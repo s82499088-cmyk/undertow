@@ -1,1024 +1,1297 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Undertow</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg: #050507;
-            --surface: rgba(24, 24, 29, 0.78);
-            --surface-solid: #16161b;
-            --border: rgba(255, 255, 255, 0.1);
-            --accent: #00e5ff;
-            --accent-2: #ff2b54;
-            --text: #ffffff;
-            --text-muted: #9898a6;
-            --safe-top: env(safe-area-inset-top, 0px);
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body, html { width: 100%; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; user-select: none; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Undertow</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#050507;
+  --surface:rgba(24,24,29,0.72);
+  --surface-solid:#16161b;
+  --border:rgba(255,255,255,0.10);
+  --border-strong:rgba(255,255,255,0.18);
+  --accent:#00e5ff;
+  --accent-2:#ff2b54;
+  --accent-3:#7000ff;
+  --text:#ffffff;
+  --text-muted:#9898a6;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow:hidden;user-select:none;-webkit-user-select:none}
+button{font-family:inherit}
 
-        /* Splash Screen (без чёрного экрана) */
-        #splash {
-            position: fixed; inset: 0; z-index: 999;
-            background: radial-gradient(circle at 50% 35%, #111c26 0%, #050507 75%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-            transition: opacity 0.35s ease, visibility 0.35s ease;
-        }
-        #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        .splash-logo {
-            font-size: 34px; font-weight: 800; letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #00e5ff, #7000ff, #ff2b54);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            animation: pulseGlow 1.6s infinite ease-in-out;
-        }
-        .spinner { width: 28px; height: 28px; border: 3px solid rgba(255,255,255,0.12); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulseGlow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+/* ============ SPLASH ============ */
+#splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 35%,#111c26 0%,#050507 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .4s ease,visibility .4s ease}
+#splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.splash-logo{font-size:38px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#00e5ff,#7000ff,#ff2b54);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:pulseGlow 1.8s infinite ease-in-out}
+.spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,0.12);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulseGlow{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 
-        /* Верхняя панель */
-        .top-bar {
-            position: fixed; top: calc(12px + var(--safe-top)); left: 14px; right: 14px; z-index: 25;
-            display: flex; align-items: center; justify-content: space-between; pointer-events: none;
-        }
-        .top-bar > * { pointer-events: auto; }
-        .brand-pill {
-            background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-            border: 1px solid var(--border); padding: 7px 13px; border-radius: 20px;
-            font-weight: 800; font-size: 14px; letter-spacing: 0.3px;
-            background-image: linear-gradient(135deg, #fff, #00e5ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .tabs-pill {
-            display: flex; background: var(--surface); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-            border: 1px solid var(--border); border-radius: 22px; padding: 3px;
-        }
-        .tab-btn {
-            background: none; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600;
-            padding: 6px 14px; border-radius: 18px; cursor: pointer; transition: 0.2s;
-        }
-        .tab-btn.active { background: rgba(255,255,255,0.14); color: #fff; }
-        .top-actions { display: flex; gap: 8px; }
-        .icon-pill {
-            width: 36px; height: 36px; border-radius: 50%; background: var(--surface);
-            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-            border: 1px solid var(--border); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;
-        }
+/* ============ TOP BAR ============ */
+.top-bar{position:fixed;top:calc(12px + var(--safe-top));left:12px;right:12px;z-index:25;display:flex;align-items:center;justify-content:space-between;pointer-events:none;gap:8px}
+.top-bar>*{pointer-events:auto}
+.brand-pill{background:var(--surface);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border:1px solid var(--border);padding:7px 13px;border-radius:20px;font-weight:800;font-size:14px;letter-spacing:.3px;background-image:linear-gradient(135deg,#fff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;box-shadow:0 4px 24px rgba(0,0,0,.3)}
+.tabs-pill{display:flex;background:var(--surface);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border:1px solid var(--border);border-radius:22px;padding:3px;box-shadow:0 4px 24px rgba(0,0,0,.3)}
+.tab-btn{background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:600;padding:6px 14px;border-radius:18px;cursor:pointer;transition:.2s}
+.tab-btn.active{background:rgba(255,255,255,0.15);color:#fff}
+.top-actions{display:flex;gap:8px}
+.icon-pill{width:36px;height:36px;border-radius:50%;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:.2s}
+.icon-pill:active{transform:scale(.92);background:rgba(255,255,255,0.14)}
+.icon-pill.spinning{animation:spin .8s linear infinite}
 
-        /* Уведомления и прогресс фоновой загрузки */
-        #toast {
-            position: fixed; top: calc(62px + var(--safe-top)); left: 50%; transform: translateX(-50%) translateY(-10px);
-            background: rgba(20, 22, 28, 0.94); border: 1px solid var(--border); backdrop-filter: blur(12px);
-            color: #fff; padding: 9px 16px; border-radius: 20px; font-size: 13px; font-weight: 500;
-            z-index: 100; opacity: 0; pointer-events: none; transition: 0.25s; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis;
-        }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* ============ TOAST ============ */
+#toast{position:fixed;top:calc(62px + var(--safe-top));left:50%;transform:translateX(-50%) translateY(-12px);background:rgba(20,22,28,0.94);border:1px solid var(--border-strong);backdrop-filter:blur(14px);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:100;opacity:0;pointer-events:none;transition:.28s cubic-bezier(.2,.8,.2,1);white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-        #uploadBanner {
-            position: fixed; top: calc(60px + var(--safe-top)); left: 16px; right: 16px; z-index: 90;
-            background: rgba(15, 23, 32, 0.95); border: 1px solid rgba(0, 229, 255, 0.35);
-            border-radius: 14px; padding: 10px 14px; display: none; flex-direction: column; gap: 6px;
-        }
-        .upload-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--accent); }
-        .upload-track { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-        .upload-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.2s; }
+/* ============ UNMUTE HINT ============ */
+#unmuteHint{position:fixed;bottom:calc(84px + var(--safe-bottom));left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:9px 16px;border-radius:20px;font-size:13px;font-weight:600;z-index:20;border:1px solid var(--border-strong);color:#fff;pointer-events:none;animation:fadeInUp .45s cubic-bezier(.2,.8,.2,1);transition:opacity .3s}
+#unmuteHint.hidden{opacity:0;visibility:hidden}
+@keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
-        /* Лента видео */
-        .view { display: none; width: 100%; height: 100vh; }
-        .view.active { display: block; }
-        .feed { width: 100%; height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
-        .feed::-webkit-scrollbar { display: none; }
+/* ============ UPLOAD BANNER ============ */
+#uploadBanner{position:fixed;top:calc(60px + var(--safe-top));left:16px;right:16px;z-index:90;background:rgba(15,23,32,0.95);backdrop-filter:blur(16px);border:1px solid rgba(0,229,255,0.35);border-radius:14px;padding:10px 14px;display:none;flex-direction:column;gap:6px;box-shadow:0 8px 30px rgba(0,229,255,0.15)}
+.upload-row{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--accent)}
+.upload-track{width:100%;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
+.upload-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .2s;box-shadow:0 0 8px rgba(0,229,255,0.6)}
 
-        .video-card {
-            position: relative; width: 100%; height: 100vh; scroll-snap-align: start;
-            background: #08080a; display: flex; align-items: center; justify-content: center; overflow: hidden;
-        }
-        video { width: 100%; height: 100%; object-fit: cover; background: #08080a; }
-        .gradient-bottom {
-            position: absolute; left: 0; right: 0; bottom: 0; height: 42%;
-            background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.35) 60%, transparent 100%);
-            pointer-events: none; z-index: 5;
-        }
-        .pause-indicator {
-            position: absolute; width: 64px; height: 64px; border-radius: 50%;
-            background: rgba(0,0,0,0.45); backdrop-filter: blur(8px);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; transform: scale(0.8); transition: 0.2s; pointer-events: none; z-index: 8;
-        }
-        .pause-indicator.visible { opacity: 1; transform: scale(1); }
-        .heart-burst {
-            position: absolute; font-size: 84px; pointer-events: none; z-index: 15;
-            animation: burst 0.75s ease-out forwards;
-        }
-        @keyframes burst {
-            0% { transform: scale(0.3); opacity: 0; }
-            35% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
+/* ============ VIEWS ============ */
+.view{display:none;width:100%;height:100vh}
+.view.active{display:block}
+.feed{width:100%;height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain}
+.feed::-webkit-scrollbar{display:none}
 
-        /* Информация об авторе и ролике */
-        .video-info {
-            position: absolute; bottom: calc(76px + var(--safe-bottom)); left: 16px; right: 78px; z-index: 10;
-        }
-        .author-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
-        .avatar-ring {
-            width: 36px; height: 36px; border-radius: 50%; padding: 2px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-2)); flex-shrink: 0;
-        }
-        .avatar-inner {
-            width: 100%; height: 100%; border-radius: 50%; background: #18181f;
-            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff;
-        }
-        .author-name { font-weight: 700; font-size: 15px; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
-        .sub-btn {
-            background: var(--accent-2); color: #fff; border: none; padding: 5px 12px;
-            border-radius: 16px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;
-        }
-        .sub-btn.subscribed { background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); }
-        .video-desc { font-size: 14px; line-height: 1.35; color: rgba(255,255,255,0.92); text-shadow: 0 1px 3px rgba(0,0,0,0.8); word-break: break-word; }
+/* ============ VIDEO CARD ============ */
+.video-card{position:relative;width:100%;height:100vh;scroll-snap-align:start;background:#08080a;display:flex;align-items:center;justify-content:center;overflow:hidden}
+video{width:100%;height:100%;object-fit:cover;background:#08080a;display:block}
 
-        /* Правая панель действий */
-        .actions {
-            position: absolute; bottom: calc(78px + var(--safe-bottom)); right: 12px; z-index: 10;
-            display: flex; flex-direction: column; gap: 16px; align-items: center;
-        }
-        .action-btn {
-            background: none; border: none; color: #fff; display: flex; flex-direction: column;
-            align-items: center; gap: 4px; cursor: pointer;
-        }
-        .action-circle {
-            width: 44px; height: 44px; border-radius: 50%; background: rgba(20, 20, 26, 0.55);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; transition: 0.15s;
-        }
-        .action-btn:active .action-circle { transform: scale(0.9); }
-        .action-btn.liked .action-circle { background: rgba(255, 43, 84, 0.25); border-color: var(--accent-2); color: var(--accent-2); }
-        .action-count { font-size: 12px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+/* buffering spinner */
+.buffering{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:6;pointer-events:none}
+.buffering.show{display:flex}
+.buffering-spinner{width:44px;height:44px;border:3px solid rgba(255,255,255,0.18);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;box-shadow:0 0 20px rgba(0,229,255,0.3)}
 
-        /* Прогресс-бар видео */
-        .progress-wrap {
-            position: absolute; bottom: calc(62px + var(--safe-bottom)); left: 0; right: 0; height: 14px;
-            display: flex; align-items: flex-end; z-index: 15; cursor: pointer;
-        }
-        .progress-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.2); }
-        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+/* video error overlay */
+.video-error{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9;background:rgba(5,5,7,0.82);backdrop-filter:blur(6px);padding:24px;text-align:center}
+.video-error.show{display:flex}
+.err-icon{font-size:44px}
+.err-title{font-size:15px;font-weight:700;color:#fff}
+.err-sub{font-size:12px;color:var(--text-muted);max-width:280px;line-height:1.45}
+.err-actions{display:flex;gap:10px;margin-top:6px}
+.err-btn{padding:9px 18px;border-radius:14px;border:1px solid var(--border-strong);background:rgba(255,255,255,0.08);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+.err-btn.primary{background:linear-gradient(135deg,var(--accent),#0099ff);color:#000;border:none}
+.err-btn:active{transform:scale(.95)}
 
-        /* Нижняя навигация */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0; height: calc(62px + var(--safe-bottom));
-            padding-bottom: var(--safe-bottom); background: rgba(8, 8, 11, 0.92);
-            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-            border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 30;
-        }
-        .nav-btn {
-            background: none; border: none; color: var(--text-muted); font-size: 11px; font-weight: 600;
-            display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 70px;
-        }
-        .nav-btn.active { color: #fff; }
-        .create-btn {
-            width: 48px; height: 32px; border-radius: 10px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            display: flex; align-items: center; justify-content: center; color: #000; font-weight: 900; font-size: 22px;
-            box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
-        }
+.gradient-bottom{position:absolute;left:0;right:0;bottom:0;height:44%;background:linear-gradient(to top,rgba(0,0,0,0.9) 0%,rgba(0,0,0,0.38) 60%,transparent 100%);pointer-events:none;z-index:5}
+.pause-indicator{position:absolute;top:50%;left:50%;width:70px;height:70px;border-radius:50%;background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;transform:translate(-50%,-50%) scale(.8);transition:.22s;pointer-events:none;z-index:8}
+.pause-indicator.visible{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.heart-burst{position:absolute;font-size:88px;pointer-events:none;z-index:15;animation:burst .78s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes burst{0%{transform:scale(.3);opacity:0}35%{transform:scale(1.25);opacity:1}100%{transform:scale(1.55);opacity:0}}
 
-        /* Профиль */
-        #profileView {
-            padding: calc(74px + var(--safe-top)) 16px calc(80px + var(--safe-bottom));
-            overflow-y: auto; background: radial-gradient(circle at 50% 0%, #131d29 0%, #050507 55%);
-        }
-        .profile-header { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; margin-bottom: 22px; }
-        .profile-avatar {
-            width: 82px; height: 82px; border-radius: 50%; padding: 3px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-        }
-        .profile-avatar img, .profile-avatar div {
-            width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #16161c;
-            display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800;
-        }
-        .profile-name { font-size: 20px; font-weight: 800; }
-        .badge-tg { font-size: 12px; padding: 4px 12px; border-radius: 12px; background: rgba(0, 229, 255, 0.14); color: var(--accent); font-weight: 600; }
-        .badge-guest { font-size: 12px; padding: 4px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.08); color: var(--text-muted); }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin-top: 8px; }
-        .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 8px; }
-        .stat-val { font-size: 18px; font-weight: 800; color: #fff; }
-        .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-        .grid-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .video-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .grid-item {
-            position: relative; aspect-ratio: 9/16; background: #141419; border-radius: 10px; overflow: hidden; cursor: pointer;
-        }
-        .grid-item video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-        .grid-views {
-            position: absolute; bottom: 6px; left: 6px; font-size: 11px; font-weight: 700;
-            background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 6px;
-        }
+/* video info */
+.video-info{position:absolute;bottom:calc(78px + var(--safe-bottom));left:16px;right:78px;z-index:10}
+.author-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.avatar-ring{width:36px;height:36px;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--accent),var(--accent-2));flex-shrink:0}
+.avatar-inner{width:100%;height:100%;border-radius:50%;background:#18181f;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff}
+.author-name{font-weight:700;font-size:15px;text-shadow:0 1px 4px rgba(0,0,0,0.85)}
+.sub-btn{background:var(--accent-2);color:#fff;border:none;padding:5px 12px;border-radius:16px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s}
+.sub-btn:active{transform:scale(.94)}
+.sub-btn.subscribed{background:rgba(255,255,255,0.18);backdrop-filter:blur(8px)}
+.video-desc{font-size:14px;line-height:1.35;color:rgba(255,255,255,0.94);text-shadow:0 1px 3px rgba(0,0,0,0.85);word-break:break-word}
 
-        /* Выезжающие шторки (Bottom Sheets) */
-        .sheet-backdrop {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.72); backdrop-filter: blur(4px);
-            z-index: 60; opacity: 0; visibility: hidden; transition: 0.25s; display: flex; align-items: flex-end;
-        }
-        .sheet-backdrop.open { opacity: 1; visibility: visible; }
-        .sheet {
-            width: 100%; background: var(--surface-solid); border-top: 1px solid var(--border);
-            border-radius: 22px 22px 0 0; padding: 16px 18px calc(22px + var(--safe-bottom));
-            transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
-            max-height: 82vh; display: flex; flex-direction: column; gap: 14px;
-        }
-        .sheet-backdrop.open .sheet { transform: translateY(0); }
-        .sheet-handle { width: 38px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; align-self: center; margin-bottom: 4px; }
-        .sheet-title { font-size: 17px; font-weight: 700; text-align: center; }
+/* right actions */
+.actions{position:absolute;bottom:calc(80px + var(--safe-bottom));right:10px;z-index:10;display:flex;flex-direction:column;gap:16px;align-items:center}
+.action-btn{background:none;border:none;color:#fff;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+.action-circle{width:46px;height:46px;border-radius:50%;background:rgba(20,20,26,0.58);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;transition:.15s}
+.action-btn:active .action-circle{transform:scale(.9)}
+.action-btn.liked .action-circle{background:rgba(255,43,84,0.28);border-color:var(--accent-2);color:var(--accent-2)}
+.action-count{font-size:12px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.9)}
 
-        .file-drop {
-            border: 1.5px dashed rgba(0, 229, 255, 0.45); border-radius: 14px; padding: 20px;
-            text-align: center; background: rgba(0, 229, 255, 0.05); cursor: pointer;
-        }
-        input[type="text"], textarea {
-            width: 100%; background: #22222a; border: 1px solid var(--border); border-radius: 12px;
-            padding: 12px 14px; color: #fff; font-size: 14px; outline: none;
-        }
-        .btn-main {
-            width: 100%; padding: 13px; border-radius: 14px; border: none; font-size: 15px; font-weight: 700;
-            background: linear-gradient(135deg, var(--accent), #0099ff); color: #000; cursor: pointer;
-        }
-        .btn-secondary {
-            width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--border);
-            background: rgba(255,255,255,0.06); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
-        }
+/* progress bar */
+.progress-wrap{position:absolute;bottom:calc(64px + var(--safe-bottom));left:0;right:0;height:18px;display:flex;align-items:flex-end;z-index:15;cursor:pointer;padding:0 2px}
+.progress-bar{width:100%;height:3px;background:rgba(255,255,255,0.2);position:relative;border-radius:2px;overflow:hidden}
+.progress-buffer{position:absolute;left:0;top:0;height:100%;width:0%;background:rgba(255,255,255,0.28);transition:width .2s}
+.progress-fill{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 0 6px rgba(0,229,255,0.7)}
 
-        /* Комментарии */
-        .comments-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; min-height: 160px; max-height: 45vh; }
-        .comment-item { background: rgba(255,255,255,0.04); padding: 10px 12px; border-radius: 12px; }
-        .comment-author { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 3px; }
-        .comment-text { font-size: 14px; line-height: 1.35; }
-        .comment-form { display: flex; gap: 8px; }
-        .comment-send { background: var(--accent); color: #000; border: none; border-radius: 12px; padding: 0 16px; font-weight: 700; cursor: pointer; }
+/* bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(62px + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:rgba(8,8,11,0.94);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;z-index:30}
+.nav-btn{background:none;border:none;color:var(--text-muted);font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;width:70px;transition:.2s}
+.nav-btn.active{color:#fff}
+.create-btn{width:48px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:22px;box-shadow:0 0 18px rgba(0,229,255,0.45)}
+.create-btn:active{transform:scale(.94)}
 
-        .empty-state {
-            height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 32px; gap: 12px; color: var(--text-muted);
-        }
-    </style>
+/* profile */
+#profileView{padding:calc(74px + var(--safe-top)) 16px calc(80px + var(--safe-bottom));overflow-y:auto;background:radial-gradient(circle at 50% 0%,#131d29 0%,#050507 55%)}
+.profile-header{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;margin-bottom:22px}
+.profile-avatar{width:82px;height:82px;border-radius:50%;padding:3px;background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+.profile-avatar img,.profile-avatar div{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#16161c;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800}
+.profile-name{font-size:20px;font-weight:800}
+.badge-tg{font-size:12px;padding:4px 12px;border-radius:12px;background:rgba(0,229,255,0.14);color:var(--accent);font-weight:600}
+.badge-guest{font-size:12px;padding:4px 12px;border-radius:12px;background:rgba(255,255,255,0.08);color:var(--text-muted)}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;margin-top:8px}
+.stat-box{background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:14px;padding:12px 8px}
+.stat-val{font-size:18px;font-weight:800;color:#fff}
+.stat-lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
+.grid-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.video-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.grid-item{position:relative;aspect-ratio:9/16;background:#141419;border-radius:10px;overflow:hidden;cursor:pointer;transition:.15s}
+.grid-item:active{transform:scale(.97)}
+.grid-item video{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.grid-views{position:absolute;bottom:6px;left:6px;font-size:11px;font-weight:700;background:rgba(0,0,0,0.62);padding:2px 6px;border-radius:6px}
+.delete-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(255,43,84,0.85);border:none;color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(6px);z-index:2;line-height:1}
+.delete-btn:active{transform:scale(.9)}
+
+/* sheets */
+.sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);z-index:60;opacity:0;visibility:hidden;transition:.25s;display:flex;align-items:flex-end}
+.sheet-backdrop.open{opacity:1;visibility:visible}
+.sheet{width:100%;background:var(--surface-solid);border-top:1px solid var(--border-strong);border-radius:22px 22px 0 0;padding:16px 18px calc(22px + var(--safe-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);max-height:82vh;display:flex;flex-direction:column;gap:14px;box-shadow:0 -12px 40px rgba(0,0,0,.5)}
+.sheet-backdrop.open .sheet{transform:translateY(0)}
+.sheet-handle{width:38px;height:4px;background:rgba(255,255,255,0.22);border-radius:2px;align-self:center;margin-bottom:4px}
+.sheet-title{font-size:17px;font-weight:700;text-align:center}
+.sheet-text{font-size:14px;color:var(--text-muted);text-align:center;line-height:1.45}
+
+.file-drop{border:1.5px dashed rgba(0,229,255,0.45);border-radius:14px;padding:20px;text-align:center;background:rgba(0,229,255,0.05);cursor:pointer;transition:.2s}
+.file-drop:active{background:rgba(0,229,255,0.1)}
+input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none;font-family:inherit;resize:none}
+input[type="text"]:focus,textarea:focus{border-color:rgba(0,229,255,0.5)}
+.btn-main{width:100%;padding:13px;border-radius:14px;border:none;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--accent),#0099ff);color:#000;cursor:pointer;transition:.15s;box-shadow:0 4px 20px rgba(0,229,255,0.25)}
+.btn-main:active{transform:scale(.98)}
+.btn-secondary{width:100%;padding:12px;border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,0.06);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s}
+.btn-secondary:active{transform:scale(.98)}
+.btn-danger{width:100%;padding:13px;border-radius:14px;border:none;font-size:15px;font-weight:700;background:linear-gradient(135deg,#ff2b54,#c40030);color:#fff;cursor:pointer;transition:.15s;box-shadow:0 4px 20px rgba(255,43,84,0.3)}
+.btn-danger:active{transform:scale(.98)}
+
+/* comments */
+.comments-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;min-height:160px;max-height:45vh}
+.comment-item{background:rgba(255,255,255,0.04);padding:10px 12px;border-radius:12px}
+.comment-author{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:3px}
+.comment-text{font-size:14px;line-height:1.35;word-break:break-word}
+.comment-form{display:flex;gap:8px}
+.comment-send{background:var(--accent);color:#000;border:none;border-radius:12px;padding:0 16px;font-weight:700;cursor:pointer}
+.comment-send:active{transform:scale(.95)}
+
+.empty-state{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;gap:12px;color:var(--text-muted)}
+</style>
 </head>
 <body>
 
-    <div id="splash">
-        <div class="splash-logo">Undertow</div>
-        <div class="spinner"></div>
-    </div>
+<div id="splash">
+  <div class="splash-logo">Undertow</div>
+  <div class="spinner"></div>
+</div>
 
-    <div id="uploadBanner">
-        <div class="upload-row">
-            <span id="uploadStatusText">Публикация в облако...</span>
-            <span id="uploadPercent">0%</span>
+<div id="toast"></div>
+
+<div id="unmuteHint">🔊 Нажмите, чтобы включить звук</div>
+
+<div id="uploadBanner">
+  <div class="upload-row">
+    <span id="uploadStatusText">Публикация в облако...</span>
+    <span id="uploadPercent">0%</span>
+  </div>
+  <div class="upload-track"><div class="upload-fill" id="uploadFill"></div></div>
+</div>
+
+<div class="top-bar" id="topBar">
+  <div class="brand-pill">Undertow</div>
+  <div class="tabs-pill">
+    <button class="tab-btn active" id="tabAll" data-tab="all">Для вас</button>
+    <button class="tab-btn" id="tabSubs" data-tab="subs">Подписки</button>
+  </div>
+  <div class="top-actions">
+    <button class="icon-pill" id="muteBtn" title="Звук">🔇</button>
+    <button class="icon-pill" id="refreshBtn" title="Обновить">↻</button>
+  </div>
+</div>
+
+<div id="feedView" class="view active">
+  <div class="feed" id="feed"></div>
+</div>
+
+<div id="profileView" class="view">
+  <div class="profile-header">
+    <div class="profile-avatar" id="profAvatar"><div>U</div></div>
+    <div class="profile-name" id="profName">Гость</div>
+    <div id="profBadge" class="badge-guest">Режим просмотра</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-val" id="statVideos">0</div><div class="stat-lbl">Видео</div></div>
+      <div class="stat-box"><div class="stat-val" id="statViews">0</div><div class="stat-lbl">Просмотры</div></div>
+      <div class="stat-box"><div class="stat-val" id="statLikes">0</div><div class="stat-lbl">Лайки</div></div>
+    </div>
+  </div>
+  <div class="grid-title"><span>Мои публикации</span></div>
+  <div class="video-grid" id="profileGrid"></div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn active" id="navFeed">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>Лента</span>
+  </button>
+  <button class="nav-btn" id="navCreate">
+    <div class="create-btn">+</div>
+  </button>
+  <button class="nav-btn" id="navProfile">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+    <span>Профиль</span>
+  </button>
+</div>
+
+<!-- upload sheet -->
+<div class="sheet-backdrop" id="uploadSheet" data-close="uploadSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Новое видео</div>
+    <label class="file-drop" for="videoFileInput">
+      <div style="font-size:26px;margin-bottom:6px">🎬</div>
+      <div id="fileLabel" style="font-weight:700;font-size:14px">Выбрать видео с устройства</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">MP4, MOV или WebM до 50 МБ</div>
+    </label>
+    <input type="file" id="videoFileInput" accept="video/*" style="display:none">
+    <textarea id="videoDescInput" rows="2" placeholder="Добавьте описание к ролику..."></textarea>
+    <button class="btn-main" id="btnPublish">Опубликовать моментально</button>
+    <button class="btn-secondary" data-close-btn="uploadSheet">Отмена</button>
+  </div>
+</div>
+
+<!-- comments sheet -->
+<div class="sheet-backdrop" id="commentsSheet" data-close="commentsSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Комментарии</div>
+    <div class="comments-list" id="commentsList"></div>
+    <div id="commentInputArea"></div>
+  </div>
+</div>
+
+<!-- share sheet -->
+<div class="sheet-backdrop" id="shareSheet" data-close="shareSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Поделиться роликом</div>
+    <button class="btn-main" id="btnShareStory">✨ Опубликовать в Историю Telegram</button>
+    <button class="btn-secondary" id="btnShareChat">✈️ Отправить в чат или другу</button>
+    <button class="btn-secondary" id="btnCopyLink">🔗 Скопировать прямую ссылку</button>
+  </div>
+</div>
+
+<!-- guest sheet -->
+<div class="sheet-backdrop" id="guestSheet" data-close="guestSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Доступно в Telegram</div>
+    <p class="sheet-text">Вы находитесь в режиме просмотра. Войдите через официального бота <b>@undertow_vids_bot</b>, чтобы ставить лайки, подписываться, комментировать и загружать видео.</p>
+    <button class="btn-main" id="btnOpenBot">Открыть в @undertow_vids_bot</button>
+    <button class="btn-secondary" data-close-btn="guestSheet">Продолжить просмотр</button>
+  </div>
+</div>
+
+<!-- delete sheet -->
+<div class="sheet-backdrop" id="deleteSheet" data-close="deleteSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Удалить видео?</div>
+    <p class="sheet-text">Видео будет удалено из ленты и из облачного хранилища. Это действие необратимо.</p>
+    <button class="btn-danger" id="btnConfirmDelete">🗑 Удалить навсегда</button>
+    <button class="btn-secondary" data-close-btn="deleteSheet">Отмена</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   UNDERSOW v14 — single-file frontend
+   Supabase + Telegram WebApp, no build tools
+   ========================================================= */
+
+const SUPABASE_URL = 'https://pgnqjobutdlaxtjrrxio.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
+const BOT_USERNAME = 'undertow_vids_bot';
+const BOT_APP_URL  = 'https://t.me/undertow_vids_bot/app';
+
+/* ---------- Telegram init ---------- */
+const tg = window.Telegram?.WebApp || null;
+if (tg) {
+  try {
+    tg.ready();
+    tg.expand();
+    if (tg.setHeaderColor) tg.setHeaderColor('#050507');
+    if (tg.setBackgroundColor) tg.setBackgroundColor('#050507');
+    if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
+  } catch (e) {}
+}
+
+const tgUser = tg?.initDataUnsafe?.user || null;
+const isGuest = !tgUser || !tgUser.id;
+const currentUser = isGuest
+  ? { id: 'guest', name: 'Гость', username: 'guest', photo: null }
+  : {
+      id: String(tgUser.id),
+      name: tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Пользователь'),
+      username: tgUser.username || tgUser.first_name || 'user',
+      photo: tgUser.photo_url || null
+    };
+
+/* ---------- state ---------- */
+let allVideos = [];
+let likedSet = new Set();
+let subsSet = new Set();
+let viewedSessionSet = new Set();
+let currentFeedTab = 'all';
+let isMuted = true;                 // start MUTED — гарантия автоплея в WebView
+let selectedFile = null;
+let lastTapTime = 0;
+let currentObserver = null;
+let pollTimer = null;
+let pendingDelete = null;
+let activeShareVideo = null;
+
+const headers = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json'
+};
+
+/* ---------- utils ---------- */
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+function formatNum(n) {
+  n = Number(n) || 0;
+  if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K';
+  return String(n);
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function haptic(type='light') {
+  try { tg?.HapticFeedback?.impactOccurred(type); } catch (e) {}
+}
+function openSheet(id) { document.getElementById(id)?.classList.add('open'); }
+function closeSheet(id) { document.getElementById(id)?.classList.remove('open'); }
+
+/* generic sheet wiring */
+document.querySelectorAll('[data-close]').forEach(bd => {
+  bd.addEventListener('click', (e) => { if (e.target === bd) closeSheet(bd.dataset.close); });
+});
+document.querySelectorAll('[data-close-btn]').forEach(btn => {
+  btn.addEventListener('click', () => closeSheet(btn.dataset.closeBtn));
+});
+
+/* ---------- user profile sync ---------- */
+async function syncUserProfile() {
+  if (isGuest) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+      method: 'POST',
+      headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ user_id: currentUser.id, username: currentUser.username, first_name: currentUser.name })
+    });
+    // replace placeholder author_name=@user on my videos
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/videos?user_id=eq.${encodeURIComponent(currentUser.id)}&author_name=eq.${encodeURIComponent('@user')}`,
+      { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ author_name: currentUser.name }) }
+    );
+  } catch (e) {}
+}
+
+/* ---------- user relations ---------- */
+async function loadUserRelations() {
+  if (isGuest) return;
+  try {
+    const [likesRes, subsRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/video_likes?user_id=eq.${encodeURIComponent(currentUser.id)}&select=video_id`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/user_subs?follower_id=eq.${encodeURIComponent(currentUser.id)}&select=author_id`, { headers })
+    ]);
+    if (likesRes.ok) {
+      const l = await likesRes.json();
+      likedSet = new Set(l.map(x => String(x.video_id)));
+    }
+    if (subsRes.ok) {
+      const s = await subsRes.json();
+      subsSet = new Set(s.map(x => String(x.author_id)));
+    }
+  } catch (e) {}
+}
+
+/* ---------- feed loading ---------- */
+async function fetchVideos() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=id.desc&limit=50`, { headers });
+  if (!res.ok) throw new Error('fetch failed');
+  const rows = await res.json();
+  allVideos = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('http'));
+
+  // deep-link startapp=v_ID — вытаскиваем видео наверх
+  const startParam = tg?.initDataUnsafe?.start_param || new URLSearchParams(location.search).get('startapp');
+  if (startParam && startParam.startsWith('v_')) {
+    const targetId = startParam.slice(2);
+    const idx = allVideos.findIndex(v => String(v.id) === targetId);
+    if (idx > 0) {
+      const [target] = allVideos.splice(idx, 1);
+      allVideos.unshift(target);
+    }
+  }
+}
+
+async function silentRefresh() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=id.desc&limit=50`, { headers });
+    if (!res.ok) return;
+    const rows = await res.json();
+    const fresh = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('http'));
+    const known = new Set(allVideos.map(v => String(v.id)));
+    const newOnes = fresh.filter(v => !known.has(String(v.id)));
+    if (!newOnes.length) return;
+
+    allVideos = [...newOnes, ...allVideos.filter(v => !String(v.id).startsWith('temp_'))];
+    const feed = document.getElementById('feed');
+    if (feed.scrollTop < feed.clientHeight * 0.5) {
+      renderFeed();
+    } else {
+      showToast(`🔥 ${newOnes.length} новых видео — обновите ↻`);
+    }
+  } catch (e) {}
+}
+
+function startPolling() {
+  stopPolling();
+  pollTimer = setInterval(() => {
+    if (document.visibilityState === 'visible'
+      && document.getElementById('feedView').classList.contains('active')) {
+      silentRefresh();
+    }
+  }, 12000);
+}
+function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+/* ---------- feed rendering ---------- */
+function authorDisplayName(v) {
+  const raw = v.author_name;
+  const authorId = String(v.author_id || v.user_id || '');
+  if (raw && raw !== '@user') return raw;
+  if (authorId === currentUser.id) return currentUser.name;
+  return `@creator_${(authorId || '01').slice(-4)}`;
+}
+
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  let list = allVideos;
+  if (currentFeedTab === 'subs') {
+    list = allVideos.filter(v => subsSet.has(String(v.author_id || v.user_id || '')));
+  }
+
+  if (!list.length) {
+    feed.innerHTML = `<div class="empty-state">
+      <div style="font-size:44px">🌊</div>
+      <div style="font-weight:700;color:#fff">${currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста'}</div>
+      <div style="font-size:13px">${currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первое видео'}</div>
+    </div>`;
+    return;
+  }
+
+  if (currentObserver) { currentObserver.disconnect(); currentObserver = null; }
+  feed.innerHTML = '';
+
+  list.forEach((v, idx) => {
+    const vidId = String(v.id);
+    const authorId = String(v.author_id || v.user_id || '');
+    const authorName = authorDisplayName(v);
+    const isLiked = likedSet.has(vidId);
+    const isSub = subsSet.has(authorId);
+    const isOwn = !isGuest && authorId === currentUser.id;
+    const initial = (authorName.replace('@','')[0] || 'U').toUpperCase();
+    const desc = escapeHtml(v.description || '');
+
+    const card = document.createElement('div');
+    card.className = 'video-card';
+    card.dataset.id = vidId;
+    card.dataset.index = String(idx);
+
+    card.innerHTML = `
+      <video
+        src="${v.video_url}"
+        loop playsinline webkit-playsinline muted
+        preload="${idx < 2 ? 'auto' : 'metadata'}"
+        crossorigin="anonymous"></video>
+
+      <div class="buffering"><div class="buffering-spinner"></div></div>
+
+      <div class="video-error">
+        <div class="err-icon">⚠️</div>
+        <div class="err-title">Не удалось воспроизвести</div>
+        <div class="err-sub">Файл может быть повреждён или кодек не поддерживается устройством.</div>
+        <div class="err-actions">
+          <button class="err-btn" data-err="retry">Повторить</button>
+          <button class="err-btn primary" data-err="skip">Пропустить</button>
         </div>
-        <div class="upload-track"><div class="upload-fill" id="uploadFill"></div></div>
-    </div>
+      </div>
 
-    <div class="top-bar" id="topBar">
-        <div class="brand-pill">Undertow</div>
-        <div class="tabs-pill">
-            <button class="tab-btn active" id="tabAll" onclick="switchFeedTab('all')">Для вас</button>
-            <button class="tab-btn" id="tabSubs" onclick="switchFeedTab('subs')">Подписки</button>
+      <div class="gradient-bottom"></div>
+
+      <div class="pause-indicator">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+
+      <div class="video-info">
+        <div class="author-row">
+          <div class="avatar-ring"><div class="avatar-inner">${initial}</div></div>
+          <span class="author-name">${escapeHtml(authorName)}</span>
+          ${(!isOwn && authorId) ? `<button class="sub-btn ${isSub?'subscribed':''}" data-act="sub">${isSub?'Вы подписаны':'Подписаться'}</button>` : ''}
         </div>
-        <div class="top-actions">
-            <button class="icon-pill" onclick="toggleMute()" id="muteBtn" title="Звук">🔊</button>
-            <button class="icon-pill" onclick="refreshFeed()" title="Обновить">↻</button>
-        </div>
-    </div>
+        <div class="video-desc">${desc}</div>
+      </div>
 
-    <div id="feedView" class="view active">
-        <div class="feed" id="feed"></div>
-    </div>
-
-    <div id="profileView" class="view">
-        <div class="profile-header">
-            <div class="profile-avatar" id="profAvatar"><div>U</div></div>
-            <div class="profile-name" id="profName">Гость</div>
-            <div id="profBadge" class="badge-guest">Режим просмотра</div>
-            <div class="stats-grid">
-                <div class="stat-box"><div class="stat-val" id="statVideos">0</div><div class="stat-lbl">Видео</div></div>
-                <div class="stat-box"><div class="stat-val" id="statViews">0</div><div class="stat-lbl">Просмотры</div></div>
-                <div class="stat-box"><div class="stat-val" id="statLikes">0</div><div class="stat-lbl">Лайки</div></div>
-            </div>
-        </div>
-        <div class="grid-title"><span>Мои публикации</span></div>
-        <div class="video-grid" id="profileGrid"></div>
-    </div>
-
-    <div class="bottom-nav">
-        <button class="nav-btn active" id="navFeed" onclick="switchMainView('feed')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-            <span>Лента</span>
+      <div class="actions">
+        <button class="action-btn ${isLiked?'liked':''}" data-act="like">
+          <div class="action-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </div>
+          <span class="action-count" data-like-count>${formatNum(v.likes)}</span>
         </button>
-        <button class="nav-btn" onclick="handleCreateClick()">
-            <div class="create-btn">+</div>
+
+        <button class="action-btn" data-act="comment">
+          <div class="action-circle">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+          </div>
+          <span class="action-count">Чат</span>
         </button>
-        <button class="nav-btn" id="navProfile" onclick="switchMainView('profile')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            <span>Профиль</span>
+
+        <div class="action-btn" style="cursor:default">
+          <div class="action-circle">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          </div>
+          <span class="action-count" data-view-count>${formatNum(v.views)}</span>
+        </div>
+
+        <button class="action-btn" data-act="share">
+          <div class="action-circle">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
+          </div>
+          <span class="action-count">Репост</span>
         </button>
-    </div>
+      </div>
 
-    <div class="sheet-backdrop" id="uploadSheet" onclick="if(event.target===this) closeSheet('uploadSheet')">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <div class="sheet-title">Новое видео</div>
-            <label class="file-drop" for="videoFileInput">
-                <div style="font-size:26px; margin-bottom:6px;">🎬</div>
-                <div id="fileLabel" style="font-weight:700; font-size:14px;">Выбрать видео с устройства</div>
-                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">MP4, MOV или WebM до 50 МБ</div>
-            </label>
-            <input type="file" id="videoFileInput" accept="video/*" style="display:none" onchange="onFileSelected(this)">
-            <textarea id="videoDescInput" rows="2" placeholder="Добавьте описание к ролику..."></textarea>
-            <button class="btn-main" onclick="publishVideoInstant()">Опубликовать моментально</button>
-            <button class="btn-secondary" onclick="closeSheet('uploadSheet')">Отмена</button>
+      <div class="progress-wrap">
+        <div class="progress-bar">
+          <div class="progress-buffer"></div>
+          <div class="progress-fill"></div>
         </div>
-    </div>
+      </div>
+    `;
 
-    <div class="sheet-backdrop" id="commentsSheet" onclick="if(event.target===this) closeSheet('commentsSheet')">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <div class="sheet-title">Комментарии</div>
-            <div class="comments-list" id="commentsList"></div>
-            <div id="commentInputArea"></div>
+    /* ---------- wiring card ---------- */
+    const vidEl     = card.querySelector('video');
+    const buffering = card.querySelector('.buffering');
+    const errBox    = card.querySelector('.video-error');
+    const pauseEl   = card.querySelector('.pause-indicator');
+    const fillEl    = card.querySelector('.progress-fill');
+    const bufferEl  = card.querySelector('.progress-buffer');
+    const likeBtn   = card.querySelector('[data-act="like"]');
+    const subBtn    = card.querySelector('[data-act="sub"]');
+    const commentBtn= card.querySelector('[data-act="comment"]');
+    const shareBtn  = card.querySelector('[data-act="share"]');
+    const likeCntEl = card.querySelector('[data-like-count]');
+    const viewCntEl = card.querySelector('[data-view-count]');
+    const progressWrap = card.querySelector('.progress-wrap');
+
+    const showBuf  = () => buffering.classList.add('show');
+    const hideBuf  = () => buffering.classList.remove('show');
+    const showErr  = () => { errBox.classList.add('show'); hideBuf(); };
+    const hideErr  = () => errBox.classList.remove('show');
+
+    /* -- video event pipeline -- */
+    vidEl.addEventListener('loadedmetadata', () => {
+      vidEl.muted = isMuted;
+    });
+    vidEl.addEventListener('canplay',  () => { hideBuf(); hideErr(); });
+    vidEl.addEventListener('playing',  () => { hideBuf(); hideErr(); pauseEl.classList.remove('visible'); });
+    vidEl.addEventListener('waiting',  () => showBuf());
+    vidEl.addEventListener('stalled',  () => showBuf());
+    vidEl.addEventListener('error',    () => showErr());
+    vidEl.addEventListener('progress', () => {
+      if (vidEl.buffered.length && vidEl.duration) {
+        const end = vidEl.buffered.end(vidEl.buffered.length - 1);
+        bufferEl.style.width = `${Math.min(100, (end / vidEl.duration) * 100)}%`;
+      }
+    });
+
+    /* -- progress bar + scrubbing -- */
+    let scrubbing = false;
+    const applyRatio = (ratio) => {
+      if (!vidEl.duration) return;
+      vidEl.currentTime = ratio * vidEl.duration;
+      fillEl.style.width = `${ratio * 100}%`;
+    };
+    const ratioFromEvent = (e) => {
+      const rect = progressWrap.getBoundingClientRect();
+      return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    };
+    progressWrap.addEventListener('pointerdown', (e) => {
+      scrubbing = true;
+      try { progressWrap.setPointerCapture(e.pointerId); } catch(_) {}
+      applyRatio(ratioFromEvent(e));
+      e.stopPropagation();
+    });
+    progressWrap.addEventListener('pointermove', (e) => {
+      if (scrubbing) applyRatio(ratioFromEvent(e));
+    });
+    const endScrub = () => { scrubbing = false; };
+    progressWrap.addEventListener('pointerup', endScrub);
+    progressWrap.addEventListener('pointercancel', endScrub);
+    progressWrap.addEventListener('pointerleave', endScrub);
+
+    vidEl.addEventListener('timeupdate', () => {
+      if (!scrubbing && vidEl.duration) {
+        fillEl.style.width = `${(vidEl.currentTime / vidEl.duration) * 100}%`;
+      }
+    });
+
+    /* -- error buttons -- */
+    errBox.querySelector('[data-err="retry"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const src = vidEl.getAttribute('src') || vidEl.src;
+      hideErr();
+      vidEl.load();
+      vidEl.muted = isMuted;
+      vidEl.play().catch(() => {});
+    });
+    errBox.querySelector('[data-err="skip"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const next = card.nextElementSibling;
+      if (next) next.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    /* -- like / comment / share / sub -- */
+    likeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLike(vidId, likeBtn, likeCntEl, v); });
+    commentBtn.addEventListener('click', (e) => { e.stopPropagation(); openComments(vidId); });
+    shareBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openShare({ id: vidId, url: v.video_url, desc: v.description || '' });
+    });
+    if (subBtn) subBtn.addEventListener('click', (e) => { e.stopPropagation(); handleSub(authorId, subBtn); });
+
+    /* -- tap handler: single=unmute/pause, double=like -- */
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button') || e.target.closest('.progress-wrap') || e.target.closest('.video-error')) return;
+      const now = Date.now();
+      if (now - lastTapTime < 280) {
+        spawnHeart(card, e.clientX, e.clientY);
+        if (!likedSet.has(vidId)) handleLike(vidId, likeBtn, likeCntEl, v);
+      } else {
+        if (isMuted) {
+          setMuted(false);
+        } else if (vidEl.paused) {
+          vidEl.play().catch(() => {});
+          pauseEl.classList.remove('visible');
+        } else {
+          vidEl.pause();
+          pauseEl.classList.add('visible');
+        }
+      }
+      lastTapTime = now;
+    });
+
+    feed.appendChild(card);
+  });
+
+  setupObserver();
+}
+
+/* ---------- observer / autoplay ---------- */
+function setupObserver() {
+  if (currentObserver) currentObserver.disconnect();
+
+  currentObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const card = entry.target;
+      const vid = card.querySelector('video');
+      if (!vid) return;
+
+      if (entry.isIntersecting) {
+        vid.muted = isMuted;
+        const p = vid.play();
+        if (p && p.catch) {
+          p.then(() => {
+            card.querySelector('.video-error')?.classList.remove('show');
+            card.querySelector('.pause-indicator')?.classList.remove('visible');
+            registerView(card.dataset.id);
+          }).catch(() => {
+            // WebView refused — force muted and retry once
+            vid.muted = true;
+            isMuted = true;
+            document.getElementById('muteBtn').textContent = '🔇';
+            vid.play().then(() => {
+              registerView(card.dataset.id);
+            }).catch(() => {
+              card.querySelector('.pause-indicator')?.classList.add('visible');
+            });
+          });
+        }
+        registerView(card.dataset.id);
+        manageMemory(card);
+      } else {
+        vid.pause();
+        card.querySelector('.buffering')?.classList.remove('show');
+      }
+    });
+  }, { threshold: 0.65, root: document.getElementById('feed') });
+
+  document.querySelectorAll('.video-card').forEach(c => currentObserver.observe(c));
+}
+
+/* unload src of cards far from viewport (memory optimization for 1M users) */
+function manageMemory(activeCard) {
+  const cards = Array.from(document.querySelectorAll('.video-card'));
+  const activeIdx = cards.indexOf(activeCard);
+  if (activeIdx < 0) return;
+  cards.forEach((c, i) => {
+    const vid = c.querySelector('video');
+    if (!vid) return;
+    if (Math.abs(i - activeIdx) <= 3) {
+      if (!vid.getAttribute('src') && c.dataset.src) {
+        vid.setAttribute('src', c.dataset.src);
+        vid.load();
+      }
+    } else {
+      if (vid.getAttribute('src')) {
+        c.dataset.src = vid.getAttribute('src');
+        vid.removeAttribute('src');
+        vid.load();
+      }
+    }
+  });
+}
+
+/* ---------- view counter ---------- */
+async function registerView(vidId) {
+  if (!vidId || vidId.startsWith('temp_') || viewedSessionSet.has(vidId)) return;
+  viewedSessionSet.add(vidId);
+
+  const viewerKey = isGuest
+    ? (localStorage.getItem('ut_guest_id') || (() => {
+        const id = 'g_' + Math.random().toString(36).slice(2);
+        localStorage.setItem('ut_guest_id', id);
+        return id;
+      })())
+    : currentUser.id;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/register_unique_view`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ p_viewer_id: viewerKey, p_video_id: vidId })
+    });
+    if (res.ok) {
+      const newViews = await res.json();
+      const card = document.querySelector(`.video-card[data-id="${vidId}"]`);
+      const el = card?.querySelector('[data-view-count]');
+      if (el && typeof newViews === 'number') el.textContent = formatNum(newViews);
+      const item = allVideos.find(x => String(x.id) === vidId);
+      if (item) item.views = newViews;
+    }
+  } catch (e) {}
+}
+
+/* ---------- like ---------- */
+async function handleLike(vidId, btn, cntEl, data) {
+  if (isGuest) return openSheet('guestSheet');
+  if (vidId.startsWith('temp_')) return showToast('Дождитесь завершения загрузки');
+  haptic('medium');
+
+  const wasLiked = likedSet.has(vidId);
+  const item = allVideos.find(x => String(x.id) === vidId);
+  let cur = Number(item?.likes || 0);
+
+  if (wasLiked) { likedSet.delete(vidId); btn.classList.remove('liked'); cur = Math.max(0, cur - 1); }
+  else { likedSet.add(vidId); btn.classList.add('liked'); cur += 1; }
+  if (cntEl) cntEl.textContent = formatNum(cur);
+  if (item) item.likes = cur;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ p_user_id: currentUser.id, p_video_id: vidId })
+    });
+    if (res.ok) {
+      const d = await res.json();
+      if (cntEl) cntEl.textContent = formatNum(d.likes);
+      if (item) item.likes = d.likes;
+    }
+  } catch (e) {}
+}
+
+/* ---------- subscribe ---------- */
+async function handleSub(authorId, btn) {
+  if (isGuest) return openSheet('guestSheet');
+  haptic('light');
+  const wasSub = subsSet.has(authorId);
+  if (wasSub) { subsSet.delete(authorId); btn.classList.remove('subscribed'); btn.textContent = 'Подписаться'; }
+  else { subsSet.add(authorId); btn.classList.add('subscribed'); btn.textContent = 'Вы подписаны'; }
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_user_sub`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ p_follower_id: currentUser.id, p_author_id: authorId })
+    });
+  } catch (e) {}
+}
+
+/* ---------- mute control ---------- */
+function setMuted(muted) {
+  isMuted = muted;
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+  document.querySelectorAll('.video-card video').forEach(v => v.muted = muted);
+  const hint = document.getElementById('unmuteHint');
+  if (muted) hint.classList.remove('hidden');
+  else hint.classList.add('hidden');
+}
+
+/* ---------- view switching ---------- */
+function switchFeedTab(tab) {
+  if (tab === 'subs' && isGuest) return openSheet('guestSheet');
+  currentFeedTab = tab;
+  document.getElementById('tabAll').classList.toggle('active', tab === 'all');
+  document.getElementById('tabSubs').classList.toggle('active', tab === 'subs');
+  renderFeed();
+}
+
+function switchMainView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('topBar').style.display = view === 'feed' ? 'flex' : 'none';
+
+  if (view === 'feed') {
+    document.getElementById('feedView').classList.add('active');
+    document.getElementById('navFeed').classList.add('active');
+  } else {
+    document.getElementById('profileView').classList.add('active');
+    document.getElementById('navProfile').classList.add('active');
+    document.querySelectorAll('.video-card video').forEach(v => v.pause());
+    renderProfile();
+  }
+}
+
+/* ---------- profile ---------- */
+function renderProfile() {
+  document.getElementById('profName').textContent = currentUser.name;
+  const badge = document.getElementById('profBadge');
+
+  if (isGuest) {
+    badge.className = 'badge-guest';
+    badge.textContent = 'Режим гостя (только просмотр)';
+  } else {
+    badge.className = 'badge-tg';
+    badge.textContent = 'Аккаунт Telegram подключён';
+  }
+
+  const av = document.getElementById('profAvatar');
+  if (currentUser.photo) {
+    av.innerHTML = `<img src="${currentUser.photo}" alt="">`;
+  } else {
+    av.innerHTML = `<div>${(currentUser.name.replace('@','')[0] || 'G').toUpperCase()}</div>`;
+  }
+
+  const myVideos = isGuest ? [] : allVideos.filter(v => String(v.author_id || v.user_id) === currentUser.id);
+  const totalViews = myVideos.reduce((a, v) => a + (Number(v.views) || 0), 0);
+  const totalLikes = myVideos.reduce((a, v) => a + (Number(v.likes) || 0), 0);
+
+  document.getElementById('statVideos').textContent = formatNum(myVideos.length);
+  document.getElementById('statViews').textContent  = formatNum(totalViews);
+  document.getElementById('statLikes').textContent  = formatNum(totalLikes);
+
+  const grid = document.getElementById('profileGrid');
+  if (isGuest) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px 10px">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Войдите через Telegram-бота, чтобы видеть свои ролики и статистику</p>
+      <button class="btn-main" id="btnLoginInline">Войти через @${BOT_USERNAME}</button>
+    </div>`;
+    document.getElementById('btnLoginInline').addEventListener('click', openBotAuth);
+    return;
+  }
+  if (!myVideos.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);font-size:13px;padding:30px 0">У вас пока нет опубликованных видео</div>`;
+    return;
+  }
+
+  grid.innerHTML = '';
+  myVideos.forEach(v => {
+    const item = document.createElement('div');
+    item.className = 'grid-item';
+    item.innerHTML = `
+      <video src="${v.video_url}" preload="metadata" muted playsinline></video>
+      <div class="grid-views">👁 ${formatNum(v.views)}</div>
+      <button class="delete-btn" title="Удалить">×</button>
+    `;
+    item.addEventListener('click', () => {
+      const idx = allVideos.findIndex(x => String(x.id) === String(v.id));
+      if (idx > 0) {
+        const [moved] = allVideos.splice(idx, 1);
+        allVideos.unshift(moved);
+      } else if (idx === 0) {
+        // already on top
+      }
+      switchMainView('feed');
+      renderFeed();
+    });
+    item.querySelector('.delete-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      confirmDeleteVideo({ id: v.id, video_url: v.video_url });
+    });
+    grid.appendChild(item);
+  });
+}
+
+/* ---------- delete video ---------- */
+function confirmDeleteVideo(video) {
+  pendingDelete = video;
+  openSheet('deleteSheet');
+}
+
+async function doDeleteVideo() {
+  if (!pendingDelete) return;
+  const v = pendingDelete;
+  closeSheet('deleteSheet');
+  haptic('heavy');
+
+  // optimistic remove
+  allVideos = allVideos.filter(x => String(x.id) !== String(v.id));
+  if (currentFeedTab === 'subs') renderFeed();
+  renderProfile();
+
+  try {
+    // delete row
+    await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(v.id)}`, {
+      method: 'DELETE', headers
+    });
+    // delete storage object (best effort)
+    const fileName = (v.video_url || '').split('/').pop();
+    if (fileName) {
+      await fetch(`${SUPABASE_URL}/storage/v1/object/videos/${encodeURIComponent(fileName)}`, {
+        method: 'DELETE',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+    }
+    showToast('🗑 Видео удалено');
+    // refresh feed in background so it's gone from feed too
+    silentRefresh();
+  } catch (e) {
+    showToast('Не удалось удалить полностью — обновите ленту');
+  }
+  pendingDelete = null;
+}
+document.getElementById('btnConfirmDelete').addEventListener('click', doDeleteVideo);
+
+/* ---------- create / upload ---------- */
+function handleCreateClick() {
+  if (isGuest) return openSheet('guestSheet');
+  selectedFile = null;
+  document.getElementById('fileLabel').textContent = 'Выбрать видео с устройства';
+  document.getElementById('videoDescInput').value = '';
+  openSheet('uploadSheet');
+}
+document.getElementById('navCreate').addEventListener('click', handleCreateClick);
+document.getElementById('videoFileInput').addEventListener('change', function () {
+  if (this.files && this.files[0]) {
+    selectedFile = this.files[0];
+    document.getElementById('fileLabel').textContent = `✅ ${selectedFile.name}`;
+  }
+});
+
+function uploadFileXHR(file, fileName, onProgress) {
+  return new Promise((resolve, reject) => {
+    const attempt = (retriesLeft) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${SUPABASE_URL}/storage/v1/object/videos/${encodeURIComponent(fileName)}`, true);
+      xhr.setRequestHeader('apikey', SUPABASE_KEY);
+      xhr.setRequestHeader('Authorization', `Bearer ${SUPABASE_KEY}`);
+      xhr.setRequestHeader('x-upsert', 'true');
+      xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(`${SUPABASE_URL}/storage/v1/object/public/videos/${fileName}`);
+        } else if (retriesLeft > 0) {
+          setTimeout(() => attempt(retriesLeft - 1), 700);
+        } else {
+          reject(new Error(`HTTP ${xhr.status}`));
+        }
+      };
+      xhr.onerror = () => {
+        if (retriesLeft > 0) setTimeout(() => attempt(retriesLeft - 1), 700);
+        else reject(new Error('Сбой сети'));
+      };
+      xhr.send(file);
+    };
+    attempt(3);
+  });
+}
+
+async function publishVideoInstant() {
+  if (!selectedFile) return showToast('Сначала выберите видеофайл');
+  if (selectedFile.size > 52 * 1024 * 1024) return showToast('Файл больше 50 МБ');
+
+  const file = selectedFile;
+  const desc = document.getElementById('videoDescInput').value.trim();
+  const localBlobUrl = URL.createObjectURL(file);
+  const tempId = 'temp_' + Date.now();
+
+  // optimistic
+  const optimistic = {
+    id: tempId,
+    user_id: currentUser.id,
+    author_id: Number(currentUser.id),
+    author_name: currentUser.name,
+    video_url: localBlobUrl,
+    description: desc,
+    likes: 0,
+    views: 1
+  };
+  allVideos.unshift(optimistic);
+  closeSheet('uploadSheet');
+  switchMainView('feed');
+  renderFeed();
+  haptic('heavy');
+
+  const banner = document.getElementById('uploadBanner');
+  const fill   = document.getElementById('uploadFill');
+  const pctTxt = document.getElementById('uploadPercent');
+  banner.style.display = 'flex';
+  fill.style.width = '5%';
+  pctTxt.textContent = '5%';
+
+  try {
+    const ext = (file.name.split('.').pop() || 'mp4').replace(/[^a-z0-9]/gi, '') || 'mp4';
+    const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
+    const publicUrl = await uploadFileXHR(file, fileName, (pct) => {
+      fill.style.width = `${pct}%`;
+      pctTxt.textContent = `${pct}%`;
+    });
+
+    // trigger auto_publish_from_storage may already have inserted a row
+    let savedRow = null;
+    const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?video_url=eq.${encodeURIComponent(publicUrl)}&select=*`, { headers });
+    const existing = checkRes.ok ? await checkRes.json() : [];
+
+    if (existing.length > 0) {
+      const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${existing[0].id}`, {
+        method: 'PATCH',
+        headers: { ...headers, 'Prefer': 'return=representation' },
+        body: JSON.stringify({ author_name: currentUser.name, description: desc })
+      });
+      const patched = patchRes.ok ? await patchRes.json() : [];
+      savedRow = patched[0] || existing[0];
+    } else {
+      const insRes = await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
+        method: 'POST',
+        headers: { ...headers, 'Prefer': 'return=representation' },
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          author_id: Number(currentUser.id),
+          author_name: currentUser.name,
+          video_url: publicUrl,
+          description: desc,
+          likes: 0,
+          views: 0
+        })
+      });
+      const inserted = insRes.ok ? await insRes.json() : [];
+      savedRow = inserted[0] || null;
+    }
+
+    if (savedRow) {
+      const idx = allVideos.findIndex(x => x.id === tempId);
+      if (idx !== -1) allVideos[idx] = savedRow;
+      URL.revokeObjectURL(localBlobUrl);
+      renderFeed();
+    }
+    showToast('✅ Видео опубликовано');
+  } catch (err) {
+    showToast('Ошибка загрузки (проверьте VPN)');
+    // roll back optimistic
+    allVideos = allVideos.filter(x => x.id !== tempId);
+    renderFeed();
+  } finally {
+    setTimeout(() => { banner.style.display = 'none'; fill.style.width = '0%'; }, 1000);
+  }
+}
+document.getElementById('btnPublish').addEventListener('click', publishVideoInstant);
+
+/* ---------- comments ---------- */
+let activeCommentVideoId = null;
+
+async function openComments(vidId) {
+  activeCommentVideoId = vidId;
+  const listEl = document.getElementById('commentsList');
+  const inputArea = document.getElementById('commentInputArea');
+  listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">Загрузка...</div>';
+
+  if (isGuest) {
+    inputArea.innerHTML = `<button class="btn-main" id="btnCommentLogin">Войти через Telegram, чтобы написать</button>`;
+    document.getElementById('btnCommentLogin').addEventListener('click', () => {
+      closeSheet('commentsSheet');
+      openSheet('guestSheet');
+    });
+  } else {
+    inputArea.innerHTML = `<div class="comment-form">
+      <input type="text" id="newCommentInput" placeholder="Написать комментарий...">
+      <button class="comment-send" id="btnSendComment">➤</button>
+    </div>`;
+    document.getElementById('btnSendComment').addEventListener('click', () => sendComment(vidId));
+    document.getElementById('newCommentInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendComment(vidId);
+    });
+  }
+  openSheet('commentsSheet');
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${encodeURIComponent(vidId)}&order=created_at.desc&limit=50`, { headers });
+    const rows = res.ok ? await res.json() : [];
+    if (!rows.length) {
+      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px">Комментариев пока нет. Будьте первым!</div>';
+    } else {
+      listEl.innerHTML = rows.map(c => `
+        <div class="comment-item">
+          <div class="comment-author">${escapeHtml(c.author_name)}</div>
+          <div class="comment-text">${escapeHtml(c.text)}</div>
         </div>
+      `).join('');
+    }
+  } catch (e) {}
+}
+
+async function sendComment(vidId) {
+  if (isGuest) return openSheet('guestSheet');
+  const inp = document.getElementById('newCommentInput');
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  haptic('light');
+
+  const listEl = document.getElementById('commentsList');
+  if (listEl.textContent.includes('Комментариев пока нет')) listEl.innerHTML = '';
+  listEl.insertAdjacentHTML('afterbegin', `
+    <div class="comment-item">
+      <div class="comment-author">${escapeHtml(currentUser.name)}</div>
+      <div class="comment-text">${escapeHtml(text)}</div>
     </div>
-
-    <div class="sheet-backdrop" id="shareSheet" onclick="if(event.target===this) closeSheet('shareSheet')">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <div class="sheet-title">Поделиться роликом</div>
-            <button class="btn-main" onclick="shareToStory()">✨ Опубликовать в Историю Telegram</button>
-            <button class="btn-secondary" onclick="shareToChat()">✈️ Отправить в чат или другу</button>
-            <button class="btn-secondary" onclick="copyVideoLink()">🔗 Скопировать прямую ссылку</button>
-        </div>
-    </div>
-
-    <div class="sheet-backdrop" id="guestSheet" onclick="if(event.target===this) closeSheet('guestSheet')">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <div class="sheet-title">Доступно в Telegram</div>
-            <p style="font-size:14px; color:var(--text-muted); text-align:center; line-height:1.45;">
-                Вы находитесь в режиме просмотра. Войдите через официального бота <b>@undertow_vids_bot</b>, чтобы ставить лайки, подписываться, комментировать и загружать видео.
-            </p>
-            <button class="btn-main" onclick="openBotAuth()">Открыть в @undertow_vids_bot</button>
-            <button class="btn-secondary" onclick="closeSheet('guestSheet')">Продолжить просмотр</button>
-        </div>
-    </div>
-
-    <script>
-        const SUPABASE_URL = 'https://pgnqjobutdlaxtjrrxio.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
-        const BOT_USERNAME = 'undertow_vids_bot';
-        const APP_SHORT_NAME = 'app';
-
-        const tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.ready();
-            tg.expand();
-            if (tg.setHeaderColor) tg.setHeaderColor('#050507');
-            if (tg.setBackgroundColor) tg.setBackgroundColor('#050507');
-        }
-
-        const tgUser = tg?.initDataUnsafe?.user || null;
-        const isGuest = !tgUser || !tgUser.id;
-        const currentUser = isGuest
-            ? { id: 'guest', name: 'Гость', username: 'guest', photo: null }
-            : {
-                id: String(tgUser.id),
-                name: tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Пользователь'),
-                username: tgUser.username || tgUser.first_name || 'user',
-                photo: tgUser.photo_url || null
-            };
-
-        let allVideos = [];
-        let likedSet = new Set();
-        let subsSet = new Set();
-        let viewedSessionSet = new Set();
-        let currentFeedTab = 'all';
-        let isMuted = false;
-        let activeVideo = null;
-        let selectedFile = null;
-        let lastTapTime = 0;
-
-        const headers = {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-        };
-
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            clearTimeout(t._timer);
-            t._timer = setTimeout(() => t.classList.remove('show'), 2600);
-        }
-
-        function haptic(type = 'light') {
-            try { tg?.HapticFeedback?.impactOccurred(type); } catch (e) {}
-        }
-
-        function openSheet(id) { document.getElementById(id).classList.add('open'); }
-        function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
-        function openBotAuth() {
-            const url = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}`;
-            if (tg?.openTelegramLink) tg.openTelegramLink(url);
-            else window.open(url, '_blank');
-        }
-
-        async function syncUserProfile() {
-            if (isGuest) return;
-            try {
-                await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-                    method: 'POST',
-                    headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
-                    body: JSON.stringify({ user_id: currentUser.id, username: currentUser.username })
-                });
-                await fetch(`${SUPABASE_URL}/rest/v1/videos?user_id=eq.${currentUser.id}&author_name=eq.@user`, {
-                    method: 'PATCH',
-                    headers,
-                    body: JSON.stringify({ author_name: currentUser.name })
-                });
-            } catch (e) {}
-        }
-
-        async function loadUserRelations() {
-            if (isGuest) return;
-            try {
-                const [likesRes, subsRes] = await Promise.all([
-                    fetch(`${SUPABASE_URL}/rest/v1/video_likes?user_id=eq.${currentUser.id}&select=video_id`, { headers }),
-                    fetch(`${SUPABASE_URL}/rest/v1/user_subs?follower_id=eq.${currentUser.id}&select=author_id`, { headers })
-                ]);
-                if (likesRes.ok) {
-                    const l = await likesRes.json();
-                    likedSet = new Set(l.map(x => String(x.video_id)));
-                }
-                if (subsRes.ok) {
-                    const s = await subsRes.json();
-                    subsSet = new Set(s.map(x => String(x.author_id)));
-                }
-            } catch (e) {}
-        }
-
-        async function fetchVideos() {
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=id.desc&limit=50`, { headers });
-                if (!res.ok) throw new Error('Ошибка загрузки');
-                const rows = await res.json();
-                allVideos = rows.filter(r => r.video_url && r.video_url.startsWith('http'));
-
-                const startParam = tg?.initDataUnsafe?.start_param || new URLSearchParams(window.location.search).get('startapp');
-                if (startParam && startParam.startsWith('v_')) {
-                    const targetId = startParam.replace('v_', '');
-                    const idx = allVideos.findIndex(v => String(v.id) === targetId);
-                    if (idx > 0) {
-                        const [target] = allVideos.splice(idx, 1);
-                        allVideos.unshift(target);
-                    }
-                }
-            } catch (e) {
-                showToast('Не удалось обновить ленту');
-            }
-        }
-
-        function formatNum(n) {
-            n = Number(n) || 0;
-            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-            return String(n);
-        }
-
-        function renderFeed() {
-            const feed = document.getElementById('feed');
-            let list = allVideos;
-            if (currentFeedTab === 'subs') {
-                list = allVideos.filter(v => subsSet.has(String(v.author_id || v.user_id)));
-            }
-
-            if (!list.length) {
-                feed.innerHTML = `<div class="empty-state">
-                    <div style="font-size:40px;">🌊</div>
-                    <div style="font-weight:700; color:#fff;">${currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста'}</div>
-                    <div style="font-size:13px;">${currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первое видео'}</div>
-                </div>`;
-                return;
-            }
-
-            feed.innerHTML = '';
-            list.forEach((v, idx) => {
-                const vidId = String(v.id);
-                const authorId = String(v.author_id || v.user_id || '');
-                const authorName = (v.author_name && v.author_name !== '@user')
-                    ? v.author_name
-                    : (authorId === currentUser.id ? currentUser.name : `@creator_${authorId.slice(-4) || '01'}`);
-                const isLiked = likedSet.has(vidId);
-                const isSub = subsSet.has(authorId);
-                const isOwn = !isGuest && authorId === currentUser.id;
-
-                const card = document.createElement('div');
-                card.className = 'video-card';
-                card.dataset.id = vidId;
-                card.dataset.index = idx;
-
-                card.innerHTML = `
-                    <video src="${v.video_url}" loop playsinline webkit-playsinline preload="${idx < 2 ? 'auto' : 'metadata'}" ${isMuted ? 'muted' : ''}></video>
-                    <div class="gradient-bottom"></div>
-                    <div class="pause-indicator">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
-                    </div>
-                    <div class="video-info">
-                        <div class="author-row">
-                            <div class="avatar-ring"><div class="avatar-inner">${authorName.replace('@','')[0]?.toUpperCase() || 'U'}</div></div>
-                            <span class="author-name">${authorName}</span>
-                            ${!isOwn && authorId ? `<button class="sub-btn ${isSub ? 'subscribed' : ''}" onclick="handleSub('${authorId}', this)">${isSub ? 'Вы подписаны' : 'Подписаться'}</button>` : ''}
-                        </div>
-                        <div class="video-desc">${v.description || ''}</div>
-                    </div>
-                    <div class="actions">
-                        <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="handleLike('${vidId}', this)">
-                            <div class="action-circle">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                            </div>
-                            <span class="action-count" id="like-cnt-${vidId}">${formatNum(v.likes)}</span>
-                        </button>
-                        <button class="action-btn" onclick="openComments('${vidId}')">
-                            <div class="action-circle">
-                                <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-                            </div>
-                            <span class="action-count">Чат</span>
-                        </button>
-                        <div class="action-btn" style="cursor:default;">
-                            <div class="action-circle">
-                                <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                            </div>
-                            <span class="action-count" id="view-cnt-${vidId}">${formatNum(v.views)}</span>
-                        </div>
-                        <button class="action-btn" onclick='openShare(${JSON.stringify({ id: vidId, url: v.video_url, desc: v.description || "" })})'>
-                            <div class="action-circle">
-                                <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
-                            </div>
-                            <span class="action-count">Репост</span>
-                        </button>
-                    </div>
-                    <div class="progress-wrap" onclick="seekVideo(event, this)">
-                        <div class="progress-bar"><div class="progress-fill"></div></div>
-                    </div>
-                `;
-
-                const vidEl = card.querySelector('video');
-                const pauseEl = card.querySelector('.pause-indicator');
-                const fillEl = card.querySelector('.progress-fill');
-
-                vidEl.addEventListener('timeupdate', () => {
-                    if (vidEl.duration) fillEl.style.width = `${(vidEl.currentTime / vidEl.duration) * 100}%`;
-                });
-
-                card.addEventListener('click', (e) => {
-                    if (e.target.closest('button') || e.target.closest('.progress-wrap')) return;
-                    const now = Date.now();
-                    if (now - lastTapTime < 280) {
-                        spawnHeart(card, e.clientX, e.clientY);
-                        if (!likedSet.has(vidId)) {
-                            const likeBtn = card.querySelector('.action-btn');
-                            handleLike(vidId, likeBtn);
-                        }
-                    } else {
-                        if (vidEl.paused) { vidEl.play().catch(()=>{}); pauseEl.classList.remove('visible'); }
-                        else { vidEl.pause(); pauseEl.classList.add('visible'); }
-                    }
-                    lastTapTime = now;
-                });
-
-                feed.appendChild(card);
-            });
-
-            setupObserver();
-        }
-
-        function spawnHeart(container, x, y) {
-            const h = document.createElement('div');
-            h.className = 'heart-burst';
-            h.textContent = '❤️';
-            h.style.left = `${x - 42}px`;
-            h.style.top = `${y - 42}px`;
-            container.appendChild(h);
-            setTimeout(() => h.remove(), 800);
-        }
-
-        function seekVideo(e, wrap) {
-            const card = wrap.closest('.video-card');
-            const vid = card.querySelector('video');
-            if (!vid.duration) return;
-            const rect = wrap.getBoundingClientRect();
-            vid.currentTime = ((e.clientX - rect.left) / rect.width) * vid.duration;
-        }
-
-        function setupObserver() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    const card = entry.target;
-                    const vid = card.querySelector('video');
-                    const pauseEl = card.querySelector('.pause-indicator');
-                    const vidId = card.dataset.id;
-
-                    if (entry.isIntersecting) {
-                        vid.muted = isMuted;
-                        vid.play().then(() => pauseEl.classList.remove('visible')).catch(() => pauseEl.classList.add('visible'));
-                        registerView(vidId);
-                    } else {
-                        vid.pause();
-                    }
-                });
-            }, { threshold: 0.65 });
-
-            document.querySelectorAll('.video-card').forEach(c => observer.observe(c));
-        }
-
-        async function registerView(vidId) {
-            if (!vidId || vidId.startsWith('temp_') || viewedSessionSet.has(vidId)) return;
-            viewedSessionSet.add(vidId);
-            const viewerKey = isGuest ? (localStorage.getItem('ut_guest_id') || (() => {
-                const id = 'g_' + Math.random().toString(36).slice(2);
-                localStorage.setItem('ut_guest_id', id);
-                return id;
-            })()) : currentUser.id;
-
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/register_unique_view`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ p_viewer_id: viewerKey, p_video_id: vidId })
-                });
-                if (res.ok) {
-                    const newViews = await res.json();
-                    const el = document.getElementById(`view-cnt-${vidId}`);
-                    if (el && typeof newViews === 'number') el.textContent = formatNum(newViews);
-                    const item = allVideos.find(x => String(x.id) === vidId);
-                    if (item) item.views = newViews;
-                }
-            } catch (e) {}
-        }
-
-        async function handleLike(vidId, btn) {
-            if (isGuest) return openSheet('guestSheet');
-            if (vidId.startsWith('temp_')) return showToast('Дождитесь завершения загрузки');
-            haptic('medium');
-
-            const wasLiked = likedSet.has(vidId);
-            const cntEl = document.getElementById(`like-cnt-${vidId}`);
-            const item = allVideos.find(x => String(x.id) === vidId);
-            let curLikes = Number(item?.likes || 0);
-
-            if (wasLiked) { likedSet.delete(vidId); btn.classList.remove('liked'); curLikes = Math.max(0, curLikes - 1); }
-            else { likedSet.add(vidId); btn.classList.add('liked'); curLikes += 1; }
-            if (cntEl) cntEl.textContent = formatNum(curLikes);
-            if (item) item.likes = curLikes;
-
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ p_user_id: currentUser.id, p_video_id: vidId })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (cntEl) cntEl.textContent = formatNum(data.likes);
-                    if (item) item.likes = data.likes;
-                }
-            } catch (e) {}
-        }
-
-        async function handleSub(authorId, btn) {
-            if (isGuest) return openSheet('guestSheet');
-            haptic('light');
-            const wasSub = subsSet.has(authorId);
-            if (wasSub) { subsSet.delete(authorId); btn.classList.remove('subscribed'); btn.textContent = 'Подписаться'; }
-            else { subsSet.add(authorId); btn.classList.add('subscribed'); btn.textContent = 'Вы подписаны'; }
-
-            try {
-                await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_user_sub`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ p_follower_id: currentUser.id, p_author_id: authorId })
-                });
-            } catch (e) {}
-        }
-
-        function toggleMute() {
-            isMuted = !isMuted;
-            document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
-            document.querySelectorAll('video').forEach(v => v.muted = isMuted);
-        }
-
-        function switchFeedTab(tab) {
-            if (tab === 'subs' && isGuest) return openSheet('guestSheet');
-            currentFeedTab = tab;
-            document.getElementById('tabAll').classList.toggle('active', tab === 'all');
-            document.getElementById('tabSubs').classList.toggle('active', tab === 'subs');
-            renderFeed();
-        }
-
-        function switchMainView(view) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('topBar').style.display = view === 'feed' ? 'flex' : 'none';
-
-            if (view === 'feed') {
-                document.getElementById('feedView').classList.add('active');
-                document.getElementById('navFeed').classList.add('active');
-            } else {
-                document.getElementById('profileView').classList.add('active');
-                document.getElementById('navProfile').classList.add('active');
-                document.querySelectorAll('video').forEach(v => v.pause());
-                renderProfile();
-            }
-        }
-
-        function renderProfile() {
-            document.getElementById('profName').textContent = currentUser.name;
-            const badge = document.getElementById('profBadge');
-            if (isGuest) {
-                badge.className = 'badge-guest';
-                badge.textContent = 'Режим гостя (только просмотр)';
-            } else {
-                badge.className = 'badge-tg';
-                badge.textContent = 'Аккаунт Telegram подключён';
-            }
-
-            if (currentUser.photo) {
-                document.getElementById('profAvatar').innerHTML = `<img src="${currentUser.photo}" alt="avatar">`;
-            } else {
-                document.getElementById('profAvatar').innerHTML = `<div>${currentUser.name.replace('@','')[0]?.toUpperCase() || 'G'}</div>`;
-            }
-
-            const myVideos = isGuest ? [] : allVideos.filter(v => String(v.author_id || v.user_id) === currentUser.id);
-            const totalViews = myVideos.reduce((acc, v) => acc + (Number(v.views) || 0), 0);
-            const totalLikes = myVideos.reduce((acc, v) => acc + (Number(v.likes) || 0), 0);
-
-            document.getElementById('statVideos').textContent = formatNum(myVideos.length);
-            document.getElementById('statViews').textContent = formatNum(totalViews);
-            document.getElementById('statLikes').textContent = formatNum(totalLikes);
-
-            const grid = document.getElementById('profileGrid');
-            if (isGuest) {
-                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:24px 10px;">
-                    <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Войдите через Telegram-бота, чтобы видеть свои ролики и статистику</p>
-                    <button class="btn-main" onclick="openBotAuth()">Войти через @${BOT_USERNAME}</button>
-                </div>`;
-                return;
-            }
-            if (!myVideos.length) {
-                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); font-size:13px; padding:30px 0;">У вас пока нет опубликованных видео</div>`;
-                return;
-            }
-
-            grid.innerHTML = '';
-            myVideos.forEach(v => {
-                const item = document.createElement('div');
-                item.className = 'grid-item';
-                item.innerHTML = `<video src="${v.video_url}" preload="metadata" muted></video><div class="grid-views">👁 ${formatNum(v.views)}</div>`;
-                item.onclick = () => {
-                    const idx = allVideos.findIndex(x => String(x.id) === String(v.id));
-                    if (idx > 0) {
-                        const [moved] = allVideos.splice(idx, 1);
-                        allVideos.unshift(moved);
-                    }
-                    switchMainView('feed');
-                    renderFeed();
-                };
-                grid.appendChild(item);
-            });
-        }
-
-        function handleCreateClick() {
-            if (isGuest) return openSheet('guestSheet');
-            selectedFile = null;
-            document.getElementById('fileLabel').textContent = 'Выбрать видео с устройства';
-            document.getElementById('videoDescInput').value = '';
-            openSheet('uploadSheet');
-        }
-
-        function onFileSelected(input) {
-            if (input.files && input.files[0]) {
-                selectedFile = input.files[0];
-                document.getElementById('fileLabel').textContent = `✅ ${selectedFile.name}`;
-            }
-        }
-
-        function uploadFileXHR(file, fileName, onProgress) {
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', `${SUPABASE_URL}/storage/v1/object/videos/${fileName}`, true);
-                xhr.setRequestHeader('apikey', SUPABASE_KEY);
-                xhr.setRequestHeader('Authorization', `Bearer ${SUPABASE_KEY}`);
-                xhr.setRequestHeader('x-upsert', 'true');
-                xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
-
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
-                };
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) resolve(`${SUPABASE_URL}/storage/v1/object/public/videos/${fileName}`);
-                    else reject(new Error(`HTTP ${xhr.status}`));
-                };
-                xhr.onerror = () => reject(new Error('Сбой сети'));
-                xhr.send(file);
-            });
-        }
-
-        async function publishVideoInstant() {
-            if (!selectedFile) return showToast('Сначала выберите видеофайл');
-            if (selectedFile.size > 52 * 1024 * 1024) return showToast('Файл больше 50 МБ');
-
-            const fileToUpload = selectedFile;
-            const desc = document.getElementById('videoDescInput').value.trim();
-            const localBlobUrl = URL.createObjectURL(fileToUpload);
-            const tempId = 'temp_' + Date.now();
-
-            const optimisticVideo = {
-                id: tempId,
-                user_id: currentUser.id,
-                author_id: currentUser.id,
-                author_name: currentUser.name,
-                video_url: localBlobUrl,
-                description: desc,
-                likes: 0,
-                views: 1
-            };
-            allVideos.unshift(optimisticVideo);
-            closeSheet('uploadSheet');
-            switchMainView('feed');
-            renderFeed();
-            haptic('heavy');
-
-            const banner = document.getElementById('uploadBanner');
-            const fill = document.getElementById('uploadFill');
-            const pctText = document.getElementById('uploadPercent');
-            banner.style.display = 'flex';
-            fill.style.width = '5%';
-            pctText.textContent = '5%';
-
-            try {
-                const ext = (fileToUpload.name.split('.').pop() || 'mp4').replace(/[^a-z0-9]/gi, '');
-                const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
-                const publicUrl = await uploadFileXHR(fileToUpload, fileName, (pct) => {
-                    fill.style.width = `${pct}%`;
-                    pctText.textContent = `${pct}%`;
-                });
-
-                const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?video_url=eq.${encodeURIComponent(publicUrl)}&select=*`, { headers });
-                const existing = checkRes.ok ? await checkRes.json() : [];
-
-                let savedRow = null;
-                if (existing.length > 0) {
-                    const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${existing[0].id}`, {
-                        method: 'PATCH',
-                        headers: { ...headers, 'Prefer': 'return=representation' },
-                        body: JSON.stringify({ author_name: currentUser.name, description: desc })
-                    });
-                    const patched = await patchRes.json();
-                    savedRow = patched[0] || existing[0];
-                } else {
-                    const insRes = await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
-                        method: 'POST',
-                        headers: { ...headers, 'Prefer': 'return=representation' },
-                        body: JSON.stringify({
-                            user_id: currentUser.id,
-                            author_id: Number(currentUser.id),
-                            author_name: currentUser.name,
-                            video_url: publicUrl,
-                            description: desc,
-                            likes: 0,
-                            views: 0
-                        })
-                    });
-                    const inserted = await insRes.json();
-                    savedRow = inserted[0];
-                }
-
-                if (savedRow) {
-                    const idx = allVideos.findIndex(x => x.id === tempId);
-                    if (idx !== -1) allVideos[idx] = savedRow;
-                }
-                showToast('✅ Видео опубликовано в облаке!');
-            } catch (err) {
-                showToast('Ошибка сети при загрузке (проверьте VPN)');
-            } finally {
-                setTimeout(() => { banner.style.display = 'none'; }, 1000);
-            }
-        }
-
-        async function openComments(vidId) {
-            activeVideo = { id: vidId };
-            const listEl = document.getElementById('commentsList');
-            const inputArea = document.getElementById('commentInputArea');
-            listEl.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Загрузка...</div>';
-
-            if (isGuest) {
-                inputArea.innerHTML = `<button class="btn-main" onclick="closeSheet('commentsSheet'); openSheet('guestSheet');">Войти через Telegram, чтобы написать</button>`;
-            } else {
-                inputArea.innerHTML = `<div class="comment-form">
-                    <input type="text" id="newCommentInput" placeholder="Написать комментарий...">
-                    <button class="comment-send" onclick="sendComment('${vidId}')">➤</button>
-                </div>`;
-            }
-            openSheet('commentsSheet');
-
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${vidId}&order=created_at.desc&limit=50`, { headers });
-                const rows = res.ok ? await res.json() : [];
-                if (!rows.length) {
-                    listEl.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:24px;">Комментариев пока нет. Будьте первым!</div>';
-                } else {
-                    listEl.innerHTML = rows.map(c => `
-                        <div class="comment-item">
-                            <div class="comment-author">${c.author_name}</div>
-                            <div class="comment-text">${c.text}</div>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) {}
-        }
-
-        async function sendComment(vidId) {
-            const inp = document.getElementById('newCommentInput');
-            const text = inp.value.trim();
-            if (!text) return;
-            inp.value = '';
-            haptic('light');
-
-            const listEl = document.getElementById('commentsList');
-            if (listEl.textContent.includes('Комментариев пока нет')) listEl.innerHTML = '';
-            listEl.insertAdjacentHTML('afterbegin', `
-                <div class="comment-item">
-                    <div class="comment-author">${currentUser.name}</div>
-                    <div class="comment-text">${text}</div>
-                </div>
-            `);
-
-            await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({ video_id: vidId, user_id: currentUser.id, author_name: currentUser.name, text })
-            });
-        }
-
-        function openShare(vidObj) {
-            activeVideo = vidObj;
-            openSheet('shareSheet');
-        }
-
-        function getDirectVideoLink() {
-            return `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=v_${activeVideo.id}`;
-        }
-
-        function shareToStory() {
-            closeSheet('shareSheet');
-            const link = getDirectVideoLink();
-            if (tg?.shareToStory) {
-                try {
-                    tg.shareToStory(activeVideo.url, {
-                        text: activeVideo.desc ? `${activeVideo.desc} — смотри в Undertow` : 'Смотри это видео в Undertow 🔥',
-                        widget_link: { url: link, name: 'Смотреть в Undertow' }
-                    });
-                    return;
-                } catch (e) {}
-            }
-            navigator.clipboard?.writeText(link);
-            showToast('Ссылка скопирована! Вставьте её в Историю Telegram');
-        }
-
-        function shareToChat() {
-            closeSheet('shareSheet');
-            const link = getDirectVideoLink();
-            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(activeVideo.desc || 'Зацени ролик в Undertow 🔥')}`;
-            if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl);
-            else window.open(shareUrl, '_blank');
-        }
-
-        function copyVideoLink() {
-            closeSheet('shareSheet');
-            navigator.clipboard?.writeText(getDirectVideoLink());
-            showToast('🔗 Прямая ссылка на ролик скопирована');
-        }
-
-        async function refreshFeed() {
-            haptic('light');
-            showToast('Обновление ленты...');
-            await fetchVideos();
-            renderFeed();
-        }
-
-        (async function init() {
-            await Promise.all([syncUserProfile(), loadUserRelations(), fetchVideos()]);
-            renderFeed();
-            setTimeout(() => document.getElementById('splash').classList.add('hidden'), 250);
-        })();
-    </script>
+  `);
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ video_id: vidId, user_id: currentUser.id, author_name: currentUser.name, text })
+    });
+  } catch (e) { showToast('Не отправлено — попробуйте ещё раз'); }
+}
+
+/* ---------- share ---------- */
+function openShare(v) {
+  activeShareVideo = v;
+  openSheet('shareSheet');
+}
+function getDirectVideoLink() {
+  if (!activeShareVideo) return BOT_APP_URL;
+  return `${BOT_APP_URL}?startapp=v_${activeShareVideo.id}`;
+}
+document.getElementById('btnShareStory').addEventListener('click', () => {
+  closeSheet('shareSheet');
+  const link = getDirectVideoLink();
+  if (tg?.shareToStory) {
+    try {
+      tg.shareToStory(activeShareVideo.url, {
+        text: activeShareVideo.desc ? `${activeShareVideo.desc} — смотри в Undertow` : 'Смотри это видео в Undertow 🔥',
+        widget_link: { url: link, name: 'Смотреть в Undertow' }
+      });
+      return;
+    } catch (e) {}
+  }
+  navigator.clipboard?.writeText(link);
+  showToast('Ссылка скопирована — вставьте в Историю');
+});
+document.getElementById('btnShareChat').addEventListener('click', () => {
+  closeSheet('shareSheet');
+  const link = getDirectVideoLink();
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(activeShareVideo?.desc || 'Зацени ролик в Undertow 🔥')}`;
+  if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl);
+  else window.open(shareUrl, '_blank');
+});
+document.getElementById('btnCopyLink').addEventListener('click', () => {
+  closeSheet('shareSheet');
+  navigator.clipboard?.writeText(getDirectVideoLink());
+  showToast('🔗 Ссылка на ролик скопирована');
+});
+
+/* ---------- bot auth ---------- */
+function openBotAuth() {
+  if (tg?.openTelegramLink) tg.openTelegramLink(BOT_APP_URL);
+  else window.open(BOT_APP_URL, '_blank');
+}
+document.getElementById('btnOpenBot').addEventListener('click', openBotAuth);
+
+/* ---------- refresh ---------- */
+async function refreshFeed() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  haptic('light');
+  try {
+    await fetchVideos();
+    renderFeed();
+    showToast('Лента обновлена');
+  } catch (e) {
+    showToast('Не удалось обновить ленту');
+  } finally {
+    setTimeout(() => btn.classList.remove('spinning'), 450);
+  }
+}
+
+/* ---------- nav / mute wiring ---------- */
+document.getElementById('navFeed').addEventListener('click', () => switchMainView('feed'));
+document.getElementById('navProfile').addEventListener('click', () => switchMainView('profile'));
+document.getElementById('tabAll').addEventListener('click', () => switchFeedTab('all'));
+document.getElementById('tabSubs').addEventListener('click', () => switchFeedTab('subs'));
+document.getElementById('muteBtn').addEventListener('click', () => { setMuted(!isMuted); haptic('light'); });
+document.getElementById('refreshBtn').addEventListener('click', refreshFeed);
+
+/* ---------- heart burst ---------- */
+function spawnHeart(container, x, y) {
+  const h = document.createElement('div');
+  h.className = 'heart-burst';
+  h.textContent = '❤️';
+  h.style.left = (x - 44) + 'px';
+  h.style.top  = (y - 44) + 'px';
+  container.appendChild(h);
+  setTimeout(() => h.remove(), 820);
+}
+
+/* ---------- visibility: silent refresh on return ---------- */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    silentRefresh();
+  }
+});
+
+/* ---------- init ---------- */
+(async function init() {
+  try {
+    await Promise.all([syncUserProfile(), loadUserRelations(), fetchVideos()]);
+  } catch (e) {}
+  renderFeed();
+  setMuted(true); // force-muted start
+  startPolling();
+  setTimeout(() => document.getElementById('splash').classList.add('hidden'), 280);
+})();
+</script>
 </body>
 </html>
