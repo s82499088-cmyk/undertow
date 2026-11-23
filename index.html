@@ -242,7 +242,7 @@ let likedSet = new Set();
 let subsSet = new Set();
 let viewedSessionSet = new Set();
 let currentFeedTab = 'all';
-let userWantsSound = false;
+let userWantsSound = true; // <-- ЗВУК ВКЛЮЧЕН ПО УМОЛЧАНИЮ
 let selectedFile = null;
 let currentObserver = null;
 let pollTimer = null;
@@ -351,7 +351,7 @@ function renderFeed() {
     card.dataset.index = String(idx);
 
     card.innerHTML = `
-      <video src="${v.video_url}" loop playsinline webkit-playsinline muted preload="${idx < 2 ? 'auto' : 'metadata'}" crossorigin="anonymous"></video>
+      <video src="${v.video_url}" loop playsinline webkit-playsinline preload="${idx < 2 ? 'auto' : 'metadata'}" crossorigin="anonymous"></video>
       <div class="buffering"><div class="buffering-spinner"></div></div>
       <div class="gradient-bottom"></div>
       <div class="pause-indicator"><svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>
@@ -446,13 +446,24 @@ function renderFeed() {
 }
 
 async function playCard(vid, card) {
-  vid.muted = true;
+  // Пытаемся включить звук, если пользователь его хочет
+  vid.muted = !userWantsSound;
   try {
     await vid.play();
-    if (userWantsSound) vid.muted = false;
     card.querySelector('.pause-indicator')?.classList.remove('visible');
-  } catch (_) {
-    card.querySelector('.pause-indicator')?.classList.add('visible');
+  } catch (err) {
+    // Если WebView заблокировал запуск со звуком (NotAllowedError)
+    if (!vid.muted) {
+      vid.muted = true;
+      try {
+        await vid.play();
+        card.querySelector('.pause-indicator')?.classList.remove('visible');
+      } catch (e) {
+        card.querySelector('.pause-indicator')?.classList.add('visible');
+      }
+    } else {
+      card.querySelector('.pause-indicator')?.classList.add('visible');
+    }
   }
 }
 
@@ -556,7 +567,12 @@ async function handleSub(authorId, btn) {
 
 function enableSound() {
   userWantsSound = true;
-  document.querySelectorAll('.video-card video').forEach(v => v.muted = false);
+  document.querySelectorAll('.video-card video').forEach(v => {
+    if (v.muted) {
+      v.muted = false;
+      v.play().catch(() => {});
+    }
+  });
 }
 
 function switchFeedTab(tab) {
@@ -768,9 +784,11 @@ document.getElementById('tabAll').addEventListener('click', () => switchFeedTab(
 document.getElementById('tabSubs').addEventListener('click', () => switchFeedTab('subs'));
 document.getElementById('refreshBtn').addEventListener('click', refreshFeed);
 
-document.addEventListener('pointerdown', () => {
-  if (!userWantsSound) enableSound();
-}, { passive: true });
+// Слушаем ЛЮБОЕ действие пользователя, чтобы принудительно включить звук
+document.addEventListener('pointerdown', enableSound, { passive: true });
+document.addEventListener('touchstart', enableSound, { passive: true });
+document.addEventListener('scroll', enableSound, { passive: true });
+document.addEventListener('click', enableSound, { passive: true });
 
 function spawnHeart(container, x, y) {
   const h = document.createElement('div');
