@@ -2,914 +2,436 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Undertow</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?65"></script>
     <style>
         :root {
             --bg: #07090e;
-            --surface: rgba(18, 22, 33, 0.88);
-            --glass: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.14);
+            --surface: rgba(20, 24, 34, 0.78);
+            --surface-solid: #131722;
+            --border: rgba(255, 255, 255, 0.1);
             --accent: #00d2ff;
-            --accent-grad: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
-            --like-color: #ff2b54;
-            --text: #ffffff;
-            --text-muted: rgba(255, 255, 255, 0.62);
+            --accent-2: #3a7bd5;
+            --pink: #ff2e63;
+            --text: #f4f6fb;
+            --muted: #8e98b0;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            background: var(--bg);
-            color: var(--text);
-            overflow: hidden;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body, html { width: 100%; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; user-select: none; }
 
         /* Верхняя стеклянная панель */
         .top-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 25;
-            background: linear-gradient(180deg, rgba(7,9,14,0.85) 0%, rgba(7,9,14,0) 100%);
+            position: fixed; top: 0; left: 0; right: 0; z-index: 25;
+            padding: calc(env(safe-area-inset-top, 12px) + 10px) 14px 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(to bottom, rgba(7,9,14,0.85) 0%, rgba(7,9,14,0) 100%);
             pointer-events: none;
         }
-
         .top-bar > * { pointer-events: auto; }
-
         .brand {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 800;
-            font-size: 17px;
-            letter-spacing: -0.3px;
+            font-weight: 800; font-size: 17px; letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-
-        .brand-logo {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            background: var(--accent-grad);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 210, 255, 0.35);
-        }
-
         .tabs-pill {
-            display: flex;
-            background: rgba(15, 19, 28, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 3px;
+            display: flex; background: rgba(15, 19, 28, 0.65); backdrop-filter: blur(14px);
+            border: 1px solid var(--border); border-radius: 99px; padding: 3px;
         }
-
         .tab-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 13px;
-            font-weight: 600;
-            padding: 5px 12px;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600;
+            padding: 5px 13px; border-radius: 99px; cursor: pointer; transition: 0.2s;
         }
-
-        .tab-btn.active {
-            background: rgba(255, 255, 255, 0.16);
-            color: #fff;
+        .tab-btn.active { background: rgba(255,255,255,0.14); color: #fff; }
+        .top-actions { display: flex; gap: 8px; }
+        .icon-pill {
+            width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border);
+            background: rgba(15, 19, 28, 0.65); backdrop-filter: blur(14px); color: #fff;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
+        .icon-pill svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; }
 
-        .top-actions {
-            display: flex;
-            gap: 8px;
+        /* Всплывающее уведомление о новых видео */
+        .new-vids-banner {
+            position: fixed; top: calc(env(safe-area-inset-top, 12px) + 58px); left: 50%; transform: translateX(-50%) translateY(-20px);
+            z-index: 26; background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            color: #fff; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 99px;
+            box-shadow: 0 8px 24px rgba(0, 210, 255, 0.35); border: none; cursor: pointer;
+            opacity: 0; pointer-events: none; transition: 0.25s ease;
         }
+        .new-vids-banner.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
 
-        .icon-circle {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: rgba(15, 19, 28, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        /* Плашка новых видео */
-        .new-vids-pill {
-            position: fixed;
-            top: 66px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-20px);
-            background: var(--accent-grad);
-            color: #fff;
-            font-size: 13px;
-            font-weight: 700;
-            padding: 8px 16px;
-            border-radius: 20px;
-            box-shadow: 0 8px 24px rgba(0, 210, 255, 0.4);
-            z-index: 30;
-            cursor: pointer;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.25s ease;
-        }
-
-        .new-vids-pill.visible {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        /* Всплывающее уведомление */
-        .toast {
-            position: fixed;
-            top: 68px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-16px);
-            background: rgba(22, 27, 40, 0.94);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            color: #fff;
-            padding: 9px 16px;
-            border-radius: 14px;
-            font-size: 13px;
-            font-weight: 500;
-            z-index: 60;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.25s ease;
-            white-space: nowrap;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        /* Экраны */
-        .screen {
-            display: none;
-            width: 100%;
-            height: calc(100vh - 64px);
-        }
-
-        .screen.active { display: block; }
-
-        /* Лента */
-        .feed {
-            width: 100%;
-            height: 100%;
-            overflow-y: scroll;
-            scroll-snap-type: y mandatory;
-            scrollbar-width: none;
-        }
+        /* Вертикальная лента */
+        .feed { width: 100%; height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
         .feed::-webkit-scrollbar { display: none; }
-
         .video-card {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            scroll-snap-align: start;
-            background: #05070a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            position: relative; width: 100%; height: 100vh; scroll-snap-align: start;
+            background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
+        video { width: 100%; height: 100%; object-fit: cover; }
 
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
+        /* Градиент снизу для читаемости */
         .card-gradient {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.82) 100%);
-            pointer-events: none;
+            position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(to top, rgba(7,9,14,0.92) 0%, rgba(7,9,14,0.28) 32%, transparent 60%);
         }
 
-        /* Пауза и сердечко */
-        .pause-badge {
-            position: absolute;
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: rgba(15, 19, 28, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-            opacity: 0;
-            transform: scale(0.85);
-            transition: all 0.2s ease;
+        /* Пауза и двойной лайк */
+        .pause-indicator {
+            position: absolute; width: 64px; height: 64px; border-radius: 50%;
+            background: rgba(15, 19, 28, 0.65); backdrop-filter: blur(12px); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.2s;
         }
-
-        .video-card.paused .pause-badge {
-            opacity: 1;
-            transform: scale(1);
+        .pause-indicator.show { opacity: 1; }
+        .double-heart {
+            position: absolute; font-size: 84px; pointer-events: none; opacity: 0; transform: scale(0.4);
+            transition: transform 0.35s cubic-bezier(0.17, 0.89, 0.32, 1.49), opacity 0.35s;
         }
+        .double-heart.pop { opacity: 1; transform: scale(1.1); }
 
-        .heart-burst {
-            position: absolute;
-            pointer-events: none;
-            animation: burst 0.7s ease forwards;
+        /* Информация об авторе и ролике */
+        .video-info { position: absolute; bottom: 82px; left: 16px; right: 78px; z-index: 10; }
+        .author-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .avatar-ring {
+            width: 38px; height: 38px; border-radius: 50%; padding: 2px;
+            background: linear-gradient(135deg, var(--accent), var(--pink)); flex-shrink: 0;
         }
-
-        @keyframes burst {
-            0% { transform: scale(0.4); opacity: 0; }
-            35% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
+        .avatar-inner {
+            width: 100%; height: 100%; border-radius: 50%; background: #181d2a;
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff;
         }
-
-        /* Инфо об авторе */
-        .video-info {
-            position: absolute;
-            bottom: 22px;
-            left: 14px;
-            right: 78px;
-            z-index: 10;
-        }
-
-        .author-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .author-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: var(--accent-grad);
-            padding: 2px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-
-        .author-avatar-inner {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: #121722;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .author-name {
-            font-weight: 700;
-            font-size: 15px;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-        }
-
+        .author-name { font-weight: 700; font-size: 15px; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }
         .sub-btn {
-            background: var(--accent-grad);
-            color: #fff;
-            border: none;
-            padding: 5px 12px;
-            border-radius: 14px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 210, 255, 0.25);
+            background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; cursor: pointer;
         }
+        .sub-btn.subscribed { background: rgba(0, 210, 255, 0.22); border-color: var(--accent); color: var(--accent); }
+        .video-desc { font-size: 14px; line-height: 1.38; color: rgba(255,255,255,0.92); text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
 
-        .sub-btn.subscribed {
-            background: rgba(255, 255, 255, 0.16);
-            box-shadow: none;
-            backdrop-filter: blur(8px);
+        /* Правая панель действий */
+        .actions { position: absolute; bottom: 84px; right: 12px; z-index: 10; display: flex; flex-direction: column; gap: 16px; align-items: center; }
+        .action-btn { background: none; border: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+        .action-circle {
+            width: 44px; height: 44px; border-radius: 50%; background: rgba(15, 19, 28, 0.6);
+            backdrop-filter: blur(12px); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center; transition: transform 0.15s;
         }
+        .action-btn:active .action-circle { transform: scale(0.9); }
+        .action-circle svg { width: 21px; height: 21px; stroke: #fff; fill: none; stroke-width: 2; }
+        .action-btn.liked .action-circle { background: rgba(255, 46, 99, 0.22); border-color: var(--pink); }
+        .action-btn.liked .action-circle svg { fill: var(--pink); stroke: var(--pink); }
+        .action-count { font-size: 11px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
 
-        .video-desc {
-            font-size: 14px;
-            line-height: 1.38;
-            color: rgba(255, 255, 255, 0.92);
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-        }
-
-        /* Правая колонка действий */
-        .actions {
-            position: absolute;
-            bottom: 24px;
-            right: 12px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            align-items: center;
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-        }
-
-        .action-glass {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: rgba(15, 19, 28, 0.55);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.15s ease;
-        }
-
-        .action-btn:active .action-glass { transform: scale(0.9); }
-
-        .action-btn.liked .action-glass {
-            background: rgba(255, 43, 84, 0.22);
-            border-color: rgba(255, 43, 84, 0.55);
-            color: var(--like-color);
-        }
-
-        .action-count {
-            font-size: 12px;
-            font-weight: 600;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-        }
-
-        /* Прогресс бар */
-        .progress-track {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: rgba(255,255,255,0.18);
-            z-index: 12;
-        }
-
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--accent-grad);
-        }
+        /* Прогресс-бар видео */
+        .progress-track { position: absolute; bottom: 64px; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.18); z-index: 15; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); }
 
         /* Нижняя навигация */
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 64px;
-            background: rgba(10, 13, 20, 0.94);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--glass-border);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 25;
+            position: fixed; bottom: 0; left: 0; right: 0; height: calc(64px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: env(safe-area-inset-bottom, 0px); background: rgba(10, 13, 20, 0.88);
+            backdrop-filter: blur(18px); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: center; z-index: 25;
         }
-
         .nav-item {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 11px;
-            font-weight: 600;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            width: 72px;
+            background: none; border: none; color: var(--muted); font-size: 11px; font-weight: 600;
+            display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
         }
-
         .nav-item.active { color: #fff; }
-
+        .nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
         .create-btn {
-            width: 48px;
-            height: 34px;
-            border-radius: 12px;
-            background: var(--accent-grad);
-            border: none;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 48px; height: 32px; border-radius: 10px; border: none; cursor: pointer;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            color: #fff; display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 16px rgba(0, 210, 255, 0.35);
-            cursor: pointer;
         }
 
-        /* Профиль */
-        .profile-screen {
-            overflow-y: auto;
-            padding: 74px 16px 24px;
-            background: radial-gradient(circle at top, rgba(0, 210, 255, 0.14) 0%, transparent 55%);
+        /* Экран профиля */
+        .profile-view {
+            display: none; position: fixed; inset: 0; background: var(--bg); z-index: 22;
+            padding: calc(env(safe-area-inset-top, 16px) + 24px) 18px 84px; overflow-y: auto;
         }
-
+        .profile-view.open { display: block; }
         .profile-card {
-            background: var(--surface);
-            border: 1px solid var(--glass-border);
-            border-radius: 22px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 16px;
+            background: var(--surface-solid); border: 1px solid var(--border); border-radius: 20px;
+            padding: 22px 18px; text-align: center; margin-bottom: 18px;
         }
-
         .profile-avatar {
-            width: 74px;
-            height: 74px;
-            border-radius: 50%;
-            margin: 0 auto 12px;
-            background: var(--accent-grad);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            font-weight: 800;
-            overflow: hidden;
+            width: 74px; height: 74px; border-radius: 50%; margin: 0 auto 12px;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; overflow: hidden;
         }
-
         .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
         .profile-name { font-size: 19px; font-weight: 800; margin-bottom: 4px; }
-        .profile-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
-
-        .badge-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            background: rgba(0, 210, 255, 0.14);
-            color: var(--accent);
-            border: 1px solid rgba(0, 210, 255, 0.3);
-        }
-
-        .badge-status.guest {
-            background: rgba(255, 170, 0, 0.14);
-            color: #ffbb33;
-            border-color: rgba(255, 170, 0, 0.3);
-        }
-
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 16px;
-        }
-
-        .stat-box {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--glass-border);
-            border-radius: 14px;
-            padding: 10px 6px;
-        }
-
+        .profile-badge { display: inline-block; font-size: 12px; color: var(--accent); background: rgba(0,210,255,0.12); padding: 4px 10px; border-radius: 99px; margin-bottom: 14px; }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; border-top: 1px solid var(--border); padding-top: 14px; }
         .stat-val { font-size: 17px; font-weight: 800; }
-        .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-        .btn-tg {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            margin-top: 14px;
-            padding: 13px;
-            border-radius: 14px;
-            background: var(--accent-grad);
-            color: #fff;
-            font-weight: 700;
-            font-size: 14px;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-        }
-
-        .section-title { font-size: 15px; font-weight: 700; margin: 16px 0 10px; }
-
-        .vids-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-
-        .grid-item {
-            aspect-ratio: 9/16;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #121722;
-            position: relative;
-        }
-
+        .stat-lbl { font-size: 11px; color: var(--muted); }
+        .videos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .grid-item { aspect-ratio: 9/16; background: #161b26; border-radius: 10px; overflow: hidden; position: relative; cursor: pointer; }
         .grid-item video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Шторки (Bottom Sheets) */
-        .sheet-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.72);
-            backdrop-filter: blur(6px);
-            z-index: 50;
-            align-items: flex-end;
-            justify-content: center;
+        /* Выезжающие шторки (Bottom Sheets) */
+        .sheet-backdrop {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 40;
+            align-items: flex-end; justify-content: center;
         }
-
-        .sheet-overlay.open { display: flex; }
-
+        .sheet-backdrop.open { display: flex; }
         .sheet {
-            width: 100%;
-            max-width: 480px;
-            background: #111520;
-            border-top: 1px solid var(--glass-border);
-            border-radius: 24px 24px 0 0;
-            padding: 14px 18px 24px;
-            animation: slideUp 0.25s ease;
+            width: 100%; max-width: 480px; background: var(--surface-solid);
+            border-top: 1px solid var(--border); border-radius: 22px 22px 0 0;
+            padding: 16px 18px calc(env(safe-area-inset-bottom, 16px) + 18px);
+            animation: slideUp 0.22s ease-out;
         }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .sheet-handle { width: 38px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 99px; margin: 0 auto 14px; }
+        .sheet-title { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 14px; }
 
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .sheet-handle {
-            width: 38px;
-            height: 4px;
-            background: rgba(255,255,255,0.22);
-            border-radius: 4px;
-            margin: 0 auto 14px;
-        }
-
-        .sheet-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 14px;
-        }
-
-        .sheet-title { font-size: 16px; font-weight: 700; }
-
-        .close-x {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: #fff;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .comments-list {
-            max-height: 44vh;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        .comment-item {
-            background: rgba(255,255,255,0.04);
-            border-radius: 14px;
-            padding: 10px 12px;
-        }
-
+        /* Комментарии */
+        .comments-list { max-height: 46vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+        .comment-item { background: rgba(255,255,255,0.04); padding: 10px 12px; border-radius: 12px; }
         .comment-author { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 3px; }
         .comment-text { font-size: 14px; line-height: 1.35; }
-
-        .comment-form {
-            display: flex;
-            gap: 8px;
+        .comment-form { display: flex; gap: 8px; }
+        input[type="text"], textarea {
+            width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            color: #fff; border-radius: 12px; padding: 11px 13px; font-size: 14px; outline: none;
         }
-
-        input, textarea {
-            width: 100%;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid var(--glass-border);
-            border-radius: 14px;
-            padding: 11px 14px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: #fff;
+            border: none; border-radius: 12px; padding: 12px 16px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%;
         }
-
-        .send-btn {
-            background: var(--accent-grad);
-            border: none;
-            color: #fff;
-            border-radius: 14px;
-            padding: 0 16px;
-            font-weight: 700;
-            cursor: pointer;
-            flex-shrink: 0;
+        .btn-ghost {
+            background: rgba(255,255,255,0.08); color: #fff; border: none; border-radius: 12px;
+            padding: 11px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px;
         }
-
         .file-drop {
-            border: 1.5px dashed rgba(0, 210, 255, 0.45);
-            background: rgba(0, 210, 255, 0.06);
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            margin-bottom: 12px;
+            border: 1.5px dashed rgba(0, 210, 255, 0.45); border-radius: 14px; padding: 20px;
+            text-align: center; background: rgba(0, 210, 255, 0.05); cursor: pointer; margin-bottom: 12px;
         }
-
-        .empty-state {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 24px;
-            color: var(--text-muted);
+        .toast {
+            position: fixed; top: calc(env(safe-area-inset-top, 12px) + 56px); left: 50%; transform: translateX(-50%);
+            background: rgba(20, 25, 36, 0.95); border: 1px solid var(--border); color: #fff;
+            padding: 9px 16px; border-radius: 99px; font-size: 13px; z-index: 60; opacity: 0; pointer-events: none; transition: 0.2s;
         }
+        .toast.show { opacity: 1; }
     </style>
 </head>
 <body>
 
-    <div class="toast" id="toast"></div>
-    <div class="new-vids-pill" id="newVidsPill" onclick="applyPendingVideos()">⬆️ Появились новые видео</div>
-
     <!-- Верхняя панель -->
     <div class="top-bar" id="topBar">
-        <div class="brand">
-            <div class="brand-logo">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c2-3 5-3 7 0s5 3 7 0 5-3 6 0"/><path d="M2 18c2-3 5-3 7 0s5 3 7 0 5-3 6 0"/></svg>
-            </div>
-            <span>Undertow</span>
-        </div>
-
+        <div class="brand">Undertow</div>
         <div class="tabs-pill">
-            <button class="tab-btn active" id="tabAll" onclick="switchFeedTab('all')">Для вас</button>
-            <button class="tab-btn" id="tabSubs" onclick="switchFeedTab('subs')">Подписки</button>
+            <button class="tab-btn active" id="tabAll" onclick="switchTab('all')">Для вас</button>
+            <button class="tab-btn" id="tabSubs" onclick="switchTab('subs')">Подписки</button>
         </div>
-
         <div class="top-actions">
-            <button class="icon-circle" id="muteBtn" onclick="toggleMute()" title="Звук">
-                <svg id="muteIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <button class="icon-pill" onclick="toggleMute()" id="muteBtn" title="Звук">
+                <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
             </button>
-            <button class="icon-circle" onclick="manualRefresh()" title="Обновить">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <button class="icon-pill" onclick="manualRefresh()" title="Обновить">
+                <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             </button>
         </div>
     </div>
 
-    <!-- Экран ленты -->
-    <div class="screen active" id="feedScreen">
-        <div class="feed" id="feed"></div>
+    <button class="new-vids-banner" id="newVidsBanner" onclick="applyPendingVideos()">⬆️ Появились новые видео</button>
+    <div class="toast" id="toast"></div>
+
+    <!-- Лента видео -->
+    <div class="feed" id="feed"></div>
+
+    <!-- Профиль -->
+    <div class="profile-view" id="profileView">
+        <div class="profile-card">
+            <div class="profile-avatar" id="profAvatar">U</div>
+            <div class="profile-name" id="profName">Гость</div>
+            <div class="profile-badge" id="profStatus">Режим просмотра</div>
+            <div id="guestLoginBox" style="display:none; margin-bottom: 12px;">
+                <a href="https://t.me/undertow_vids_bot/app" style="text-decoration:none;">
+                    <button class="btn-accent">Войти через Telegram</button>
+                </a>
+            </div>
+            <div class="stats-row">
+                <div><div class="stat-val" id="statVideos">0</div><div class="stat-lbl">Видео</div></div>
+                <div><div class="stat-val" id="statLikes">0</div><div class="stat-lbl">Лайков</div></div>
+                <div><div class="stat-val" id="statSubs">0</div><div class="stat-lbl">Подписок</div></div>
+            </div>
+        </div>
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--muted);">Опубликованные видео</div>
+        <div class="videos-grid" id="profileGrid"></div>
     </div>
 
-    <!-- Экран профиля -->
-    <div class="screen profile-screen" id="profileScreen">
-        <div class="profile-card" id="profileCard"></div>
-        <div class="section-title" id="profileVideosTitle">Ваши видео</div>
-        <div class="vids-grid" id="profileVidsGrid"></div>
-    </div>
-
-    <!-- Нижняя навигация -->
+    <!-- Нижнее меню -->
     <div class="bottom-nav">
-        <button class="nav-item active" id="navFeed" onclick="switchScreen('feed')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <button class="nav-item active" id="navFeed" onclick="showScreen('feed')">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
             <span>Лента</span>
         </button>
-
-        <button class="create-btn" onclick="handleCreateClick()">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <button class="create-btn" onclick="openUpload()">
+            <svg width="22" height="22" viewBox="0 0 24 24" stroke="#fff" fill="none" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
-
-        <button class="nav-item" id="navProfile" onclick="switchScreen('profile')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <button class="nav-item" id="navProfile" onclick="showScreen('profile')">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <span>Профиль</span>
         </button>
     </div>
 
-    <!-- Шторка комментариев -->
-    <div class="sheet-overlay" id="commentsSheet" onclick="closeSheetOnBg(event, 'commentsSheet')">
+    <!-- Шторка загрузки видео -->
+    <div class="sheet-backdrop" id="uploadSheet" onclick="if(event.target===this) closeSheets()">
         <div class="sheet">
             <div class="sheet-handle"></div>
-            <div class="sheet-header">
-                <div class="sheet-title" id="commentsTitle">Комментарии</div>
-                <button class="close-x" onclick="closeSheet('commentsSheet')">✕</button>
-            </div>
+            <div class="sheet-title">Опубликовать видео</div>
+            <label class="file-drop">
+                <input type="file" id="videoFile" accept="video/*" style="display:none" onchange="onFileSelected(this)">
+                <div id="fileLabel" style="font-size:14px; font-weight:600; color:var(--accent);">📁 Нажмите, чтобы выбрать видео с устройства</div>
+                <div style="font-size:12px; color:var(--muted); margin-top:4px;">MP4, MOV или WebM до 50 МБ</div>
+            </label>
+            <textarea id="videoDesc" rows="2" placeholder="Добавьте описание или хештеги..." style="margin-bottom:12px;"></textarea>
+            <button class="btn-accent" id="publishBtn" onclick="publishVideo()">Опубликовать в ленту</button>
+            <button class="btn-ghost" onclick="closeSheets()">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Шторка комментариев -->
+    <div class="sheet-backdrop" id="commentsSheet" onclick="if(event.target===this) closeSheets()">
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-title">Комментарии</div>
             <div class="comments-list" id="commentsList"></div>
             <div id="commentInputArea"></div>
         </div>
     </div>
 
-    <!-- Шторка публикации видео -->
-    <div class="sheet-overlay" id="uploadSheet" onclick="closeSheetOnBg(event, 'uploadSheet')">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <div class="sheet-header">
-                <div class="sheet-title">Опубликовать видео</div>
-                <button class="close-x" onclick="closeSheet('uploadSheet')">✕</button>
-            </div>
-            <div class="file-drop" onclick="document.getElementById('videoFileInput').click()">
-                <div style="font-weight:700; margin-bottom:4px;" id="fileLabel">📹 Выбрать видео с устройства</div>
-                <div style="font-size:12px; color:var(--text-muted);">MP4, MOV или WebM</div>
-                <input type="file" id="videoFileInput" accept="video/*" style="display:none" onchange="onFilePicked(this)">
-            </div>
-            <input type="url" id="videoUrlInput" placeholder="Или вставьте прямую ссылку на .mp4" style="margin-bottom:10px;">
-            <textarea id="videoDescInput" rows="2" placeholder="Добавьте описание к ролику..." style="margin-bottom:12px;"></textarea>
-            <button class="btn-tg" id="publishBtn" onclick="publishVideo()">Опубликовать в ленту</button>
-        </div>
-    </div>
-
-    <!-- Шторка для гостя -->
-    <div class="sheet-overlay" id="guestSheet" onclick="closeSheetOnBg(event, 'guestSheet')">
+    <!-- Шторка для гостей -->
+    <div class="sheet-backdrop" id="guestSheet" onclick="if(event.target===this) closeSheets()">
         <div class="sheet" style="text-align:center;">
             <div class="sheet-handle"></div>
-            <div style="font-size:18px; font-weight:800; margin-bottom:8px;">Режим просмотра</div>
-            <div style="font-size:14px; color:var(--text-muted); line-height:1.45; margin-bottom:16px;" id="guestReason">
-                Гости могут свободно смотреть ленту и делиться видео. Чтобы ставить лайки, подписываться и публиковать ролики, откройте приложение через Telegram-бота.
-            </div>
-            <a href="https://t.me/undertow_vids_bot" target="_blank" class="btn-tg">Открыть в @undertow_vids_bot</a>
+            <div class="sheet-title">Только для пользователей Telegram</div>
+            <p style="font-size:14px; color:var(--muted); margin-bottom:16px; line-height:1.4;">
+                Гости могут свободно смотреть ленту. Чтобы ставить лайки, подписываться, комментировать и выкладывать ролики, откройте Undertow в Telegram.
+            </p>
+            <a href="https://t.me/undertow_vids_bot/app" style="text-decoration:none;">
+                <button class="btn-accent">Открыть в Telegram</button>
+            </a>
+            <button class="btn-ghost" onclick="closeSheets()">Продолжить как гость</button>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://pgnqjobutdlaxtjrrxio.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
-        const BOT_USERNAME = 'undertow_vids_bot';
+        const BOT_APP_LINK = 'https://t.me/undertow_vids_bot/app';
 
         const tg = window.Telegram?.WebApp;
         if (tg) {
             tg.ready();
             tg.expand();
+            if (tg.setHeaderColor) tg.setHeaderColor('#07090e');
+            if (tg.setBackgroundColor) tg.setBackgroundColor('#07090e');
         }
 
         const tgUser = tg?.initDataUnsafe?.user || null;
         const isGuest = !tgUser;
-        const currentUser = tgUser || { id: 0, first_name: 'Гость', username: 'guest' };
+        const currentUser = tgUser ? {
+            id: String(tgUser.id),
+            name: tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Автор'),
+            photo: tgUser.photo_url || null
+        } : { id: 'guest', name: 'Гость', photo: null };
+
+        // Определяем ID видео из ссылки ?startapp=v_<ID>
+        const urlParams = new URLSearchParams(window.location.search);
+        const rawStartParam = tg?.initDataUnsafe?.start_param || urlParams.get('tgWebAppStartParam') || urlParams.get('startapp') || '';
+        const targetVideoId = rawStartParam.startsWith('v_') ? rawStartParam.slice(2) : rawStartParam;
 
         let allVideos = [];
-        let pendingVideos = [];
+        let pendingVideos = null;
         let currentTab = 'all';
         let isMuted = false;
         let activeCommentVideoId = null;
-        let lastTapTime = 0;
 
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.textContent = msg;
             t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2600);
+            setTimeout(() => t.classList.remove('show'), 2400);
         }
 
-        function openGuestPrompt(reason) {
-            if (reason) document.getElementById('guestReason').textContent = reason;
+        function closeSheets() {
+            document.querySelectorAll('.sheet-backdrop').forEach(el => el.classList.remove('open'));
+        }
+
+        function requireAuth() {
+            if (!isGuest) return true;
             document.getElementById('guestSheet').classList.add('open');
+            return false;
         }
 
-        function closeSheet(id) {
-            document.getElementById(id).classList.remove('open');
-        }
-
-        function closeSheetOnBg(e, id) {
-            if (e.target.id === id) closeSheet(id);
-        }
-
-        function getHeaders(extra = {}) {
-            return {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                ...extra
-            };
-        }
-
-        async function syncUserProfile() {
-            if (isGuest) return;
+        // Загрузка видео из Supabase
+        async function fetchVideos(isBackground = false) {
             try {
-                await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-                    method: 'POST',
-                    headers: getHeaders({
-                        'Content-Type': 'application/json',
-                        'Prefer': 'resolution=merge-duplicates'
-                    }),
-                    body: JSON.stringify({
-                        user_id: String(currentUser.id),
-                        username: currentUser.username || currentUser.first_name,
-                        avatar_url: currentUser.photo_url || null
-                    })
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
                 });
-            } catch (e) {}
-        }
+                const data = await res.json();
+                if (!Array.isArray(data)) return;
 
-        async function fetchVideosFromDb() {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc`, {
-                headers: getHeaders()
-            });
-            const data = await res.json();
-            return Array.isArray(data) ? data.filter(v => v.video_url) : [];
-        }
+                let normalized = data.map(v => ({
+                    id: String(v.id),
+                    author_id: String(v.author_id || v.user_id || '0'),
+                    author_name: v.author_name || (v.username ? `@${v.username.replace('@','')}` : '@creator'),
+                    description: v.description || v.title || '',
+                    video_url: v.video_url || v.url || v.file_url || '',
+                    likes: Number(v.likes || 0),
+                    created_at: v.created_at
+                })).filter(v => v.video_url);
 
-        async function initApp() {
-            syncUserProfile();
-            try {
-                allVideos = await fetchVideosFromDb();
-            } catch (e) {
-                allVideos = [];
-            }
-            renderFeed();
-            renderProfile();
-            startAutoRefresh();
-        }
-
-        function startAutoRefresh() {
-            setInterval(async () => {
-                try {
-                    const fresh = await fetchVideosFromDb();
-                    if (!fresh.length) return;
-                    const oldIds = new Set(allVideos.map(v => String(v.id)));
-                    const added = fresh.filter(v => !oldIds.has(String(v.id)));
-                    if (added.length > 0) {
-                        const feedEl = document.getElementById('feed');
-                        if (feedEl.scrollTop < 80) {
-                            allVideos = fresh;
-                            renderFeed();
-                            showToast(`Новых видео: ${added.length}`);
-                        } else {
-                            pendingVideos = fresh;
-                            document.getElementById('newVidsPill').classList.add('visible');
-                        }
+                // Если перешли по прямой ссылке на ролик — ставим его самым первым
+                if (targetVideoId) {
+                    const idx = normalized.findIndex(v => v.id === String(targetVideoId));
+                    if (idx > 0) {
+                        const [picked] = normalized.splice(idx, 1);
+                        normalized.unshift(picked);
                     }
-                } catch (e) {}
-            }, 10000);
+                }
+
+                if (!isBackground || allVideos.length === 0) {
+                    allVideos = normalized;
+                    renderFeed();
+                } else if (normalized.length > 0 && normalized[0].id !== allVideos[0]?.id) {
+                    const feed = document.getElementById('feed');
+                    if (feed.scrollTop < 120) {
+                        allVideos = normalized;
+                        renderFeed();
+                        showToast('Лента обновлена');
+                    } else {
+                        pendingVideos = normalized;
+                        document.getElementById('newVidsBanner').classList.add('show');
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         function applyPendingVideos() {
-            if (pendingVideos.length) {
+            if (pendingVideos) {
                 allVideos = pendingVideos;
-                pendingVideos = [];
+                pendingVideos = null;
+                document.getElementById('newVidsBanner').classList.remove('show');
+                renderFeed();
+                document.getElementById('feed').scrollTo({ top: 0, behavior: 'smooth' });
             }
-            document.getElementById('newVidsPill').classList.remove('visible');
-            renderFeed();
-            document.getElementById('feed').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        async function manualRefresh() {
-            showToast('Обновляем ленту...');
-            allVideos = await fetchVideosFromDb();
-            document.getElementById('newVidsPill').classList.remove('visible');
-            renderFeed();
+        function manualRefresh() {
+            fetchVideos(false);
+            showToast('Лента обновлена');
         }
 
-        function getSubs() {
-            if (isGuest) return [];
-            return JSON.parse(localStorage.getItem(`undertow_subs_${currentUser.id}`) || '[]');
-        }
-
-        function getLikes() {
-            if (isGuest) return [];
-            return JSON.parse(localStorage.getItem(`undertow_likes_${currentUser.id}`) || '[]');
-        }
-
-        function switchFeedTab(tab) {
-            if (tab === 'subs' && isGuest) {
-                openGuestPrompt('Вкладка «Подписки» доступна после входа через Telegram-бота.');
-                return;
-            }
+        function switchTab(tab) {
+            if (tab === 'subs' && !requireAuth()) return;
             currentTab = tab;
             document.getElementById('tabAll').classList.toggle('active', tab === 'all');
             document.getElementById('tabSubs').classList.toggle('active', tab === 'subs');
@@ -918,111 +440,93 @@
 
         function renderFeed() {
             const feed = document.getElementById('feed');
-            const subs = getSubs();
-            const likes = getLikes();
+            const subs = JSON.parse(localStorage.getItem('undertow_subs') || '[]');
+            const liked = JSON.parse(localStorage.getItem('undertow_likes') || '[]');
 
-            let list = allVideos;
-            if (currentTab === 'subs') {
-                list = allVideos.filter(v => subs.includes(String(v.author_id || v.user_id)));
-            }
+            const list = currentTab === 'subs'
+                ? allVideos.filter(v => subs.includes(v.author_id))
+                : allVideos;
 
-            if (!list.length) {
-                feed.innerHTML = `
-                    <div class="empty-state">
-                        <div style="font-size:17px; font-weight:700; color:#fff; margin-bottom:6px;">
-                            ${currentTab === 'subs' ? 'Пока нет подписок' : 'В ленте пока пусто'}
-                        </div>
-                        <div style="font-size:13px;">
-                            ${currentTab === 'subs' ? 'Подпишитесь на авторов в общей ленте.' : 'Станьте первым, кто загрузит видео в Undertow!'}
-                        </div>
-                    </div>`;
+            feed.innerHTML = '';
+            if (list.length === 0) {
+                feed.innerHTML = `<div style="height:100vh;display:flex;align-items:center;justify-content:center;color:var(--muted);padding:24px;text-align:center;">
+                    ${currentTab === 'subs' ? 'Вы пока ни на кого не подписаны' : 'Пока нет видео. Нажмите +, чтобы загрузить первое!'}
+                </div>`;
                 return;
             }
 
-            feed.innerHTML = '';
             list.forEach(v => {
-                const vidId = String(v.id);
-                const authorId = String(v.author_id || v.user_id || '0');
-                const authorName = v.author_name || '@creator';
-                const initial = authorName.replace('@', '').charAt(0).toUpperCase() || 'U';
-                const isSub = !isGuest && subs.includes(authorId);
-                const isLiked = !isGuest && likes.includes(vidId);
-                const isOwn = !isGuest && authorId === String(currentUser.id);
-
+                const isSub = subs.includes(v.author_id);
+                const isLiked = liked.includes(v.id);
+                const initial = v.author_name.replace('@', '').charAt(0).toUpperCase() || 'U';
                 const card = document.createElement('div');
                 card.className = 'video-card';
                 card.innerHTML = `
                     <video src="${v.video_url}" loop playsinline ${isMuted ? 'muted' : ''}></video>
                     <div class="card-gradient"></div>
-                    <div class="pause-badge">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                    <div class="pause-indicator">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                     </div>
-
+                    <div class="double-heart">❤️</div>
                     <div class="video-info">
                         <div class="author-row">
-                            <div class="author-avatar"><div class="author-avatar-inner">${initial}</div></div>
-                            <span class="author-name">${authorName}</span>
-                            ${!isOwn ? `<button class="sub-btn ${isSub ? 'subscribed' : ''}" onclick="toggleSub('${authorId}', this)">${isSub ? 'Вы подписаны' : 'Подписаться'}</button>` : ''}
+                            <div class="avatar-ring"><div class="avatar-inner">${initial}</div></div>
+                            <span class="author-name">${v.author_name}</span>
+                            ${v.author_id !== currentUser.id ? `
+                                <button class="sub-btn ${isSub ? 'subscribed' : ''}" onclick="toggleSub('${v.author_id}', this)">
+                                    ${isSub ? 'Вы подписаны' : 'Подписаться'}
+                                </button>
+                            ` : ''}
                         </div>
-                        <div class="video-desc">${v.description || ''}</div>
+                        <div class="video-desc">${v.description}</div>
                     </div>
-
                     <div class="actions">
-                        <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${vidId}', this)">
-                            <div class="action-glass">
-                                <svg width="21" height="21" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${v.id}', this)">
+                            <div class="action-circle">
+                                <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                             </div>
-                            <span class="action-count">${v.likes || 0}</span>
+                            <span class="action-count">${v.likes}</span>
                         </button>
-
-                        <button class="action-btn" onclick="openComments('${vidId}')">
-                            <div class="action-glass">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                        <button class="action-btn" onclick="openComments('${v.id}')">
+                            <div class="action-circle">
+                                <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                             </div>
                             <span class="action-count">Чат</span>
                         </button>
-
-                        <button class="action-btn" onclick="shareVideo('${vidId}')">
-                            <div class="action-glass">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+                        <button class="action-btn" onclick="shareVideo('${v.id}', '${v.author_name}')">
+                            <div class="action-circle">
+                                <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                             </div>
                             <span class="action-count">Репост</span>
                         </button>
                     </div>
-
                     <div class="progress-track"><div class="progress-fill"></div></div>
                 `;
 
-                const videoEl = card.querySelector('video');
-                const fillEl = card.querySelector('.progress-fill');
+                const video = card.querySelector('video');
+                const pauseIcon = card.querySelector('.pause-indicator');
+                const heart = card.querySelector('.double-heart');
+                const fill = card.querySelector('.progress-fill');
 
-                videoEl.addEventListener('timeupdate', () => {
-                    if (videoEl.duration) {
-                        fillEl.style.width = `${(videoEl.currentTime / videoEl.duration) * 100}%`;
-                    }
+                video.addEventListener('timeupdate', () => {
+                    if (video.duration) fill.style.width = `${(video.currentTime / video.duration) * 100}%`;
                 });
 
-                card.addEventListener('click', (e) => {
-                    if (e.target.closest('button')) return;
+                let lastTap = 0;
+                video.addEventListener('click', () => {
                     const now = Date.now();
-                    if (now - lastTapTime < 280) {
-                        spawnHeart(card, e.clientX, e.clientY);
-                        const likeBtn = card.querySelector('.action-btn');
-                        if (isGuest) {
-                            openGuestPrompt('Гости могут только смотреть видео. Войдите через Telegram, чтобы ставить лайки.');
-                        } else if (!likeBtn.classList.contains('liked')) {
-                            toggleLike(vidId, likeBtn);
+                    if (now - lastTap < 280) {
+                        if (requireAuth()) {
+                            heart.classList.add('pop');
+                            setTimeout(() => heart.classList.remove('pop'), 550);
+                            const likeBtn = card.querySelector('.action-btn');
+                            if (!likeBtn.classList.contains('liked')) toggleLike(v.id, likeBtn);
                         }
                     } else {
-                        if (videoEl.paused) {
-                            videoEl.play().catch(() => {});
-                            card.classList.remove('paused');
-                        } else {
-                            videoEl.pause();
-                            card.classList.add('paused');
-                        }
+                        if (video.paused) { video.play(); pauseIcon.classList.remove('show'); }
+                        else { video.pause(); pauseIcon.classList.add('show'); }
                     }
-                    lastTapTime = now;
+                    lastTap = now;
                 });
 
                 feed.appendChild(card);
@@ -1031,84 +535,60 @@
             setupObserver();
         }
 
-        function spawnHeart(card, x, y) {
-            const h = document.createElement('div');
-            h.className = 'heart-burst';
-            h.style.left = `${x - 32}px`;
-            h.style.top = `${y - 32}px`;
-            h.innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="#ff2b54"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
-            card.appendChild(h);
-            setTimeout(() => h.remove(), 750);
-        }
-
         function setupObserver() {
-            const obs = new IntersectionObserver((entries) => {
+            const observer = new IntersectionObserver(entries => {
                 entries.forEach(entry => {
-                    const v = entry.target.querySelector('video');
-                    if (!v) return;
+                    const video = entry.target.querySelector('video');
+                    const pauseIcon = entry.target.querySelector('.pause-indicator');
                     if (entry.isIntersecting) {
-                        v.muted = isMuted;
-                        v.play().then(() => entry.target.classList.remove('paused')).catch(() => {
-                            v.muted = true;
-                            v.play().catch(() => {});
-                        });
+                        video.play().catch(() => {});
+                        pauseIcon.classList.remove('show');
                     } else {
-                        v.pause();
-                        v.currentTime = 0;
+                        video.pause();
+                        video.currentTime = 0;
                     }
                 });
             }, { threshold: 0.65 });
-
-            document.querySelectorAll('.video-card').forEach(c => obs.observe(c));
+            document.querySelectorAll('.video-card').forEach(c => observer.observe(c));
         }
 
         function toggleMute() {
             isMuted = !isMuted;
             document.querySelectorAll('video').forEach(v => v.muted = isMuted);
-            document.getElementById('muteIcon').innerHTML = isMuted
-                ? `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>`
-                : `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
+            document.getElementById('muteBtn').innerHTML = isMuted
+                ? `<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`
+                : `<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
         }
 
-        async function toggleLike(vidId, btn) {
-            if (isGuest) {
-                openGuestPrompt('Гости не могут ставить лайки. Откройте Undertow через Telegram-бота.');
-                return;
-            }
-            let likes = getLikes();
+        async function toggleLike(videoId, btn) {
+            if (!requireAuth()) return;
+            let liked = JSON.parse(localStorage.getItem('undertow_likes') || '[]');
             const countEl = btn.querySelector('.action-count');
-            const svgEl = btn.querySelector('svg');
             let count = parseInt(countEl.textContent) || 0;
+            const adding = !liked.includes(videoId);
 
-            if (likes.includes(vidId)) {
-                likes = likes.filter(x => x !== vidId);
-                btn.classList.remove('liked');
-                svgEl.setAttribute('fill', 'none');
-                count = Math.max(0, count - 1);
-            } else {
-                likes.push(vidId);
+            if (adding) {
+                liked.push(videoId);
                 btn.classList.add('liked');
-                svgEl.setAttribute('fill', 'currentColor');
                 count += 1;
+            } else {
+                liked = liked.filter(x => x !== videoId);
+                btn.classList.remove('liked');
+                count = Math.max(0, count - 1);
             }
             countEl.textContent = count;
-            localStorage.setItem(`undertow_likes_${currentUser.id}`, JSON.stringify(likes));
+            localStorage.setItem('undertow_likes', JSON.stringify(liked));
 
-            try {
-                await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${vidId}`, {
-                    method: 'PATCH',
-                    headers: getHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({ likes: count })
-                });
-            } catch (e) {}
+            await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${videoId}`, {
+                method: 'PATCH',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ likes: count })
+            });
         }
 
         function toggleSub(authorId, btn) {
-            if (isGuest) {
-                openGuestPrompt('Гости не могут подписываться на авторов. Войдите через Telegram.');
-                return;
-            }
-            let subs = getSubs();
+            if (!requireAuth()) return;
+            let subs = JSON.parse(localStorage.getItem('undertow_subs') || '[]');
             if (subs.includes(authorId)) {
                 subs = subs.filter(x => x !== authorId);
                 btn.textContent = 'Подписаться';
@@ -1119,223 +599,225 @@
                 btn.classList.add('subscribed');
                 showToast('Вы подписались на автора');
             }
-            localStorage.setItem(`undertow_subs_${currentUser.id}`, JSON.stringify(subs));
-            renderProfile();
+            localStorage.setItem('undertow_subs', JSON.stringify(subs));
         }
 
-        async function openComments(vidId) {
-            activeCommentVideoId = vidId;
+        // Репост с точной ссылкой t.me/undertow_vids_bot/app?startapp=v_<ID>
+        function shareVideo(videoId, author) {
+            const directLink = `${BOT_APP_LINK}?startapp=v_${videoId}`;
+            const shareText = `Смотри видео от ${author} в Undertow!`;
+            if (tg?.openTelegramLink) {
+                tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(directLink)}&text=${encodeURIComponent(shareText)}`);
+            } else {
+                navigator.clipboard?.writeText(directLink);
+                showToast('Ссылка на видео скопирована');
+            }
+        }
+
+        // Комментарии
+        async function openComments(videoId) {
+            activeCommentVideoId = videoId;
             document.getElementById('commentsSheet').classList.add('open');
             const listEl = document.getElementById('commentsList');
+            listEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:16px;">Загрузка...</div>';
+
             const inputArea = document.getElementById('commentInputArea');
-
-            listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">Загрузка...</div>`;
-
             if (isGuest) {
-                inputArea.innerHTML = `<a href="https://t.me/${BOT_USERNAME}" target="_blank" class="btn-tg" style="margin-top:0;">Войдите через Telegram, чтобы комментировать</a>`;
+                inputArea.innerHTML = `<a href="${BOT_APP_LINK}" style="text-decoration:none;"><button class="btn-accent">Войдите через Telegram, чтобы комментировать</button></a>`;
             } else {
                 inputArea.innerHTML = `
                     <div class="comment-form">
                         <input type="text" id="commentInput" placeholder="Написать комментарий...">
-                        <button class="send-btn" onclick="submitComment()">➤</button>
+                        <button class="btn-accent" style="width:auto;padding:0 16px;" onclick="sendComment()">➤</button>
                     </div>`;
             }
 
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${vidId}&order=created_at.asc`, {
-                    headers: getHeaders()
-                });
-                const comments = await res.json();
-                if (!comments.length) {
-                    listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:24px;">Комментариев пока нет.</div>`;
-                } else {
-                    listEl.innerHTML = comments.map(c => `
-                        <div class="comment-item">
-                            <div class="comment-author">${c.author_name}</div>
-                            <div class="comment-text">${c.text}</div>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) {
-                listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">Не удалось загрузить комментарии</div>`;
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${videoId}&order=created_at.asc`, {
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+            });
+            const comments = await res.json();
+            listEl.innerHTML = '';
+            if (!Array.isArray(comments) || comments.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;">Пока нет комментариев. Будьте первым!</div>';
+                return;
             }
+            comments.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'comment-item';
+                item.innerHTML = `<div class="comment-author">${c.author_name}</div><div class="comment-text">${c.text}</div>`;
+                listEl.appendChild(item);
+            });
         }
 
-        async function submitComment() {
-            if (isGuest || !activeCommentVideoId) return;
+        async function sendComment() {
+            if (!requireAuth()) return;
             const input = document.getElementById('commentInput');
             const text = input.value.trim();
             if (!text) return;
             input.value = '';
 
-            const authorName = currentUser.username ? `@${currentUser.username}` : currentUser.first_name;
-            try {
-                await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
-                    method: 'POST',
-                    headers: getHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({
-                        video_id: String(activeCommentVideoId),
-                        user_id: String(currentUser.id),
-                        author_name: authorName,
-                        text
-                    })
-                });
-                openComments(activeCommentVideoId);
-            } catch (e) {
-                showToast('Ошибка отправки');
-            }
+            await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+                method: 'POST',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    video_id: activeCommentVideoId,
+                    user_id: currentUser.id,
+                    author_name: currentUser.name,
+                    text
+                })
+            });
+            openComments(activeCommentVideoId);
         }
 
-        function shareVideo(vidId) {
-            const shareUrl = `https://t.me/${BOT_USERNAME}?start=video_${vidId}`;
-            const shareText = 'Смотри крутое видео в Undertow!';
-            if (tg && tg.openTelegramLink) {
-                tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`);
-            } else {
-                navigator.clipboard?.writeText(shareUrl);
-                showToast('Ссылка на видео скопирована');
-            }
-        }
-
-        function handleCreateClick() {
-            if (isGuest) {
-                openGuestPrompt('Публикация видео недоступна в режиме гостя. Откройте приложение через Telegram-бота.');
-                return;
-            }
+        // Загрузка видео
+        function openUpload() {
+            if (!requireAuth()) return;
             document.getElementById('uploadSheet').classList.add('open');
         }
 
-        function onFilePicked(input) {
+        function onFileSelected(input) {
             if (input.files && input.files[0]) {
-                document.getElementById('fileLabel').textContent = `✅ Выбран: ${input.files[0].name}`;
+                document.getElementById('fileLabel').textContent = `✅ Выбрано: ${input.files[0].name}`;
             }
         }
 
         async function publishVideo() {
-            if (isGuest) return;
-            const fileInput = document.getElementById('videoFileInput');
-            let videoUrl = document.getElementById('videoUrlInput').value.trim();
-            const desc = document.getElementById('videoDescInput').value.trim();
+            if (!requireAuth()) return;
+            const fileInput = document.getElementById('videoFile');
+            const desc = document.getElementById('videoDesc').value.trim();
             const btn = document.getElementById('publishBtn');
 
-            if (!fileInput.files.length && !videoUrl) {
-                showToast('Выберите файл или вставьте ссылку');
+            if (!fileInput.files || !fileInput.files[0]) {
+                showToast('Сначала выберите видеофайл');
                 return;
             }
 
+            const file = fileInput.files[0];
             btn.disabled = true;
-            btn.textContent = 'Загрузка...';
+            btn.textContent = 'Загрузка в облако...';
 
             try {
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    const ext = file.name.split('.').pop() || 'mp4';
-                    const filePath = `${currentUser.id}_${Date.now()}.${ext}`;
+                const ext = file.name.split('.').pop() || 'mp4';
+                const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
 
-                    const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/videos/${filePath}`, {
-                        method: 'POST',
-                        headers: getHeaders({ 'Content-Type': file.type || 'video/mp4' }),
-                        body: file
-                    });
-                    if (!upRes.ok) throw new Error('Ошибка загрузки файла');
-                    videoUrl = `${SUPABASE_URL}/storage/v1/object/public/videos/${filePath}`;
+                const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/videos/${fileName}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': file.type || 'video/mp4'
+                    },
+                    body: file
+                });
+
+                if (!uploadRes.ok) {
+                    const err = await uploadRes.json();
+                    throw new Error(err.message || 'Ошибка загрузки файла в Storage');
                 }
 
-                const authorName = currentUser.username ? `@${currentUser.username}` : currentUser.first_name;
+                const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/videos/${fileName}`;
+
                 const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
                     method: 'POST',
-                    headers: getHeaders({
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
                         'Content-Type': 'application/json',
                         'Prefer': 'return=representation'
-                    }),
+                    },
                     body: JSON.stringify({
-                        user_id: String(currentUser.id),
-                        author_id: Number(currentUser.id),
-                        author_name: authorName,
+                        user_id: currentUser.id,
+                        author_id: Number(currentUser.id) || 0,
+                        author_name: currentUser.name,
                         description: desc,
-                        video_url: videoUrl,
+                        video_url: publicUrl,
                         likes: 0
                     })
                 });
-                if (!dbRes.ok) throw new Error('Ошибка сохранения в базу');
 
-                closeSheet('uploadSheet');
+                if (!dbRes.ok) {
+                    const err = await dbRes.json();
+                    throw new Error(err.message || 'Ошибка сохранения в базу');
+                }
+
                 fileInput.value = '';
-                document.getElementById('fileLabel').textContent = '📹 Выбрать видео с устройства';
-                document.getElementById('videoUrlInput').value = '';
-                document.getElementById('videoDescInput').value = '';
+                document.getElementById('videoDesc').value = '';
+                document.getElementById('fileLabel').textContent = '📁 Нажмите, чтобы выбрать видео с устройства';
+                closeSheets();
                 showToast('Видео опубликовано!');
-                manualRefresh();
+                await fetchVideos(false);
             } catch (e) {
-                showToast(e.message || 'Ошибка публикации');
+                alert('Ошибка загрузки: ' + e.message);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Опубликовать в ленту';
             }
         }
 
-        function switchScreen(name) {
-            document.getElementById('feedScreen').classList.toggle('active', name === 'feed');
-            document.getElementById('profileScreen').classList.toggle('active', name === 'profile');
-            document.getElementById('topBar').style.display = name === 'feed' ? 'flex' : 'none';
-            document.getElementById('navFeed').classList.toggle('active', name === 'feed');
-            document.getElementById('navProfile').classList.toggle('active', name === 'profile');
+        // Навигация Лента / Профиль
+        function showScreen(screen) {
+            const isProf = screen === 'profile';
+            document.getElementById('profileView').classList.toggle('open', isProf);
+            document.getElementById('topBar').style.display = isProf ? 'none' : 'flex';
+            document.getElementById('navFeed').classList.toggle('active', !isProf);
+            document.getElementById('navProfile').classList.toggle('active', isProf);
 
-            if (name === 'profile') {
-                document.querySelectorAll('video').forEach(v => v.pause());
+            if (isProf) {
                 renderProfile();
+                document.querySelectorAll('video').forEach(v => v.pause());
+            } else {
+                setupObserver();
             }
         }
 
         function renderProfile() {
-            const card = document.getElementById('profileCard');
-            const grid = document.getElementById('profileVidsGrid');
-            const title = document.getElementById('profileVideosTitle');
+            document.getElementById('profName').textContent = currentUser.name;
+            const avatarEl = document.getElementById('profAvatar');
+            if (currentUser.photo) {
+                avatarEl.innerHTML = `<img src="${currentUser.photo}" alt="">`;
+            } else {
+                avatarEl.textContent = currentUser.name.replace('@', '').charAt(0).toUpperCase();
+            }
 
-            if (isGuest) {
-                card.innerHTML = `
-                    <div class="profile-avatar">👤</div>
-                    <div class="profile-name">Режим гостя</div>
-                    <div class="profile-sub">Доступен только просмотр ленты и репосты</div>
-                    <div class="badge-status guest">Только просмотр</div>
-                    <a href="https://t.me/${BOT_USERNAME}" target="_blank" class="btn-tg">Войти через Telegram</a>
-                `;
-                title.style.display = 'none';
-                grid.innerHTML = '';
+            document.getElementById('profStatus').textContent = isGuest ? 'Гостевой режим (только просмотр)' : 'Аккаунт Telegram подтверждён';
+            document.getElementById('guestLoginBox').style.display = isGuest ? 'block' : 'none';
+
+            const myVids = isGuest ? [] : allVideos.filter(v => v.author_id === currentUser.id);
+            const totalLikes = myVids.reduce((acc, v) => acc + v.likes, 0);
+            const subs = JSON.parse(localStorage.getItem('undertow_subs') || '[]');
+
+            document.getElementById('statVideos').textContent = myVids.length;
+            document.getElementById('statLikes').textContent = totalLikes;
+            document.getElementById('statSubs').textContent = isGuest ? 0 : subs.length;
+
+            const grid = document.getElementById('profileGrid');
+            grid.innerHTML = '';
+            if (myVids.length === 0) {
+                grid.innerHTML = `<div style="grid-column:1/-1;color:var(--muted);font-size:13px;padding:12px 0;">
+                    ${isGuest ? 'Войдите через Telegram, чтобы загружать свои видео' : 'У вас пока нет загруженных видео'}
+                </div>`;
                 return;
             }
-
-            const myVideos = allVideos.filter(v => String(v.author_id || v.user_id) === String(currentUser.id));
-            const totalLikes = myVideos.reduce((acc, v) => acc + (Number(v.likes) || 0), 0);
-            const subsCount = getSubs().length;
-
-            const avatarHtml = currentUser.photo_url
-                ? `<img src="${currentUser.photo_url}" alt="avatar">`
-                : (currentUser.first_name || 'U').charAt(0).toUpperCase();
-
-            card.innerHTML = `
-                <div class="profile-avatar">${avatarHtml}</div>
-                <div class="profile-name">${currentUser.first_name || 'Пользователь'}</div>
-                <div class="profile-sub">${currentUser.username ? '@' + currentUser.username : 'ID: ' + currentUser.id}</div>
-                <div class="badge-status">✓ Аккаунт Telegram</div>
-                <div class="stats-row">
-                    <div class="stat-box"><div class="stat-val">${myVideos.length}</div><div class="stat-lbl">Видео</div></div>
-                    <div class="stat-box"><div class="stat-val">${totalLikes}</div><div class="stat-lbl">Лайков</div></div>
-                    <div class="stat-box"><div class="stat-val">${subsCount}</div><div class="stat-lbl">Подписок</div></div>
-                </div>
-            `;
-
-            title.style.display = 'block';
-            if (!myVideos.length) {
-                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:24px; font-size:13px;">Вы ещё не опубликовали ни одного видео</div>`;
-            } else {
-                grid.innerHTML = myVideos.map(v => `
-                    <div class="grid-item"><video src="${v.video_url}" muted playsinline></video></div>
-                `).join('');
-            }
+            myVids.forEach(v => {
+                const item = document.createElement('div');
+                item.className = 'grid-item';
+                item.innerHTML = `<video src="${v.video_url}" muted preload="metadata"></video>`;
+                item.onclick = () => {
+                    const idx = allVideos.findIndex(x => x.id === v.id);
+                    if (idx > 0) {
+                        const [picked] = allVideos.splice(idx, 1);
+                        allVideos.unshift(picked);
+                        renderFeed();
+                    }
+                    showScreen('feed');
+                };
+                grid.appendChild(item);
+            });
         }
 
-        initApp();
+        // Запуск и фоновое автообновление каждые 10 секунд
+        fetchVideos(false);
+        setInterval(() => fetchVideos(true), 10000);
     </script>
 </body>
 </html>
