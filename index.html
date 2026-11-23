@@ -7,18 +7,11 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
-  --bg:#050507;
-  --surface:rgba(24,24,29,0.72);
-  --surface-solid:#16161b;
-  --border:rgba(255,255,255,0.10);
-  --border-strong:rgba(255,255,255,0.18);
-  --accent:#00e5ff;
-  --accent-2:#ff2b54;
-  --accent-3:#7000ff;
-  --text:#ffffff;
-  --text-muted:#9898a6;
-  --safe-top:env(safe-area-inset-top,0px);
-  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#050507;--surface:rgba(24,24,29,0.72);--surface-solid:#16161b;
+  --border:rgba(255,255,255,0.10);--border-strong:rgba(255,255,255,0.18);
+  --accent:#00e5ff;--accent-2:#ff2b54;--accent-3:#7000ff;
+  --text:#ffffff;--text-muted:#9898a6;
+  --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
 body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow:hidden;user-select:none;-webkit-user-select:none}
@@ -55,9 +48,8 @@ button{font-family:inherit}
 .feed{width:100%;height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain}
 .feed::-webkit-scrollbar{display:none}
 
-/* ГЛАВНОЕ ИЗМЕНЕНИЕ: object-fit: contain + чёрный фон */
-.video-card{position:relative;width:100%;height:100vh;scroll-snap-align:start;background:#000000;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.video-card video{width:100%;height:100%;object-fit:contain;background:#000000;display:block}
+.video-card{position:relative;width:100%;height:100vh;scroll-snap-align:start;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.video-card video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
 
 .buffering{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:6;pointer-events:none}
 .buffering.show{display:flex}
@@ -112,7 +104,6 @@ button{font-family:inherit}
 .video-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .grid-item{position:relative;aspect-ratio:9/16;background:#141419;border-radius:10px;overflow:hidden;cursor:pointer;transition:.15s}
 .grid-item:active{transform:scale(.97)}
-/* В сетке профиля оставляем cover, чтобы превью были ровными */
 .grid-item video{width:100%;height:100%;object-fit:cover;pointer-events:none}
 .grid-views{position:absolute;bottom:6px;left:6px;font-size:11px;font-weight:700;background:rgba(0,0,0,0.62);padding:2px 6px;border-radius:6px}
 .delete-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(255,43,84,0.85);border:none;color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(6px);z-index:2;line-height:1}
@@ -150,18 +141,10 @@ input[type="text"]:focus,textarea:focus{border-color:rgba(0,229,255,0.5)}
 </head>
 <body>
 
-<div id="splash">
-  <div class="splash-logo">Undertow</div>
-  <div class="spinner"></div>
-</div>
-
+<div id="splash"><div class="splash-logo">Undertow</div><div class="spinner"></div></div>
 <div id="toast"></div>
-
 <div id="uploadBanner">
-  <div class="upload-row">
-    <span id="uploadStatusText">Публикация в облако...</span>
-    <span id="uploadPercent">0%</span>
-  </div>
+  <div class="upload-row"><span id="uploadStatusText">Публикация в облако...</span><span id="uploadPercent">0%</span></div>
   <div class="upload-track"><div class="upload-fill" id="uploadFill"></div></div>
 </div>
 
@@ -171,14 +154,10 @@ input[type="text"]:focus,textarea:focus{border-color:rgba(0,229,255,0.5)}
     <button class="tab-btn active" id="tabAll" data-tab="all">Для вас</button>
     <button class="tab-btn" id="tabSubs" data-tab="subs">Подписки</button>
   </div>
-  <div class="top-actions">
-    <button class="icon-pill" id="refreshBtn" title="Обновить">↻</button>
-  </div>
+  <div class="top-actions"><button class="icon-pill" id="refreshBtn" title="Обновить">↻</button></div>
 </div>
 
-<div id="feedView" class="view active">
-  <div class="feed" id="feed"></div>
-</div>
+<div id="feedView" class="view active"><div class="feed" id="feed"></div></div>
 
 <div id="profileView" class="view">
   <div class="profile-header">
@@ -196,73 +175,50 @@ input[type="text"]:focus,textarea:focus{border-color:rgba(0,229,255,0.5)}
 </div>
 
 <div class="bottom-nav">
-  <button class="nav-btn active" id="navFeed">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-    <span>Лента</span>
-  </button>
-  <button class="nav-btn" id="navCreate">
-    <div class="create-btn">+</div>
-  </button>
-  <button class="nav-btn" id="navProfile">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-    <span>Профиль</span>
-  </button>
+  <button class="nav-btn active" id="navFeed"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Лента</span></button>
+  <button class="nav-btn" id="navCreate"><div class="create-btn">+</div></button>
+  <button class="nav-btn" id="navProfile"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Профиль</span></button>
 </div>
 
-<div class="sheet-backdrop" id="uploadSheet" data-close="uploadSheet">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">Новое видео</div>
-    <label class="file-drop" for="videoFileInput">
-      <div style="font-size:26px;margin-bottom:6px">🎬</div>
-      <div id="fileLabel" style="font-weight:700;font-size:14px">Выбрать видео с устройства</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">MP4 (H.264) до 50 МБ</div>
-    </label>
-    <input type="file" id="videoFileInput" accept="video/*" style="display:none">
-    <textarea id="videoDescInput" rows="2" placeholder="Добавьте описание к ролику..."></textarea>
-    <button class="btn-main" id="btnPublish">Опубликовать моментально</button>
-    <button class="btn-secondary" data-close-btn="uploadSheet">Отмена</button>
-  </div>
-</div>
+<div class="sheet-backdrop" id="uploadSheet" data-close="uploadSheet"><div class="sheet">
+  <div class="sheet-handle"></div><div class="sheet-title">Новое видео</div>
+  <label class="file-drop" for="videoFileInput">
+    <div style="font-size:26px;margin-bottom:6px">🎬</div>
+    <div id="fileLabel" style="font-weight:700;font-size:14px">Выбрать видео с устройства</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:4px">MP4 (H.264) до 50 МБ</div>
+  </label>
+  <input type="file" id="videoFileInput" accept="video/*" style="display:none">
+  <textarea id="videoDescInput" rows="2" placeholder="Добавьте описание к ролику..."></textarea>
+  <button class="btn-main" id="btnPublish">Опубликовать моментально</button>
+  <button class="btn-secondary" data-close-btn="uploadSheet">Отмена</button>
+</div></div>
 
-<div class="sheet-backdrop" id="commentsSheet" data-close="commentsSheet">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">Комментарии</div>
-    <div class="comments-list" id="commentsList"></div>
-    <div id="commentInputArea"></div>
-  </div>
-</div>
+<div class="sheet-backdrop" id="commentsSheet" data-close="commentsSheet"><div class="sheet">
+  <div class="sheet-handle"></div><div class="sheet-title">Комментарии</div>
+  <div class="comments-list" id="commentsList"></div>
+  <div id="commentInputArea"></div>
+</div></div>
 
-<div class="sheet-backdrop" id="shareSheet" data-close="shareSheet">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">Поделиться роликом</div>
-    <button class="btn-main" id="btnShareStory">✨ Опубликовать в Историю Telegram</button>
-    <button class="btn-secondary" id="btnShareChat">✈️ Отправить в чат или другу</button>
-    <button class="btn-secondary" id="btnCopyLink">🔗 Скопировать прямую ссылку</button>
-  </div>
-</div>
+<div class="sheet-backdrop" id="shareSheet" data-close="shareSheet"><div class="sheet">
+  <div class="sheet-handle"></div><div class="sheet-title">Поделиться роликом</div>
+  <button class="btn-main" id="btnShareStory">✨ Опубликовать в Историю Telegram</button>
+  <button class="btn-secondary" id="btnShareChat">✈️ Отправить в чат или другу</button>
+  <button class="btn-secondary" id="btnCopyLink">🔗 Скопировать прямую ссылку</button>
+</div></div>
 
-<div class="sheet-backdrop" id="guestSheet" data-close="guestSheet">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">Доступно в Telegram</div>
-    <p class="sheet-text">Вы находитесь в режиме просмотра. Войдите через официального бота <b>@undertow_vids_bot</b>, чтобы ставить лайки, подписываться, комментировать и загружать видео.</p>
-    <button class="btn-main" id="btnOpenBot">Открыть в @undertow_vids_bot</button>
-    <button class="btn-secondary" data-close-btn="guestSheet">Продолжить просмотр</button>
-  </div>
-</div>
+<div class="sheet-backdrop" id="guestSheet" data-close="guestSheet"><div class="sheet">
+  <div class="sheet-handle"></div><div class="sheet-title">Доступно в Telegram</div>
+  <p class="sheet-text">Вы находитесь в режиме просмотра. Войдите через официального бота <b>@undertow_vids_bot</b>, чтобы ставить лайки, подписываться, комментировать и загружать видео.</p>
+  <button class="btn-main" id="btnOpenBot">Открыть в @undertow_vids_bot</button>
+  <button class="btn-secondary" data-close-btn="guestSheet">Продолжить просмотр</button>
+</div></div>
 
-<div class="sheet-backdrop" id="deleteSheet" data-close="deleteSheet">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">Удалить видео?</div>
-    <p class="sheet-text">Видео будет удалено из ленты и из облачного хранилища. Это действие необратимо.</p>
-    <button class="btn-danger" id="btnConfirmDelete">🗑 Удалить навсегда</button>
-    <button class="btn-secondary" data-close-btn="deleteSheet">Отмена</button>
-  </div>
-</div>
+<div class="sheet-backdrop" id="deleteSheet" data-close="deleteSheet"><div class="sheet">
+  <div class="sheet-handle"></div><div class="sheet-title">Удалить видео?</div>
+  <p class="sheet-text">Видео будет удалено из ленты и из облачного хранилища. Это действие необратимо.</p>
+  <button class="btn-danger" id="btnConfirmDelete">🗑 Удалить навсегда</button>
+  <button class="btn-secondary" data-close-btn="deleteSheet">Отмена</button>
+</div></div>
 
 <script>
 const SUPABASE_URL = 'https://pgnqjobutdlaxtjrrxio.supabase.co';
@@ -271,14 +227,7 @@ const BOT_USERNAME = 'undertow_vids_bot';
 const BOT_APP_URL  = 'https://t.me/undertow_vids_bot/app';
 
 const tg = window.Telegram?.WebApp || null;
-if (tg) {
-  try {
-    tg.ready(); tg.expand();
-    if (tg.setHeaderColor) tg.setHeaderColor('#050507');
-    if (tg.setBackgroundColor) tg.setBackgroundColor('#050507');
-    if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
-  } catch (e) {}
-}
+if (tg) { try { tg.ready(); tg.expand(); if (tg.setHeaderColor) tg.setHeaderColor('#050507'); if (tg.setBackgroundColor) tg.setBackgroundColor('#050507'); } catch (e) {} }
 const tgUser = tg?.initDataUnsafe?.user || null;
 const isGuest = !tgUser || !tgUser.id;
 const currentUser = isGuest
@@ -293,60 +242,32 @@ let likedSet = new Set();
 let subsSet = new Set();
 let viewedSessionSet = new Set();
 let currentFeedTab = 'all';
-let isMuted = true;   // всегда muted для гарантии автоплея
+let userWantsSound = false;
 let selectedFile = null;
-let lastTapTime = 0;
 let currentObserver = null;
 let pollTimer = null;
 let pendingDelete = null;
 let activeShareVideo = null;
-const brokenVideoIds = new Set();  // видео, которые не смогли проиграть
+const brokenVideoIds = new Set();
+const likeLocks = new Map();
 
-const headers = {
-  'apikey': SUPABASE_KEY,
-  'Authorization': `Bearer ${SUPABASE_KEY}`,
-  'Content-Type': 'application/json'
-};
+const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
-function escapeHtml(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
-    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
-  ));
-}
-function formatNum(n) {
-  n = Number(n) || 0;
-  if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M';
-  if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K';
-  return String(n);
-}
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2600);
-}
+function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function formatNum(n) { n = Number(n) || 0; if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M'; if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K'; return String(n); }
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2600); }
 function haptic(type='light') { try { tg?.HapticFeedback?.impactOccurred(type); } catch (e) {} }
 function openSheet(id) { document.getElementById(id)?.classList.add('open'); }
 function closeSheet(id) { document.getElementById(id)?.classList.remove('open'); }
 
-document.querySelectorAll('[data-close]').forEach(bd => {
-  bd.addEventListener('click', (e) => { if (e.target === bd) closeSheet(bd.dataset.close); });
-});
-document.querySelectorAll('[data-close-btn]').forEach(btn => {
-  btn.addEventListener('click', () => closeSheet(btn.dataset.closeBtn));
-});
+document.querySelectorAll('[data-close]').forEach(bd => bd.addEventListener('click', (e) => { if (e.target === bd) closeSheet(bd.dataset.close); }));
+document.querySelectorAll('[data-close-btn]').forEach(btn => btn.addEventListener('click', () => closeSheet(btn.dataset.closeBtn)));
 
 async function syncUserProfile() {
   if (isGuest) return;
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-      method: 'POST',
-      headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({ user_id: currentUser.id, username: currentUser.username, first_name: currentUser.name })
-    });
-    await fetch(
-      `${SUPABASE_URL}/rest/v1/videos?user_id=eq.${encodeURIComponent(currentUser.id)}&author_name=eq.${encodeURIComponent('@user')}`,
-      { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ author_name: currentUser.name }) }
-    );
+    await fetch(`${SUPABASE_URL}/rest/v1/users`, { method: 'POST', headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id: currentUser.id, username: currentUser.username, first_name: currentUser.name }) });
+    await fetch(`${SUPABASE_URL}/rest/v1/videos?user_id=eq.${encodeURIComponent(currentUser.id)}&author_name=eq.${encodeURIComponent('@user')}`, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ author_name: currentUser.name }) });
   } catch (e) {}
 }
 
@@ -367,7 +288,6 @@ async function fetchVideos() {
   if (!res.ok) throw new Error('fetch failed');
   const rows = await res.json();
   allVideos = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('http'));
-
   const startParam = tg?.initDataUnsafe?.start_param || new URLSearchParams(location.search).get('startapp');
   if (startParam && startParam.startsWith('v_')) {
     const targetId = startParam.slice(2);
@@ -391,13 +311,7 @@ async function silentRefresh() {
   } catch (e) {}
 }
 
-function startPolling() {
-  stopPolling();
-  pollTimer = setInterval(() => {
-    if (document.visibilityState === 'visible'
-      && document.getElementById('feedView').classList.contains('active')) silentRefresh();
-  }, 12000);
-}
+function startPolling() { stopPolling(); pollTimer = setInterval(() => { if (document.visibilityState === 'visible' && document.getElementById('feedView').classList.contains('active')) silentRefresh(); }, 12000); }
 function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 
 function authorDisplayName(v) {
@@ -411,16 +325,10 @@ function authorDisplayName(v) {
 function renderFeed() {
   const feed = document.getElementById('feed');
   let list = allVideos.filter(v => !brokenVideoIds.has(String(v.id)));
-  if (currentFeedTab === 'subs') {
-    list = list.filter(v => subsSet.has(String(v.author_id || v.user_id || '')));
-  }
+  if (currentFeedTab === 'subs') list = list.filter(v => subsSet.has(String(v.author_id || v.user_id || '')));
 
   if (!list.length) {
-    feed.innerHTML = `<div class="empty-state">
-      <div style="font-size:44px">🌊</div>
-      <div style="font-weight:700;color:#fff">${currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста'}</div>
-      <div style="font-size:13px">${currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первое видео'}</div>
-    </div>`;
+    feed.innerHTML = `<div class="empty-state"><div style="font-size:44px">🌊</div><div style="font-weight:700;color:#fff">${currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста'}</div><div style="font-size:13px">${currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первое видео'}</div></div>`;
     return;
   }
 
@@ -443,13 +351,10 @@ function renderFeed() {
     card.dataset.index = String(idx);
 
     card.innerHTML = `
-      <video src="${v.video_url}" loop playsinline webkit-playsinline muted
-        preload="${idx < 2 ? 'auto' : 'metadata'}" crossorigin="anonymous"></video>
+      <video src="${v.video_url}" loop playsinline webkit-playsinline muted preload="${idx < 2 ? 'auto' : 'metadata'}" crossorigin="anonymous"></video>
       <div class="buffering"><div class="buffering-spinner"></div></div>
       <div class="gradient-bottom"></div>
-      <div class="pause-indicator">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
-      </div>
+      <div class="pause-indicator"><svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>
       <div class="video-info">
         <div class="author-row">
           <div class="avatar-ring"><div class="avatar-inner">${initial}</div></div>
@@ -476,91 +381,79 @@ function renderFeed() {
           <span class="action-count">Репост</span>
         </button>
       </div>
-      <div class="progress-wrap">
-        <div class="progress-bar">
-          <div class="progress-buffer"></div>
-          <div class="progress-fill"></div>
-        </div>
-      </div>
+      <div class="progress-wrap"><div class="progress-bar"><div class="progress-buffer"></div><div class="progress-fill"></div></div></div>
     `;
 
-    const vidEl     = card.querySelector('video');
+    const vidEl = card.querySelector('video');
     const buffering = card.querySelector('.buffering');
-    const pauseEl   = card.querySelector('.pause-indicator');
-    const fillEl    = card.querySelector('.progress-fill');
-    const bufferEl  = card.querySelector('.progress-buffer');
-    const likeBtn   = card.querySelector('[data-act="like"]');
-    const subBtn    = card.querySelector('[data-act="sub"]');
-    const commentBtn= card.querySelector('[data-act="comment"]');
-    const shareBtn  = card.querySelector('[data-act="share"]');
+    const pauseEl = card.querySelector('.pause-indicator');
+    const fillEl = card.querySelector('.progress-fill');
+    const bufferEl = card.querySelector('.progress-buffer');
+    const likeBtn = card.querySelector('[data-act="like"]');
+    const subBtn = card.querySelector('[data-act="sub"]');
+    const commentBtn = card.querySelector('[data-act="comment"]');
+    const shareBtn = card.querySelector('[data-act="share"]');
     const likeCntEl = card.querySelector('[data-like-count]');
-    const viewCntEl = card.querySelector('[data-view-count]');
     const progressWrap = card.querySelector('.progress-wrap');
 
     const showBuf = () => buffering.classList.add('show');
     const hideBuf = () => buffering.classList.remove('show');
 
-    vidEl.addEventListener('loadedmetadata', () => { vidEl.muted = isMuted; });
     vidEl.addEventListener('canplay', () => hideBuf());
     vidEl.addEventListener('playing', () => { hideBuf(); pauseEl.classList.remove('visible'); });
     vidEl.addEventListener('waiting', () => showBuf());
     vidEl.addEventListener('stalled', () => showBuf());
-
-    // Молчаливый пропуск битых видео (без оверлея с ошибкой)
-    vidEl.addEventListener('error', () => {
-      hideBuf();
-      brokenVideoIds.add(vidId);
-      const next = card.nextElementSibling;
-      if (next) next.scrollIntoView({ behavior: 'smooth' });
-      setTimeout(() => card.remove(), 420);
-    });
-
-    vidEl.addEventListener('progress', () => {
-      if (vidEl.buffered.length && vidEl.duration) {
-        const end = vidEl.buffered.end(vidEl.buffered.length - 1);
-        bufferEl.style.width = `${Math.min(100, (end / vidEl.duration) * 100)}%`;
-      }
-    });
+    vidEl.addEventListener('error', () => { hideBuf(); brokenVideoIds.add(vidId); const next = card.nextElementSibling; if (next) next.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => card.remove(), 420); });
+    vidEl.addEventListener('progress', () => { if (vidEl.buffered.length && vidEl.duration) { const end = vidEl.buffered.end(vidEl.buffered.length - 1); bufferEl.style.width = `${Math.min(100, (end / vidEl.duration) * 100)}%`; } });
 
     let scrubbing = false;
     const applyRatio = (r) => { if (!vidEl.duration) return; vidEl.currentTime = r * vidEl.duration; fillEl.style.width = `${r*100}%`; };
-    const ratioFromEvent = (e) => {
-      const rect = progressWrap.getBoundingClientRect();
-      return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    };
+    const ratioFromEvent = (e) => { const rect = progressWrap.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); };
     progressWrap.addEventListener('pointerdown', (e) => { scrubbing = true; try { progressWrap.setPointerCapture(e.pointerId); } catch(_){} applyRatio(ratioFromEvent(e)); e.stopPropagation(); });
     progressWrap.addEventListener('pointermove', (e) => { if (scrubbing) applyRatio(ratioFromEvent(e)); });
     const endScrub = () => { scrubbing = false; };
     progressWrap.addEventListener('pointerup', endScrub);
     progressWrap.addEventListener('pointercancel', endScrub);
     progressWrap.addEventListener('pointerleave', endScrub);
+    vidEl.addEventListener('timeupdate', () => { if (!scrubbing && vidEl.duration) fillEl.style.width = `${(vidEl.currentTime / vidEl.duration) * 100}%`; });
 
-    vidEl.addEventListener('timeupdate', () => {
-      if (!scrubbing && vidEl.duration) fillEl.style.width = `${(vidEl.currentTime / vidEl.duration) * 100}%`;
-    });
-
-    likeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLike(vidId, likeBtn, likeCntEl, v); });
+    likeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLike(vidId, likeBtn, likeCntEl); });
     commentBtn.addEventListener('click', (e) => { e.stopPropagation(); openComments(vidId); });
     shareBtn.addEventListener('click', (e) => { e.stopPropagation(); openShare({ id: vidId, url: v.video_url, desc: v.description || '' }); });
     if (subBtn) subBtn.addEventListener('click', (e) => { e.stopPropagation(); handleSub(authorId, subBtn); });
 
+    let tapTimer = null;
     card.addEventListener('click', (e) => {
-      if (e.target.closest('button') || e.target.closest('.progress-wrap')) return;
-      const now = Date.now();
-      if (now - lastTapTime < 280) {
+      if (e.target.closest('button') || e.target.closest('.action-btn') || e.target.closest('.progress-wrap')) return;
+      if (tapTimer) {
+        clearTimeout(tapTimer); tapTimer = null;
         spawnHeart(card, e.clientX, e.clientY);
-        if (!likedSet.has(vidId)) handleLike(vidId, likeBtn, likeCntEl, v);
+        if (!likedSet.has(vidId)) handleLike(vidId, likeBtn, likeCntEl);
       } else {
-        if (vidEl.paused) { vidEl.play().catch(() => {}); pauseEl.classList.remove('visible'); }
-        else { vidEl.pause(); pauseEl.classList.add('visible'); }
+        tapTimer = setTimeout(() => {
+          tapTimer = null;
+          if (!card.isConnected) return;
+          if (vidEl.paused) { vidEl.play().catch(() => {}); pauseEl.classList.remove('visible'); }
+          else { vidEl.pause(); pauseEl.classList.add('visible'); }
+        }, 280);
       }
-      lastTapTime = now;
     });
 
     feed.appendChild(card);
   });
 
   setupObserver();
+}
+
+async function playCard(vid, card) {
+  vid.muted = true;
+  try {
+    await vid.play();
+    if (userWantsSound) vid.muted = false;
+    card.querySelector('.pause-indicator')?.classList.remove('visible');
+  } catch (_) {
+    card.querySelector('.pause-indicator')?.classList.add('visible');
+  }
 }
 
 function setupObserver() {
@@ -570,21 +463,8 @@ function setupObserver() {
       const card = entry.target;
       const vid = card.querySelector('video');
       if (!vid) return;
-
       if (entry.isIntersecting) {
-        vid.muted = isMuted;
-        const p = vid.play();
-        if (p && p.catch) {
-          p.then(() => {
-            card.querySelector('.pause-indicator')?.classList.remove('visible');
-            registerView(card.dataset.id);
-          }).catch(() => {
-            vid.muted = true;
-            isMuted = true;
-            vid.play().then(() => registerView(card.dataset.id))
-              .catch(() => card.querySelector('.pause-indicator')?.classList.add('visible'));
-          });
-        }
+        playCard(vid, card);
         registerView(card.dataset.id);
         manageMemory(card);
       } else {
@@ -593,7 +473,6 @@ function setupObserver() {
       }
     });
   }, { threshold: 0.65, root: document.getElementById('feed') });
-
   document.querySelectorAll('.video-card').forEach(c => currentObserver.observe(c));
 }
 
@@ -604,25 +483,17 @@ function manageMemory(activeCard) {
   cards.forEach((c, i) => {
     const vid = c.querySelector('video');
     if (!vid) return;
-    if (Math.abs(i - activeIdx) <= 3) {
-      if (!vid.getAttribute('src') && c.dataset.src) { vid.setAttribute('src', c.dataset.src); vid.load(); }
-    } else {
-      if (vid.getAttribute('src')) { c.dataset.src = vid.getAttribute('src'); vid.removeAttribute('src'); vid.load(); }
-    }
+    if (Math.abs(i - activeIdx) <= 3) { if (!vid.getAttribute('src') && c.dataset.src) { vid.setAttribute('src', c.dataset.src); vid.load(); } }
+    else { if (vid.getAttribute('src')) { c.dataset.src = vid.getAttribute('src'); vid.removeAttribute('src'); vid.load(); } }
   });
 }
 
 async function registerView(vidId) {
   if (!vidId || vidId.startsWith('temp_') || viewedSessionSet.has(vidId)) return;
   viewedSessionSet.add(vidId);
-  const viewerKey = isGuest
-    ? (localStorage.getItem('ut_guest_id') || (() => { const id = 'g_' + Math.random().toString(36).slice(2); localStorage.setItem('ut_guest_id', id); return id; })())
-    : currentUser.id;
+  const viewerKey = isGuest ? (localStorage.getItem('ut_guest_id') || (() => { const id = 'g_' + Math.random().toString(36).slice(2); localStorage.setItem('ut_guest_id', id); return id; })()) : currentUser.id;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/register_unique_view`, {
-      method: 'POST', headers,
-      body: JSON.stringify({ p_viewer_id: viewerKey, p_video_id: vidId })
-    });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/register_unique_view`, { method: 'POST', headers, body: JSON.stringify({ p_viewer_id: viewerKey, p_video_id: vidId }) });
     if (res.ok) {
       const newViews = await res.json();
       const card = document.querySelector(`.video-card[data-id="${vidId}"]`);
@@ -634,28 +505,42 @@ async function registerView(vidId) {
   } catch (e) {}
 }
 
-async function handleLike(vidId, btn, cntEl, data) {
+async function handleLike(vidId, btn, cntEl) {
   if (isGuest) return openSheet('guestSheet');
   if (vidId.startsWith('temp_')) return showToast('Дождитесь завершения загрузки');
+  if (likeLocks.has(vidId)) return;
+  const lockTimer = setTimeout(() => likeLocks.delete(vidId), 8000);
+  likeLocks.set(vidId, lockTimer);
+
   haptic('medium');
   const wasLiked = likedSet.has(vidId);
   const item = allVideos.find(x => String(x.id) === vidId);
   let cur = Number(item?.likes || 0);
+
   if (wasLiked) { likedSet.delete(vidId); btn.classList.remove('liked'); cur = Math.max(0, cur - 1); }
   else { likedSet.add(vidId); btn.classList.add('liked'); cur += 1; }
   if (cntEl) cntEl.textContent = formatNum(cur);
   if (item) item.likes = cur;
+
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`, {
-      method: 'POST', headers,
-      body: JSON.stringify({ p_user_id: currentUser.id, p_video_id: vidId })
-    });
-    if (res.ok) {
-      const d = await res.json();
-      if (cntEl) cntEl.textContent = formatNum(d.likes);
-      if (item) item.likes = d.likes;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`, { method: 'POST', headers, body: JSON.stringify({ p_user_id: currentUser.id, p_video_id: vidId }) });
+    if (!res.ok) throw new Error('RPC ' + res.status);
+    const d = await res.json();
+    if (typeof d.likes === 'number') { if (cntEl) cntEl.textContent = formatNum(d.likes); if (item) item.likes = d.likes; }
+    if (typeof d.liked === 'boolean') {
+      if (d.liked) { likedSet.add(vidId); btn.classList.add('liked'); }
+      else { likedSet.delete(vidId); btn.classList.remove('liked'); }
     }
-  } catch (e) {}
+  } catch (e) {
+    if (wasLiked) { likedSet.add(vidId); btn.classList.add('liked'); cur += 1; }
+    else { likedSet.delete(vidId); btn.classList.remove('liked'); cur = Math.max(0, cur - 1); }
+    if (cntEl) cntEl.textContent = formatNum(cur);
+    if (item) item.likes = cur;
+    showToast('Не удалось поставить лайк');
+  } finally {
+    clearTimeout(lockTimer);
+    likeLocks.delete(vidId);
+  }
 }
 
 async function handleSub(authorId, btn) {
@@ -665,16 +550,13 @@ async function handleSub(authorId, btn) {
   if (wasSub) { subsSet.delete(authorId); btn.classList.remove('subscribed'); btn.textContent = 'Подписаться'; }
   else { subsSet.add(authorId); btn.classList.add('subscribed'); btn.textContent = 'Вы подписаны'; }
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_user_sub`, {
-      method: 'POST', headers,
-      body: JSON.stringify({ p_follower_id: currentUser.id, p_author_id: authorId })
-    });
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_user_sub`, { method: 'POST', headers, body: JSON.stringify({ p_follower_id: currentUser.id, p_author_id: authorId }) });
   } catch (e) {}
 }
 
-function setMuted(muted) {
-  isMuted = muted;
-  document.querySelectorAll('.video-card video').forEach(v => v.muted = muted);
+function enableSound() {
+  userWantsSound = true;
+  document.querySelectorAll('.video-card video').forEach(v => v.muted = false);
 }
 
 function switchFeedTab(tab) {
@@ -689,15 +571,8 @@ function switchMainView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('topBar').style.display = view === 'feed' ? 'flex' : 'none';
-  if (view === 'feed') {
-    document.getElementById('feedView').classList.add('active');
-    document.getElementById('navFeed').classList.add('active');
-  } else {
-    document.getElementById('profileView').classList.add('active');
-    document.getElementById('navProfile').classList.add('active');
-    document.querySelectorAll('.video-card video').forEach(v => v.pause());
-    renderProfile();
-  }
+  if (view === 'feed') { document.getElementById('feedView').classList.add('active'); document.getElementById('navFeed').classList.add('active'); }
+  else { document.getElementById('profileView').classList.add('active'); document.getElementById('navProfile').classList.add('active'); document.querySelectorAll('.video-card video').forEach(v => v.pause()); renderProfile(); }
 }
 
 function renderProfile() {
@@ -708,45 +583,30 @@ function renderProfile() {
   const av = document.getElementById('profAvatar');
   if (currentUser.photo) av.innerHTML = `<img src="${currentUser.photo}" alt="">`;
   else av.innerHTML = `<div>${(currentUser.name.replace('@','')[0] || 'G').toUpperCase()}</div>`;
-
   const myVideos = isGuest ? [] : allVideos.filter(v => String(v.author_id || v.user_id) === currentUser.id && !brokenVideoIds.has(String(v.id)));
   const totalViews = myVideos.reduce((a, v) => a + (Number(v.views) || 0), 0);
   const totalLikes = myVideos.reduce((a, v) => a + (Number(v.likes) || 0), 0);
   document.getElementById('statVideos').textContent = formatNum(myVideos.length);
-  document.getElementById('statViews').textContent  = formatNum(totalViews);
-  document.getElementById('statLikes').textContent  = formatNum(totalLikes);
-
+  document.getElementById('statViews').textContent = formatNum(totalViews);
+  document.getElementById('statLikes').textContent = formatNum(totalLikes);
   const grid = document.getElementById('profileGrid');
   if (isGuest) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px 10px">
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Войдите через Telegram-бота, чтобы видеть свои ролики и статистику</p>
-      <button class="btn-main" id="btnLoginInline">Войти через @${BOT_USERNAME}</button>
-    </div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px 10px"><p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Войдите через Telegram-бота, чтобы видеть свои ролики и статистику</p><button class="btn-main" id="btnLoginInline">Войти через @${BOT_USERNAME}</button></div>`;
     document.getElementById('btnLoginInline').addEventListener('click', openBotAuth);
     return;
   }
-  if (!myVideos.length) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);font-size:13px;padding:30px 0">У вас пока нет опубликованных видео</div>`;
-    return;
-  }
+  if (!myVideos.length) { grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);font-size:13px;padding:30px 0">У вас пока нет опубликованных видео</div>`; return; }
   grid.innerHTML = '';
   myVideos.forEach(v => {
     const item = document.createElement('div');
     item.className = 'grid-item';
-    item.innerHTML = `<video src="${v.video_url}" preload="metadata" muted playsinline></video>
-      <div class="grid-views">👁 ${formatNum(v.views)}</div>
-      <button class="delete-btn" title="Удалить">×</button>`;
+    item.innerHTML = `<video src="${v.video_url}" preload="metadata" muted playsinline></video><div class="grid-views">👁 ${formatNum(v.views)}</div><button class="delete-btn" title="Удалить">×</button>`;
     item.addEventListener('click', () => {
       const idx = allVideos.findIndex(x => String(x.id) === String(v.id));
       if (idx > 0) { const [m] = allVideos.splice(idx, 1); allVideos.unshift(m); }
-      switchMainView('feed');
-      renderFeed();
+      switchMainView('feed'); renderFeed();
     });
-    item.querySelector('.delete-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      pendingDelete = { id: v.id, video_url: v.video_url };
-      openSheet('deleteSheet');
-    });
+    item.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); pendingDelete = { id: v.id, video_url: v.video_url }; openSheet('deleteSheet'); });
     grid.appendChild(item);
   });
 }
@@ -754,21 +614,14 @@ function renderProfile() {
 async function doDeleteVideo() {
   if (!pendingDelete) return;
   const v = pendingDelete;
-  closeSheet('deleteSheet');
-  haptic('heavy');
+  closeSheet('deleteSheet'); haptic('heavy');
   allVideos = allVideos.filter(x => String(x.id) !== String(v.id));
   renderProfile();
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(v.id)}`, { method: 'DELETE', headers });
     const fileName = (v.video_url || '').split('/').pop();
-    if (fileName) {
-      await fetch(`${SUPABASE_URL}/storage/v1/object/videos/${encodeURIComponent(fileName)}`, {
-        method: 'DELETE',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-      });
-    }
-    showToast('🗑 Видео удалено');
-    silentRefresh();
+    if (fileName) await fetch(`${SUPABASE_URL}/storage/v1/object/videos/${encodeURIComponent(fileName)}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+    showToast('🗑 Видео удалено'); silentRefresh();
   } catch (e) { showToast('Не удалось удалить полностью — обновите ленту'); }
   pendingDelete = null;
 }
@@ -783,10 +636,7 @@ function handleCreateClick() {
 }
 document.getElementById('navCreate').addEventListener('click', handleCreateClick);
 document.getElementById('videoFileInput').addEventListener('change', function () {
-  if (this.files && this.files[0]) {
-    selectedFile = this.files[0];
-    document.getElementById('fileLabel').textContent = `✅ ${selectedFile.name}`;
-  }
+  if (this.files && this.files[0]) { selectedFile = this.files[0]; document.getElementById('fileLabel').textContent = `✅ ${selectedFile.name}`; }
 });
 
 function uploadFileXHR(file, fileName, onProgress) {
@@ -820,64 +670,39 @@ async function publishVideoInstant() {
   const tempId = 'temp_' + Date.now();
   allVideos.unshift({ id: tempId, user_id: currentUser.id, author_id: Number(currentUser.id), author_name: currentUser.name, video_url: localBlobUrl, description: desc, likes: 0, views: 1 });
   closeSheet('uploadSheet'); switchMainView('feed'); renderFeed(); haptic('heavy');
-
-  const banner = document.getElementById('uploadBanner');
-  const fill = document.getElementById('uploadFill');
-  const pctTxt = document.getElementById('uploadPercent');
+  const banner = document.getElementById('uploadBanner'), fill = document.getElementById('uploadFill'), pctTxt = document.getElementById('uploadPercent');
   banner.style.display = 'flex'; fill.style.width = '5%'; pctTxt.textContent = '5%';
-
   try {
     const ext = (file.name.split('.').pop() || 'mp4').replace(/[^a-z0-9]/gi, '') || 'mp4';
     const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
     const publicUrl = await uploadFileXHR(file, fileName, (pct) => { fill.style.width = `${pct}%`; pctTxt.textContent = `${pct}%`; });
-
     let savedRow = null;
     const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?video_url=eq.${encodeURIComponent(publicUrl)}&select=*`, { headers });
     const existing = checkRes.ok ? await checkRes.json() : [];
     if (existing.length > 0) {
-      const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${existing[0].id}`, {
-        method: 'PATCH', headers: { ...headers, 'Prefer': 'return=representation' },
-        body: JSON.stringify({ author_name: currentUser.name, description: desc })
-      });
-      const patched = patchRes.ok ? await patchRes.json() : [];
-      savedRow = patched[0] || existing[0];
+      const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${existing[0].id}`, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=representation' }, body: JSON.stringify({ author_name: currentUser.name, description: desc }) });
+      const patched = patchRes.ok ? await patchRes.json() : []; savedRow = patched[0] || existing[0];
     } else {
-      const insRes = await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
-        method: 'POST', headers: { ...headers, 'Prefer': 'return=representation' },
-        body: JSON.stringify({ user_id: currentUser.id, author_id: Number(currentUser.id), author_name: currentUser.name, video_url: publicUrl, description: desc, likes: 0, views: 0 })
-      });
-      const inserted = insRes.ok ? await insRes.json() : [];
-      savedRow = inserted[0] || null;
+      const insRes = await fetch(`${SUPABASE_URL}/rest/v1/videos`, { method: 'POST', headers: { ...headers, 'Prefer': 'return=representation' }, body: JSON.stringify({ user_id: currentUser.id, author_id: Number(currentUser.id), author_name: currentUser.name, video_url: publicUrl, description: desc, likes: 0, views: 0 }) });
+      const inserted = insRes.ok ? await insRes.json() : []; savedRow = inserted[0] || null;
     }
-    if (savedRow) {
-      const idx = allVideos.findIndex(x => x.id === tempId);
-      if (idx !== -1) allVideos[idx] = savedRow;
-      URL.revokeObjectURL(localBlobUrl);
-      renderFeed();
-    }
+    if (savedRow) { const idx = allVideos.findIndex(x => x.id === tempId); if (idx !== -1) allVideos[idx] = savedRow; URL.revokeObjectURL(localBlobUrl); renderFeed(); }
     showToast('✅ Видео опубликовано');
   } catch (err) {
     showToast('Ошибка загрузки (проверьте VPN)');
-    allVideos = allVideos.filter(x => x.id !== tempId);
-    renderFeed();
-  } finally {
-    setTimeout(() => { banner.style.display = 'none'; fill.style.width = '0%'; }, 1000);
-  }
+    allVideos = allVideos.filter(x => x.id !== tempId); renderFeed();
+  } finally { setTimeout(() => { banner.style.display = 'none'; fill.style.width = '0%'; }, 1000); }
 }
 document.getElementById('btnPublish').addEventListener('click', publishVideoInstant);
 
 async function openComments(vidId) {
-  const listEl = document.getElementById('commentsList');
-  const inputArea = document.getElementById('commentInputArea');
+  const listEl = document.getElementById('commentsList'), inputArea = document.getElementById('commentInputArea');
   listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">Загрузка...</div>';
   if (isGuest) {
     inputArea.innerHTML = `<button class="btn-main" id="btnCommentLogin">Войти через Telegram, чтобы написать</button>`;
     document.getElementById('btnCommentLogin').addEventListener('click', () => { closeSheet('commentsSheet'); openSheet('guestSheet'); });
   } else {
-    inputArea.innerHTML = `<div class="comment-form">
-      <input type="text" id="newCommentInput" placeholder="Написать комментарий...">
-      <button class="comment-send" id="btnSendComment">➤</button>
-    </div>`;
+    inputArea.innerHTML = `<div class="comment-form"><input type="text" id="newCommentInput" placeholder="Написать комментарий..."><button class="comment-send" id="btnSendComment">➤</button></div>`;
     document.getElementById('btnSendComment').addEventListener('click', () => sendComment(vidId));
     document.getElementById('newCommentInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendComment(vidId); });
   }
@@ -896,17 +721,12 @@ async function sendComment(vidId) {
   if (!inp) return;
   const text = inp.value.trim();
   if (!text) return;
-  inp.value = '';
-  haptic('light');
+  inp.value = ''; haptic('light');
   const listEl = document.getElementById('commentsList');
   if (listEl.textContent.includes('Комментариев пока нет')) listEl.innerHTML = '';
   listEl.insertAdjacentHTML('afterbegin', `<div class="comment-item"><div class="comment-author">${escapeHtml(currentUser.name)}</div><div class="comment-text">${escapeHtml(text)}</div></div>`);
-  try {
-    await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
-      method: 'POST', headers,
-      body: JSON.stringify({ video_id: vidId, user_id: currentUser.id, author_name: currentUser.name, text })
-    });
-  } catch (e) { showToast('Не отправлено — попробуйте ещё раз'); }
+  try { await fetch(`${SUPABASE_URL}/rest/v1/comments`, { method: 'POST', headers, body: JSON.stringify({ video_id: vidId, user_id: currentUser.id, author_name: currentUser.name, text }) }); }
+  catch (e) { showToast('Не отправлено — попробуйте ещё раз'); }
 }
 
 function openShare(v) { activeShareVideo = v; openSheet('shareSheet'); }
@@ -914,15 +734,7 @@ function getDirectVideoLink() { return activeShareVideo ? `${BOT_APP_URL}?starta
 document.getElementById('btnShareStory').addEventListener('click', () => {
   closeSheet('shareSheet');
   const link = getDirectVideoLink();
-  if (tg?.shareToStory) {
-    try {
-      tg.shareToStory(activeShareVideo.url, {
-        text: activeShareVideo.desc ? `${activeShareVideo.desc} — смотри в Undertow` : 'Смотри это видео в Undertow 🔥',
-        widget_link: { url: link, name: 'Смотреть в Undertow' }
-      });
-      return;
-    } catch (e) {}
-  }
+  if (tg?.shareToStory) { try { tg.shareToStory(activeShareVideo.url, { text: activeShareVideo.desc ? `${activeShareVideo.desc} — смотри в Undertow` : 'Смотри это видео в Undertow 🔥', widget_link: { url: link, name: 'Смотреть в Undertow' } }); return; } catch (e) {} }
   navigator.clipboard?.writeText(link);
   showToast('Ссылка скопирована — вставьте в Историю');
 });
@@ -933,25 +745,17 @@ document.getElementById('btnShareChat').addEventListener('click', () => {
   if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl);
   else window.open(shareUrl, '_blank');
 });
-document.getElementById('btnCopyLink').addEventListener('click', () => {
-  closeSheet('shareSheet');
-  navigator.clipboard?.writeText(getDirectVideoLink());
-  showToast('🔗 Ссылка на ролик скопирована');
-});
+document.getElementById('btnCopyLink').addEventListener('click', () => { closeSheet('shareSheet'); navigator.clipboard?.writeText(getDirectVideoLink()); showToast('🔗 Ссылка на ролик скопирована'); });
 
-function openBotAuth() {
-  if (tg?.openTelegramLink) tg.openTelegramLink(BOT_APP_URL);
-  else window.open(BOT_APP_URL, '_blank');
-}
+function openBotAuth() { if (tg?.openTelegramLink) tg.openTelegramLink(BOT_APP_URL); else window.open(BOT_APP_URL, '_blank'); }
 document.getElementById('btnOpenBot').addEventListener('click', openBotAuth);
 
 async function refreshFeed() {
   const btn = document.getElementById('refreshBtn');
-  btn.classList.add('spinning');
-  haptic('light');
+  btn.classList.add('spinning'); haptic('light');
   try {
-    brokenVideoIds.clear(); // даём битым шанс на перезагрузку
-    await fetchVideos();
+    brokenVideoIds.clear();
+    await Promise.all([fetchVideos(), loadUserRelations()]);
     renderFeed();
     showToast('Лента обновлена');
   } catch (e) { showToast('Не удалось обновить ленту'); }
@@ -964,8 +768,9 @@ document.getElementById('tabAll').addEventListener('click', () => switchFeedTab(
 document.getElementById('tabSubs').addEventListener('click', () => switchFeedTab('subs'));
 document.getElementById('refreshBtn').addEventListener('click', refreshFeed);
 
-// Автоматическое включение звука при первом жесте пользователя
-document.addEventListener('pointerdown', () => setMuted(false), { once: true, passive: true });
+document.addEventListener('pointerdown', () => {
+  if (!userWantsSound) enableSound();
+}, { passive: true });
 
 function spawnHeart(container, x, y) {
   const h = document.createElement('div');
@@ -982,7 +787,6 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 (async function init() {
   try { await Promise.all([syncUserProfile(), loadUserRelations(), fetchVideos()]); } catch (e) {}
   renderFeed();
-  setMuted(true);
   startPolling();
   setTimeout(() => document.getElementById('splash').classList.add('hidden'), 280);
 })();
