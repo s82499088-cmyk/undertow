@@ -7,125 +7,131 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg: #07080c;
-            --surface: #12141d;
-            --glass: rgba(18, 20, 29, 0.72);
+            --bg: #07090e;
+            --surface: rgba(20, 24, 34, 0.85);
+            --surface-solid: #141822;
             --border: rgba(255, 255, 255, 0.1);
-            --accent: #00d2ff;
-            --accent-grad: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
-            --like: #ff2b55;
+            --primary: #00d2ff;
+            --accent: #3a7bd5;
+            --danger: #ff2b54;
             --text: #ffffff;
-            --muted: #8e95a5;
+            --muted: #8b95a5;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         body, html { width: 100%; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; user-select: none; }
 
-        /* Верхняя стеклянная панель */
+        /* Splash Screen (убирает чёрный экран при запуске) */
+        #splash {
+            position: fixed; inset: 0; z-index: 100;
+            background: radial-gradient(circle at 50% 35%, #11223a 0%, var(--bg) 70%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+        }
+        #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .splash-logo {
+            width: 72px; height: 72px; border-radius: 22px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 12px 35px rgba(0, 210, 255, 0.35);
+            animation: pulseLogo 1.5s infinite ease-in-out;
+        }
+        .splash-title { font-size: 24px; font-weight: 800; letter-spacing: 0.5px; background: linear-gradient(90deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        @keyframes pulseLogo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+        /* Верхняя панель */
         .top-bar {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 25;
-            padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
-            display: flex; align-items: center; justify-content: space-between;
-            background: linear-gradient(180deg, rgba(7,8,12,0.85) 0%, rgba(7,8,12,0) 100%);
-            pointer-events: none;
+            position: fixed; top: calc(var(--safe-top) + var(--tg-content-safe-area-inset-top, 0px) + 10px);
+            left: 14px; right: 14px; z-index: 25;
+            display: flex; align-items: center; justify-content: space-between; pointer-events: none;
         }
         .top-bar > * { pointer-events: auto; }
-        .brand {
-            font-weight: 800; font-size: 18px; letter-spacing: -0.5px;
-            background: var(--accent-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .tabs-pill {
-            display: flex; background: var(--glass); backdrop-filter: blur(14px);
-            border: 1px solid var(--border); border-radius: 20px; padding: 3px;
+        .tabs-capsule {
+            display: flex; background: rgba(12, 15, 22, 0.65); backdrop-filter: blur(14px);
+            padding: 4px; border-radius: 20px; border: 1px solid var(--border);
         }
         .tab-btn {
             background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600;
             padding: 6px 14px; border-radius: 16px; cursor: pointer; transition: 0.2s;
         }
-        .tab-btn.active { background: rgba(255,255,255,0.14); color: #fff; }
+        .tab-btn.active { background: rgba(255, 255, 255, 0.14); color: #fff; }
         .top-actions { display: flex; gap: 8px; }
         .icon-circle {
-            width: 34px; height: 34px; border-radius: 50%; background: var(--glass);
-            backdrop-filter: blur(14px); border: 1px solid var(--border);
-            color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;
+            width: 36px; height: 36px; border-radius: 50%; background: rgba(12, 15, 22, 0.65);
+            backdrop-filter: blur(14px); border: 1px solid var(--border); color: #fff;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-        .icon-circle:active { transform: scale(0.92); }
 
-        /* Кнопка новых видео */
-        .new-pill {
-            position: fixed; top: calc(64px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
-            z-index: 26; background: var(--accent-grad); color: #fff; border: none;
-            padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700;
-            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.35); display: none; cursor: pointer;
+        /* Уведомление / прогресс загрузки */
+        .toast {
+            position: fixed; top: calc(var(--safe-top) + var(--tg-content-safe-area-inset-top, 0px) + 58px);
+            left: 50%; transform: translateX(-50%) translateY(-20px); opacity: 0;
+            background: rgba(20, 26, 38, 0.92); backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 210, 255, 0.3); color: #fff;
+            padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 500;
+            z-index: 50; transition: 0.25s; pointer-events: none; white-space: nowrap;
         }
-        .new-pill.show { display: block; animation: popDown 0.25s ease; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-        /* Основная лента */
-        .view { width: 100%; height: 100vh; display: none; }
-        .view.active { display: block; }
-
-        .feed {
-            width: 100%; height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory;
-            scrollbar-width: none; background: #000;
-        }
+        /* Лента */
+        .feed { width: 100%; height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
         .feed::-webkit-scrollbar { display: none; }
-
         .video-card {
             position: relative; width: 100%; height: 100vh; scroll-snap-align: start;
-            background: #050608; display: flex; align-items: center; justify-content: center; overflow: hidden;
+            background: #05070a; display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
-
-        .card-gradient {
-            position: absolute; inset: 0; pointer-events: none;
-            background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, transparent 25%, transparent 60%, rgba(0,0,0,0.88) 100%);
+        .gradient-bottom {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 42%;
+            background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.35) 55%, transparent 100%);
+            pointer-events: none; z-index: 5;
         }
 
-        /* Индикатор паузы и двойного тапа */
-        .pause-badge {
+        /* Пауза и сердечко */
+        .pause-indicator {
             position: absolute; width: 64px; height: 64px; border-radius: 50%;
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); border: 1px solid var(--border);
-            display: none; align-items: center; justify-content: center; pointer-events: none;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transform: scale(0.8); transition: 0.2s; pointer-events: none; z-index: 8;
         }
-        .pause-badge.show { display: flex; }
-
+        .pause-indicator.visible { opacity: 1; transform: scale(1); }
         .heart-burst {
-            position: absolute; font-size: 76px; pointer-events: none;
-            animation: heartPop 0.75s cubic-bezier(0.17, 0.89, 0.32, 1.49) forwards;
+            position: absolute; font-size: 74px; pointer-events: none; z-index: 15;
+            animation: burst 0.7s ease-out forwards;
         }
-        @keyframes heartPop {
-            0% { transform: scale(0.2); opacity: 0; }
-            40% { transform: scale(1.2); opacity: 1; }
+        @keyframes burst {
+            0% { transform: scale(0.4); opacity: 0.9; }
+            50% { transform: scale(1.2); opacity: 1; }
             100% { transform: scale(1.5); opacity: 0; }
         }
 
-        /* Информация об авторе снизу */
+        /* Инфо об авторе */
         .video-info {
-            position: absolute; bottom: calc(78px + env(safe-area-inset-bottom)); left: 16px; right: 78px; z-index: 10;
+            position: absolute; bottom: calc(74px + var(--safe-bottom)); left: 14px; right: 76px; z-index: 10;
         }
         .author-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .avatar-ring {
-            width: 38px; height: 38px; border-radius: 50%; padding: 2px;
-            background: var(--accent-grad); flex-shrink: 0;
-        }
-        .avatar-inner {
-            width: 100%; height: 100%; border-radius: 50%; background: #181b26;
-            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+        .avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;
+            border: 1.5px solid rgba(255,255,255,0.4); flex-shrink: 0;
         }
         .author-name { font-weight: 700; font-size: 15px; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
         .sub-btn {
-            background: var(--accent-grad); color: #fff; border: none;
-            padding: 5px 13px; border-radius: 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+            background: var(--primary); color: #000; border: none; padding: 5px 12px;
+            border-radius: 14px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;
         }
-        .sub-btn.subscribed { background: rgba(255,255,255,0.16); backdrop-filter: blur(8px); }
-        .video-desc {
-            font-size: 14px; line-height: 1.4; color: rgba(255,255,255,0.92);
-            text-shadow: 0 1px 3px rgba(0,0,0,0.85); word-break: break-word;
+        .sub-btn.subscribed { background: rgba(255, 255, 255, 0.18); color: #fff; backdrop-filter: blur(8px); }
+        .video-desc { font-size: 14px; line-height: 1.35; color: rgba(255,255,255,0.92); word-break: break-word; }
+        .local-badge {
+            display: inline-block; background: rgba(0, 210, 255, 0.2); border: 1px solid var(--primary);
+            color: var(--primary); font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-bottom: 6px;
         }
 
         /* Правая панель действий */
         .actions {
-            position: absolute; bottom: calc(82px + env(safe-area-inset-bottom)); right: 12px; z-index: 10;
+            position: absolute; bottom: calc(78px + var(--safe-bottom)); right: 12px; z-index: 10;
             display: flex; flex-direction: column; gap: 16px; align-items: center;
         }
         .action-btn {
@@ -133,287 +139,277 @@
             align-items: center; gap: 4px; cursor: pointer;
         }
         .action-icon {
-            width: 44px; height: 44px; border-radius: 50%; background: var(--glass);
-            backdrop-filter: blur(12px); border: 1px solid var(--border);
+            width: 44px; height: 44px; border-radius: 50%; background: rgba(15, 19, 28, 0.6);
+            backdrop-filter: blur(10px); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center; transition: 0.15s;
         }
         .action-btn:active .action-icon { transform: scale(0.9); }
-        .action-btn.liked .action-icon { background: rgba(255, 43, 85, 0.22); border-color: var(--like); color: var(--like); }
+        .action-btn.liked .action-icon { background: rgba(255, 43, 84, 0.22); border-color: var(--danger); color: var(--danger); }
         .action-count { font-size: 12px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
 
-        /* Интерактивный прогресс-бар */
+        /* Прогресс-бар видео */
         .progress-wrap {
-            position: absolute; bottom: calc(60px + env(safe-area-inset-bottom)); left: 0; right: 0;
-            height: 14px; z-index: 15; display: flex; align-items: flex-end; cursor: pointer;
+            position: absolute; bottom: calc(60px + var(--safe-bottom)); left: 0; right: 0; height: 14px;
+            display: flex; align-items: flex-end; z-index: 15; cursor: pointer;
         }
         .progress-bg { width: 100%; height: 3px; background: rgba(255,255,255,0.2); }
-        .progress-fill { height: 100%; width: 0%; background: var(--accent); box-shadow: 0 0 8px var(--accent); transition: width 0.1s linear; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), #fff); transition: width 0.1s linear; }
 
         /* Нижняя навигация */
         .bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            height: calc(60px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
-            background: rgba(7, 8, 12, 0.92); backdrop-filter: blur(18px);
-            border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 25;
+            position: fixed; bottom: 0; left: 0; right: 0; height: calc(60px + var(--safe-bottom));
+            padding-bottom: var(--safe-bottom); background: rgba(10, 12, 18, 0.92);
+            backdrop-filter: blur(16px); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: center; z-index: 25;
         }
         .nav-item {
             background: none; border: none; color: var(--muted); font-size: 11px; font-weight: 600;
-            display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 72px;
+            display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
         }
         .nav-item.active { color: #fff; }
         .add-btn {
-            width: 46px; height: 32px; border-radius: 10px; background: var(--accent-grad);
-            display: flex; align-items: center; justify-content: center; color: #fff;
+            width: 46px; height: 32px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center; color: #000;
             box-shadow: 0 4px 14px rgba(0, 210, 255, 0.35);
         }
 
-        /* Экран Профиля */
+        /* Экран профиля */
         .profile-view {
-            padding: calc(64px + env(safe-area-inset-top)) 16px calc(80px + env(safe-area-inset-bottom));
-            overflow-y: auto; height: 100vh;
-            background: radial-gradient(circle at 50% 0%, rgba(0, 210, 255, 0.14) 0%, var(--bg) 55%);
+            display: none; position: fixed; inset: 0; bottom: calc(60px + var(--safe-bottom));
+            background: var(--bg); z-index: 20; overflow-y: auto;
+            padding: calc(var(--safe-top) + var(--tg-content-safe-area-inset-top, 0px) + 20px) 16px 24px;
         }
-        .profile-header { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 20px; }
+        .profile-view.active { display: block; }
+        .profile-header {
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            padding: 20px; background: var(--surface-solid); border-radius: 20px; border: 1px solid var(--border); margin-bottom: 16px;
+        }
         .profile-avatar {
-            width: 82px; height: 82px; border-radius: 50%; padding: 3px;
-            background: var(--accent-grad); margin-bottom: 12px;
+            width: 76px; height: 76px; border-radius: 50%; margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800;
+            overflow: hidden; border: 2px solid var(--primary);
         }
-        .profile-avatar img, .profile-avatar div {
-            width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
-            background: var(--surface); display: flex; align-items: center; justify-content: center;
-            font-size: 28px; font-weight: 800;
-        }
-        .profile-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
-        .profile-badge {
-            font-size: 12px; padding: 4px 10px; border-radius: 12px;
-            background: rgba(0, 210, 255, 0.14); color: var(--accent); font-weight: 600;
-        }
-        .profile-badge.guest { background: rgba(255, 170, 0, 0.15); color: #ffaa00; }
-
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 22px;
-        }
-        .stat-box {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-            padding: 12px 8px; text-align: center;
-        }
-        .stat-val { font-size: 18px; font-weight: 800; color: #fff; }
-        .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-        .section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: #fff; }
-        .videos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-stats { display: flex; gap: 24px; margin-top: 16px; }
+        .stat-box { display: flex; flex-direction: column; align-items: center; }
+        .stat-val { font-size: 18px; font-weight: 800; }
+        .stat-lbl { font-size: 12px; color: var(--muted); }
+        .video-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .grid-item {
-            position: relative; aspect-ratio: 9 / 16; border-radius: 10px; overflow: hidden;
-            background: var(--surface); border: 1px solid var(--border); cursor: pointer;
+            aspect-ratio: 9/16; background: #141822; border-radius: 10px; overflow: hidden;
+            position: relative; cursor: pointer; border: 1px solid var(--border);
         }
         .grid-item video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
         .grid-views {
             position: absolute; bottom: 6px; left: 6px; font-size: 11px; font-weight: 700;
             background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 6px;
         }
-        .grid-del {
-            position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%;
-            background: rgba(255, 43, 85, 0.85); border: none; color: #fff; font-size: 12px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-        }
 
         /* Выезжающие шторки (Bottom Sheets) */
         .sheet-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-            z-index: 40; display: none; align-items: flex-end;
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px); z-index: 40; align-items: flex-end; justify-content: center;
         }
         .sheet-overlay.open { display: flex; }
-        .sheet-box {
-            width: 100%; max-height: 82vh; background: var(--surface);
-            border-top: 1px solid var(--border); border-radius: 22px 22px 0 0;
-            padding: 16px 18px calc(20px + env(safe-area-inset-bottom));
-            display: flex; flex-direction: column; gap: 14px; animation: slideUp 0.25s ease;
+        .sheet {
+            width: 100%; max-width: 480px; background: var(--surface-solid);
+            border-top-left-radius: 24px; border-top-right-radius: 24px;
+            border-top: 1px solid var(--border); padding: 16px 18px calc(20px + var(--safe-bottom));
+            display: flex; flex-direction: column; gap: 14px; max-height: 82vh;
+            animation: slideUp 0.25s ease-out;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .sheet-handle { width: 38px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); margin: 0 auto 4px; }
-        .sheet-title { font-size: 17px; font-weight: 800; text-align: center; }
+        .sheet-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: 0 auto 4px; }
+        .sheet-title { font-size: 17px; font-weight: 700; text-align: center; }
 
         .file-drop {
-            border: 1.5px dashed rgba(0, 210, 255, 0.45); border-radius: 14px; padding: 20px;
-            text-align: center; background: rgba(0, 210, 255, 0.05); cursor: pointer;
+            border: 1.5px dashed rgba(0, 210, 255, 0.45); background: rgba(0, 210, 255, 0.06);
+            border-radius: 16px; padding: 22px 16px; text-align: center; cursor: pointer;
         }
-        .input-field {
+        input, textarea {
             width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border);
             background: rgba(255,255,255,0.06); color: #fff; font-size: 14px; outline: none;
         }
         .btn-main {
-            width: 100%; padding: 13px; border-radius: 13px; border: none;
-            background: var(--accent-grad); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+            background: linear-gradient(135deg, var(--primary), var(--accent)); color: #000;
+            border: none; padding: 13px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer;
         }
-        .btn-main:disabled { opacity: 0.5; }
         .btn-sec {
-            width: 100%; padding: 12px; border-radius: 13px; border: 1px solid var(--border);
-            background: rgba(255,255,255,0.06); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+            background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border);
+            padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
 
         /* Комментарии */
-        .comments-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; min-height: 160px; max-height: 48vh; }
-        .comment-item { background: rgba(255,255,255,0.05); padding: 10px 12px; border-radius: 12px; }
-        .comment-author { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 3px; }
+        .comments-list { overflow-y: auto; max-height: 45vh; display: flex; flex-direction: column; gap: 12px; padding-right: 4px; }
+        .comment-item { background: rgba(255,255,255,0.04); padding: 10px 12px; border-radius: 12px; }
+        .comment-author { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 3px; }
         .comment-text { font-size: 14px; line-height: 1.35; }
-        .comment-form { display: flex; gap: 8px; }
-
-        /* Уведомление Toast */
-        .toast {
-            position: fixed; top: calc(58px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
-            background: rgba(24, 27, 38, 0.95); border: 1px solid var(--border);
-            padding: 9px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
-            z-index: 60; display: none; white-space: nowrap;
-        }
-        .toast.show { display: block; }
-        .empty-state {
-            height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 30px; color: var(--muted); gap: 12px;
-        }
+        .comment-form { display: flex; gap: 8px; margin-top: 4px; }
     </style>
 </head>
 <body>
 
+    <!-- Экран загрузки (без чёрного экрана) -->
+    <div id="splash">
+        <div class="splash-logo">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </div>
+        <div class="splash-title">Undertow</div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
-    <!-- Верхняя панель (только для ленты) -->
+    <!-- Верхняя панель -->
     <div class="top-bar" id="topBar">
-        <div class="brand">Undertow</div>
-        <div class="tabs-pill">
-            <button class="tab-btn active" id="tabAll" onclick="switchFeedTab('all')">Для вас</button>
-            <button class="tab-btn" id="tabSubs" onclick="switchFeedTab('subs')">Подписки</button>
+        <div class="tabs-capsule">
+            <button class="tab-btn active" id="tabForYou" onclick="switchTab('all')">Для вас</button>
+            <button class="tab-btn" id="tabSubs" onclick="switchTab('subs')">Подписки</button>
         </div>
         <div class="top-actions">
             <button class="icon-circle" onclick="toggleMute()" id="muteBtn" title="Звук">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
             </button>
-            <button class="icon-circle" onclick="manualRefresh()" title="Обновить">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            <button class="icon-circle" onclick="refreshFeed()" title="Обновить">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
             </button>
         </div>
     </div>
 
-    <button class="new-pill" id="newPill" onclick="applyPendingVideos()">⬆️ Появились новые видео</button>
+    <!-- Вертикальная лента -->
+    <div class="feed" id="feed"></div>
 
-    <!-- Вкладка 1: Лента -->
-    <div class="view active" id="feedView">
-        <div class="feed" id="feed"></div>
+    <!-- Профиль -->
+    <div class="profile-view" id="profileView">
+        <div class="profile-header">
+            <div class="profile-avatar" id="profAvatar">U</div>
+            <div style="font-size: 18px; font-weight: 800;" id="profName">Гость</div>
+            <div style="font-size: 12px; color: var(--primary); margin-top: 4px;" id="profStatus">Режим просмотра</div>
+            <div class="profile-stats">
+                <div class="stat-box"><span class="stat-val" id="statVideos">0</span><span class="stat-lbl">Видео</span></div>
+                <div class="stat-box"><span class="stat-val" id="statViews">0</span><span class="stat-lbl">Просмотров</span></div>
+                <div class="stat-box"><span class="stat-val" id="statLikes">0</span><span class="stat-lbl">Лайков</span></div>
+            </div>
+            <button class="btn-main" id="profLoginBtn" style="margin-top: 14px; width: 100%; display: none;" onclick="openBot()">Войти через Telegram</button>
+        </div>
+        <div style="font-size: 15px; font-weight: 700; margin-bottom: 10px;">Мои публикации</div>
+        <div class="video-grid" id="profileGrid"></div>
     </div>
 
-    <!-- Вкладка 2: Профиль -->
-    <div class="view" id="profileView">
-        <div class="profile-view" id="profileContent"></div>
-    </div>
-
-    <!-- Нижняя навигация -->
+    <!-- Нижнее меню -->
     <div class="bottom-nav">
-        <button class="nav-item active" id="navFeed" onclick="switchMainTab('feed')">
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+        <button class="nav-item active" id="navHome" onclick="showScreen('feed')">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
             <span>Лента</span>
         </button>
-        <button class="nav-item" onclick="handleUploadClick()">
+        <button class="nav-item" onclick="handleAddClick()">
             <div class="add-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </div>
         </button>
-        <button class="nav-item" id="navProfile" onclick="switchMainTab('profile')">
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <button class="nav-item" id="navProfile" onclick="showScreen('profile')">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <span>Профиль</span>
         </button>
     </div>
 
-    <!-- Шторка загрузки видео -->
-    <div class="sheet-overlay" id="uploadSheet" onclick="closeSheetOnBg(event, 'uploadSheet')">
-        <div class="sheet-box">
+    <!-- Шторка публикации видео -->
+    <div class="sheet-overlay" id="uploadSheet" onclick="if(event.target===this) closeSheet('uploadSheet')">
+        <div class="sheet">
             <div class="sheet-handle"></div>
             <div class="sheet-title">Опубликовать видео</div>
             <label class="file-drop" for="videoFile">
-                <div style="font-size:28px; margin-bottom:6px;">🎬</div>
-                <div id="fileLabel" style="font-weight:700; font-size:14px;">Выбрать видеофайл с устройства</div>
-                <div style="font-size:12px; color:var(--muted); margin-top:4px;">MP4, MOV или WebM до 50 МБ</div>
+                <div style="font-weight: 700; color: var(--primary); margin-bottom: 4px;" id="fileLabel">📁 Выбрать видео с устройства</div>
+                <div style="font-size: 12px; color: var(--muted);">Мгновенная публикация в ленту • MP4, MOV, WebM</div>
                 <input type="file" id="videoFile" accept="video/*" style="display:none" onchange="onFilePicked(this)">
             </label>
-            <input type="url" class="input-field" id="videoUrlInput" placeholder="Или вставьте прямую ссылку на .mp4">
-            <textarea class="input-field" id="videoDescInput" rows="2" placeholder="Описание ролика..."></textarea>
-            <button class="btn-main" id="publishBtn" onclick="publishVideo()">Опубликовать в ленту</button>
+            <input type="url" id="videoUrlInput" placeholder="Или вставьте прямую ссылку на .mp4">
+            <textarea id="videoDescInput" rows="2" placeholder="Добавьте описание к ролику..."></textarea>
+            <button class="btn-main" onclick="publishInstant()">Опубликовать мгновенно</button>
             <button class="btn-sec" onclick="closeSheet('uploadSheet')">Отмена</button>
         </div>
     </div>
 
     <!-- Шторка комментариев -->
-    <div class="sheet-overlay" id="commentsSheet" onclick="closeSheetOnBg(event, 'commentsSheet')">
-        <div class="sheet-box">
+    <div class="sheet-overlay" id="commentsSheet" onclick="if(event.target===this) closeSheet('commentsSheet')">
+        <div class="sheet">
             <div class="sheet-handle"></div>
-            <div class="sheet-title" id="commentsTitle">Комментарии</div>
+            <div class="sheet-title">Комментарии</div>
             <div class="comments-list" id="commentsList"></div>
-            <div id="commentInputArea"></div>
+            <div class="comment-form" id="commentFormWrap">
+                <input type="text" id="commentInput" placeholder="Написать комментарий..." maxlength="300">
+                <button class="btn-main" style="padding: 0 16px;" onclick="sendComment()">➤</button>
+            </div>
+            <button class="btn-main" id="commentGuestBtn" style="display:none;" onclick="openBot()">Войти через Telegram, чтобы писать</button>
+        </div>
+    </div>
+
+    <!-- Шторка репоста (в Истории и в чаты) -->
+    <div class="sheet-overlay" id="shareSheet" onclick="if(event.target===this) closeSheet('shareSheet')">
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-title">Поделиться роликом</div>
+            <button class="btn-main" onclick="shareToTgStory()">✨ Опубликовать в Историю Telegram</button>
+            <button class="btn-sec" onclick="shareToTgChat()">✈️ Отправить в чат или другу</button>
+            <button class="btn-sec" onclick="copyVideoLink()">🔗 Скопировать прямую ссылку</button>
         </div>
     </div>
 
     <!-- Шторка для гостей -->
-    <div class="sheet-overlay" id="guestSheet" onclick="closeSheetOnBg(event, 'guestSheet')">
-        <div class="sheet-box" style="text-align:center;">
+    <div class="sheet-overlay" id="guestSheet" onclick="if(event.target===this) closeSheet('guestSheet')">
+        <div class="sheet">
             <div class="sheet-handle"></div>
-            <div style="font-size:36px;">🔒</div>
-            <div class="sheet-title">Доступно в Telegram</div>
-            <div style="font-size:14px; color:var(--muted); line-height:1.45;">
-                В режиме гостя доступен только просмотр ленты. Откройте приложение через бота <b>@undertow_vids_bot</b>, чтобы ставить лайки, подписываться, комментировать и выкладывать видео.
+            <div class="sheet-title">Только для пользователей Telegram</div>
+            <div style="text-align: center; font-size: 14px; color: var(--muted); line-height: 1.4;">
+                Гости могут свободно смотреть ленту и читать комментарии. Чтобы ставить лайки, подписываться и загружать видео, откройте Undertow через бота.
             </div>
-            <button class="btn-main" onclick="openBot()">Войти через Telegram</button>
-            <button class="btn-sec" onclick="closeSheet('guestSheet')">Продолжить как гость</button>
+            <button class="btn-main" onclick="openBot()">Открыть в @undertow_vids_bot</button>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://pgnqjobutdlaxtjrrxio.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
+        const SUPABASE_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
         const BOT_LINK = 'https://t.me/undertow_vids_bot/app';
 
         const tg = window.Telegram?.WebApp;
         if (tg) {
             tg.ready();
             tg.expand();
-            if (tg.setHeaderColor) tg.setHeaderColor('#07080c');
-            if (tg.setBackgroundColor) tg.setBackgroundColor('#07080c');
+            if (tg.setHeaderColor) tg.setHeaderColor('#07090e');
+            if (tg.setBackgroundColor) tg.setBackgroundColor('#07090e');
         }
 
         const tgUser = tg?.initDataUnsafe?.user || null;
         const isGuest = !tgUser;
-        const currentUser = tgUser ? {
-            id: Number(tgUser.id),
-            name: tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Пользователь'),
-            fullName: [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Пользователь',
-            photo: tgUser.photo_url || null
-        } : {
-            id: 0,
-            name: 'Гость',
-            fullName: 'Гость (только просмотр)',
-            photo: null
-        };
+        const userId = tgUser ? String(tgUser.id) : null;
+        const userName = tgUser ? (tgUser.username ? `@${tgUser.username}` : tgUser.first_name) : 'Гость';
 
         let allVideos = [];
-        let pendingVideos = null;
-        let currentFeedTab = 'all';
+        let likedSet = new Set();
+        let subsSet = new Set();
+        let viewedSet = new Set();
         let isMuted = false;
-        let activeCommentVideoId = null;
-        let viewedSession = new Set();
-        let viewTimers = {};
+        let currentTab = 'all';
+        let activeVideo = null;
+        let pageOffset = 0;
+        const PAGE_SIZE = 10;
+        let isLoadingMore = false;
+        let hasMore = true;
+        let actionLock = false;
 
-        const headers = {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
-        };
-
-        function haptic(type = 'light') {
-            try { tg?.HapticFeedback?.impactOccurred(type); } catch(e) {}
-        }
-
-        function showToast(msg) {
+        function showToast(msg, duration = 2600) {
             const el = document.getElementById('toast');
             el.textContent = msg;
             el.classList.add('show');
-            setTimeout(() => el.classList.remove('show'), 2400);
+            clearTimeout(el._t);
+            el._t = setTimeout(() => el.classList.remove('show'), duration);
+        }
+
+        function haptic(type = 'light') {
+            try { tg?.HapticFeedback?.impactOccurred(type); } catch (e) {}
         }
 
         function openBot() {
@@ -423,170 +419,142 @@
 
         function openSheet(id) { document.getElementById(id).classList.add('open'); }
         function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
-        function closeSheetOnBg(e, id) { if (e.target.id === id) closeSheet(id); }
 
-        function requireAuth() {
-            if (isGuest) {
-                haptic('medium');
-                openSheet('guestSheet');
-                return false;
-            }
-            return true;
+        async function apiFetch(path, options = {}) {
+            const headers = {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            };
+            const res = await fetch(`${SUPABASE_URL}${path}`, { ...options, headers });
+            if (!res.ok) throw new Error(await res.text());
+            const text = await res.text();
+            return text ? JSON.parse(text) : null;
         }
 
-        // Синхронизация пользователя в таблице users
-        async function syncUserRecord() {
+        async function loadUserState() {
             if (isGuest) return;
             try {
-                await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-                    method: 'POST',
-                    headers: { ...headers, 'Prefer': 'resolution=ignore-duplicates' },
-                    body: JSON.stringify({ user_id: String(currentUser.id), username: currentUser.name })
-                });
-            } catch(e) {}
+                const [likes, subs, views] = await Promise.all([
+                    apiFetch(`/rest/v1/video_likes?user_id=eq.${userId}&select=video_id`),
+                    apiFetch(`/rest/v1/user_subs?follower_id=eq.${userId}&select=author_id`),
+                    apiFetch(`/rest/v1/video_views?viewer_id=eq.${userId}&select=video_id`)
+                ]);
+                likedSet = new Set((likes || []).map(x => String(x.video_id)));
+                subsSet = new Set((subs || []).map(x => String(x.author_id)));
+                viewedSet = new Set((views || []).map(x => String(x.video_id)));
+            } catch (e) { console.warn('State sync:', e); }
         }
 
         function getStartVideoId() {
-            const startParam = tg?.initDataUnsafe?.start_param || new URLSearchParams(window.location.search).get('tgWebAppStartParam') || new URLSearchParams(window.location.search).get('v');
-            if (!startParam) return null;
-            return startParam.startsWith('v_') ? startParam.slice(2) : startParam;
+            const param = tg?.initDataUnsafe?.start_param || new URLSearchParams(location.search).get('startapp') || '';
+            return param.startsWith('v_') ? param.slice(2) : null;
         }
 
-        async function fetchVideos(isBackground = false) {
+        async function fetchVideos(reset = false) {
+            if (isLoadingMore || (!hasMore && !reset)) return;
+            isLoadingMore = true;
+            if (reset) { pageOffset = 0; hasMore = true; }
+
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=created_at.desc`, { headers });
-                const data = await res.json();
-                if (!Array.isArray(data)) return;
+                const startId = reset ? getStartVideoId() : null;
+                let data = await apiFetch(`/rest/v1/videos?select=*&video_url=not.is.null&order=created_at.desc&limit=${PAGE_SIZE}&offset=${pageOffset}`);
+                data = data || [];
 
-                const valid = data.filter(v => v.video_url);
-                const targetId = getStartVideoId();
-                if (targetId) {
-                    const idx = valid.findIndex(v => String(v.id) === String(targetId));
-                    if (idx > 0) {
-                        const [item] = valid.splice(idx, 1);
-                        valid.unshift(item);
+                if (startId && reset) {
+                    const target = await apiFetch(`/rest/v1/videos?id=eq.${startId}&select=*`);
+                    if (target && target.length) {
+                        data = [target[0], ...data.filter(v => String(v.id) !== String(target[0].id))];
                     }
                 }
 
-                if (!isBackground || allVideos.length === 0) {
-                    allVideos = valid;
-                    renderFeed();
-                    renderProfile();
-                } else if (valid.length > 0 && valid[0]?.id !== allVideos[0]?.id) {
-                    const feedEl = document.getElementById('feed');
-                    if (feedEl.scrollTop < 80) {
-                        allVideos = valid;
-                        renderFeed();
-                        renderProfile();
-                    } else {
-                        pendingVideos = valid;
-                        document.getElementById('newPill').classList.add('show');
-                    }
+                if (data.length < PAGE_SIZE) hasMore = false;
+                pageOffset += data.length;
+
+                if (reset) {
+                    const localPending = allVideos.filter(v => v._isLocal);
+                    allVideos = [...localPending, ...data];
                 } else {
-                    allVideos = valid;
-                    renderProfile();
+                    const existingIds = new Set(allVideos.map(v => String(v.id)));
+                    allVideos = [...allVideos, ...data.filter(v => !existingIds.has(String(v.id)))];
                 }
+                renderFeed();
+                updateProfile();
             } catch (e) {
-                if (!isBackground) showToast('Ошибка загрузки ленты');
+                console.error(e);
+            } finally {
+                isLoadingMore = false;
+                document.getElementById('splash').classList.add('hidden');
             }
-        }
-
-        function applyPendingVideos() {
-            if (!pendingVideos) return;
-            allVideos = pendingVideos;
-            pendingVideos = null;
-            document.getElementById('newPill').classList.remove('show');
-            renderFeed();
-            document.getElementById('feed').scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function manualRefresh() {
-            haptic('light');
-            showToast('Обновление ленты...');
-            fetchVideos(false);
-        }
-
-        function formatNum(n) {
-            n = Number(n || 0);
-            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-            return String(n);
         }
 
         function renderFeed() {
             const feed = document.getElementById('feed');
-            const subs = JSON.parse(localStorage.getItem('ut_subs') || '[]');
-            const liked = JSON.parse(localStorage.getItem('ut_likes') || '[]');
+            const list = currentTab === 'subs'
+                ? allVideos.filter(v => subsSet.has(String(v.author_id)))
+                : allVideos;
 
-            let list = allVideos;
-            if (currentFeedTab === 'subs') {
-                list = allVideos.filter(v => subs.includes(Number(v.author_id || v.user_id)));
-            }
-
-            if (list.length === 0) {
-                feed.innerHTML = `
-                    <div class="empty-state">
-                        <div style="font-size:42px;">🌊</div>
-                        <div style="font-weight:700; color:#fff; font-size:16px;">
-                            ${currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста'}
-                        </div>
-                        <div style="font-size:13px;">
-                            ${currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первый ролик'}
-                        </div>
-                    </div>`;
+            if (!list.length) {
+                feed.innerHTML = `<div class="video-card" style="flex-direction:column;gap:12px;padding:24px;text-align:center;">
+                    <div style="font-size:16px;font-weight:700;">Пока нет видео</div>
+                    <div style="font-size:13px;color:var(--muted);">Нажмите «+» снизу, чтобы опубликовать первый ролик</div>
+                </div>`;
                 return;
             }
 
             feed.innerHTML = '';
-            list.forEach(v => {
+            list.forEach((v, idx) => {
                 const vid = String(v.id);
-                const aid = Number(v.author_id || v.user_id || 0);
-                const aname = v.author_name || '@user';
-                const isSub = !isGuest && subs.includes(aid);
-                const isLiked = !isGuest && liked.includes(vid);
-                const isOwn = !isGuest && aid === currentUser.id;
+                const aid = String(v.author_id || '');
+                const isLiked = likedSet.has(vid);
+                const isSub = subsSet.has(aid);
+                const isOwn = userId && aid === userId;
+                const letter = (v.author_name || 'U').replace('@', '')[0]?.toUpperCase() || 'U';
 
                 const card = document.createElement('div');
                 card.className = 'video-card';
-                card.dataset.vid = vid;
+                card.dataset.id = vid;
+                card.dataset.src = v.video_url;
                 card.innerHTML = `
-                    <video src="${v.video_url}" loop playsinline ${isMuted ? 'muted' : ''}></video>
-                    <div class="card-gradient"></div>
-                    <div class="pause-badge">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    <video src="${idx < 3 ? v.video_url : ''}" loop playsinline preload="${idx === 0 ? 'auto' : 'metadata'}" ${isMuted ? 'muted' : ''}></video>
+                    <div class="gradient-bottom"></div>
+                    <div class="pause-indicator">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                     </div>
                     <div class="video-info">
+                        ${v._isLocal ? '<div class="local-badge">⏳ Сохраняется в облако...</div>' : ''}
                         <div class="author-row">
-                            <div class="avatar-ring"><div class="avatar-inner">${aname.replace('@','')[0]?.toUpperCase() || 'U'}</div></div>
-                            <span class="author-name">${aname}</span>
-                            ${!isOwn ? `<button class="sub-btn ${isSub ? 'subscribed' : ''}" onclick="toggleSub(event, ${aid}, this)">${isSub ? 'Вы подписаны' : 'Подписаться'}</button>` : ''}
+                            <div class="avatar">${letter}</div>
+                            <span class="author-name">${v.author_name || '@user'}</span>
+                            ${(!isOwn && aid) ? `<button class="sub-btn ${isSub ? 'subscribed' : ''}" onclick="handleSub('${aid}', this)">${isSub ? 'Вы подписаны' : 'Подписаться'}</button>` : ''}
                         </div>
                         <div class="video-desc">${v.description || ''}</div>
                     </div>
                     <div class="actions">
-                        <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike(event, '${vid}', this)">
+                        <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="handleLike('${vid}', this)">
                             <div class="action-icon">
-                                <svg width="21" height="21" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                             </div>
-                            <span class="action-count">${formatNum(v.likes)}</span>
+                            <span class="action-count">${v.likes || 0}</span>
                         </button>
-                        <button class="action-btn" onclick="openComments(event, '${vid}')">
+                        <button class="action-btn" onclick="openComments('${vid}')">
                             <div class="action-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                             </div>
                             <span class="action-count">Чат</span>
                         </button>
-                        <button class="action-btn" onclick="shareVideo(event, '${vid}', '${aname.replace(/'/g, '')}')">
+                        <button class="action-btn" onclick="openShare('${vid}')">
                             <div class="action-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                             </div>
                             <span class="action-count">Репост</span>
                         </button>
                         <div class="action-btn" style="cursor:default;">
-                            <div class="action-icon" style="width:38px; height:38px; background:rgba(0,0,0,0.35);">
-                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <div class="action-icon" style="width:38px;height:38px;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                             </div>
-                            <span class="action-count" id="views-${vid}">${formatNum(v.views)}</span>
+                            <span class="action-count" id="views-${vid}">${v.views || 0}</span>
                         </div>
                     </div>
                     <div class="progress-wrap" onclick="seekVideo(event, this)">
@@ -595,13 +563,11 @@
                 `;
 
                 const videoEl = card.querySelector('video');
-                const pauseBadge = card.querySelector('.pause-badge');
-                const progressFill = card.querySelector('.progress-fill');
+                const pauseEl = card.querySelector('.pause-indicator');
+                const fillEl = card.querySelector('.progress-fill');
 
                 videoEl.addEventListener('timeupdate', () => {
-                    if (videoEl.duration) {
-                        progressFill.style.width = `${(videoEl.currentTime / videoEl.duration) * 100}%`;
-                    }
+                    if (videoEl.duration) fillEl.style.width = `${(videoEl.currentTime / videoEl.duration) * 100}%`;
                 });
 
                 let lastTap = 0;
@@ -609,15 +575,17 @@
                     if (e.target.closest('button') || e.target.closest('.progress-wrap')) return;
                     const now = Date.now();
                     if (now - lastTap < 280) {
-                        triggerDoubleTapLike(card, vid);
+                        const heart = document.createElement('div');
+                        heart.className = 'heart-burst';
+                        heart.textContent = '❤️';
+                        heart.style.left = `${e.clientX - 35}px`;
+                        heart.style.top = `${e.clientY - 35}px`;
+                        card.appendChild(heart);
+                        setTimeout(() => heart.remove(), 750);
+                        if (!likedSet.has(vid)) handleLike(vid, card.querySelector('.action-btn'));
                     } else {
-                        if (videoEl.paused) {
-                            videoEl.play().catch(()=>{});
-                            pauseBadge.classList.remove('show');
-                        } else {
-                            videoEl.pause();
-                            pauseBadge.classList.add('show');
-                        }
+                        if (videoEl.paused) { videoEl.play().catch(()=>{}); pauseEl.classList.remove('visible'); }
+                        else { videoEl.pause(); pauseEl.classList.add('visible'); }
                     }
                     lastTap = now;
                 });
@@ -628,395 +596,412 @@
             setupObserver();
         }
 
-        function seekVideo(e, wrap) {
-            e.stopPropagation();
-            const card = wrap.closest('.video-card');
-            const video = card.querySelector('video');
-            if (!video.duration) return;
-            const rect = wrap.getBoundingClientRect();
-            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-            video.currentTime = pos * video.duration;
-        }
-
         function setupObserver() {
+            const cards = Array.from(document.querySelectorAll('.video-card'));
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     const card = entry.target;
                     const video = card.querySelector('video');
-                    const vid = card.dataset.vid;
+                    const vid = card.dataset.id;
+                    const idx = cards.indexOf(card);
+
                     if (entry.isIntersecting) {
+                        if (!video.getAttribute('src')) video.src = card.dataset.src;
                         video.muted = isMuted;
                         video.play().catch(() => {});
-                        card.querySelector('.pause-badge').classList.remove('show');
-                        if (!viewedSession.has(vid)) {
-                            viewTimers[vid] = setTimeout(() => registerView(vid), 1500);
-                        }
+                        card.querySelector('.pause-indicator')?.classList.remove('visible');
+
+                        // Подгрузка соседних и очистка старых (оптимизация под 1 млн юзеров)
+                        cards.forEach((c, i) => {
+                            const v = c.querySelector('video');
+                            if (Math.abs(i - idx) <= 2) {
+                                if (!v.getAttribute('src')) v.src = c.dataset.src;
+                            } else if (v.getAttribute('src')) {
+                                v.pause();
+                                v.removeAttribute('src');
+                                v.load();
+                            }
+                        });
+
+                        if (idx >= cards.length - 3) fetchVideos(false);
+
+                        // Уникальный просмотр (1 юзер = 1 просмотр в БД)
+                        clearTimeout(card._viewTimer);
+                        card._viewTimer = setTimeout(() => registerView(vid), 1500);
                     } else {
+                        clearTimeout(card._viewTimer);
                         video.pause();
-                        video.currentTime = 0;
-                        clearTimeout(viewTimers[vid]);
                     }
                 });
             }, { threshold: 0.65 });
 
-            document.querySelectorAll('.video-card').forEach(c => observer.observe(c));
+            cards.forEach(c => observer.observe(c));
         }
 
         async function registerView(vid) {
-            if (viewedSession.has(vid)) return;
-            viewedSession.add(vid);
-            const item = allVideos.find(v => String(v.id) === String(vid));
-            if (!item) return;
-            const nextViews = Number(item.views || 0) + 1;
-            item.views = nextViews;
-            const lbl = document.getElementById(`views-${vid}`);
-            if (lbl) lbl.textContent = formatNum(nextViews);
+            if (!vid || vid.startsWith('local_') || viewedSet.has(vid)) return;
+            const viewerKey = userId || ('guest_' + (localStorage.getItem('u_gid') || (() => { const g = Math.random().toString(36).slice(2); localStorage.setItem('u_gid', g); return g; })()));
+            viewedSet.add(vid);
             try {
-                await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${vid}`, {
-                    method: 'PATCH',
-                    headers,
-                    body: JSON.stringify({ views: nextViews })
+                const newViews = await apiFetch('/rest/v1/rpc/register_unique_view', {
+                    method: 'POST',
+                    body: JSON.stringify({ p_viewer_id: viewerKey, p_video_id: vid })
                 });
-            } catch(e) {}
+                const el = document.getElementById(`views-${vid}`);
+                if (el && typeof newViews === 'number') el.textContent = newViews;
+            } catch (e) { viewedSet.delete(vid); }
+        }
+
+        async function handleLike(vid, btn) {
+            if (isGuest) return openSheet('guestSheet');
+            if (actionLock || vid.startsWith('local_')) return;
+            actionLock = true;
+            haptic('medium');
+
+            const countEl = btn.querySelector('.action-count');
+            const svg = btn.querySelector('svg');
+            const wasLiked = likedSet.has(vid);
+            let cur = parseInt(countEl.textContent) || 0;
+
+            if (wasLiked) { likedSet.delete(vid); btn.classList.remove('liked'); svg.setAttribute('fill', 'none'); countEl.textContent = Math.max(0, cur - 1); }
+            else { likedSet.add(vid); btn.classList.add('liked'); svg.setAttribute('fill', 'currentColor'); countEl.textContent = cur + 1; }
+
+            try {
+                const res = await apiFetch('/rest/v1/rpc/toggle_video_like', {
+                    method: 'POST',
+                    body: JSON.stringify({ p_user_id: userId, p_video_id: vid })
+                });
+                if (res) {
+                    countEl.textContent = res.likes;
+                    if (res.liked) { likedSet.add(vid); btn.classList.add('liked'); svg.setAttribute('fill', 'currentColor'); }
+                    else { likedSet.delete(vid); btn.classList.remove('liked'); svg.setAttribute('fill', 'none'); }
+                }
+            } catch (e) { showToast('Ошибка сети'); }
+            finally { actionLock = false; }
+        }
+
+        async function handleSub(authorId, btn) {
+            if (isGuest) return openSheet('guestSheet');
+            if (actionLock) return;
+            actionLock = true;
+            haptic('light');
+
+            const wasSub = subsSet.has(authorId);
+            if (wasSub) { subsSet.delete(authorId); btn.textContent = 'Подписаться'; btn.classList.remove('subscribed'); }
+            else { subsSet.add(authorId); btn.textContent = 'Вы подписаны'; btn.classList.add('subscribed'); }
+
+            try {
+                await apiFetch('/rest/v1/rpc/toggle_user_sub', {
+                    method: 'POST',
+                    body: JSON.stringify({ p_follower_id: userId, p_author_id: authorId })
+                });
+            } catch (e) {}
+            finally { actionLock = false; }
+        }
+
+        function seekVideo(e, wrap) {
+            const video = wrap.closest('.video-card').querySelector('video');
+            if (!video.duration) return;
+            const rect = wrap.getBoundingClientRect();
+            video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
         }
 
         function toggleMute() {
             isMuted = !isMuted;
             document.querySelectorAll('video').forEach(v => v.muted = isMuted);
-            document.getElementById('muteBtn').style.opacity = isMuted ? '0.45' : '1';
-            showToast(isMuted ? 'Звук выключен' : 'Звук включён');
+            showToast(isMuted ? '🔇 Звук выключен' : '🔊 Звук включён', 1200);
         }
 
-        function triggerDoubleTapLike(card, vid) {
-            if (!requireAuth()) return;
-            const burst = document.createElement('div');
-            burst.className = 'heart-burst';
-            burst.textContent = '❤️';
-            card.appendChild(burst);
-            setTimeout(() => burst.remove(), 800);
-
-            const likeBtn = card.querySelector('.action-btn');
-            if (!likeBtn.classList.contains('liked')) {
-                toggleLike(null, vid, likeBtn);
-            }
-        }
-
-        async function toggleLike(e, vid, btn) {
-            if (e) e.stopPropagation();
-            if (!requireAuth()) return;
-            haptic('light');
-
-            let liked = JSON.parse(localStorage.getItem('ut_likes') || '[]');
-            const item = allVideos.find(v => String(v.id) === String(vid));
-            let count = Number(item?.likes || 0);
-
-            if (liked.includes(vid)) {
-                liked = liked.filter(x => x !== vid);
-                btn.classList.remove('liked');
-                btn.querySelector('svg').setAttribute('fill', 'none');
-                count = Math.max(0, count - 1);
-            } else {
-                liked.push(vid);
-                btn.classList.add('liked');
-                btn.querySelector('svg').setAttribute('fill', 'currentColor');
-                count += 1;
-            }
-            localStorage.setItem('ut_likes', JSON.stringify(liked));
-            if (item) item.likes = count;
-            btn.querySelector('.action-count').textContent = formatNum(count);
-
-            try {
-                await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${vid}`, {
-                    method: 'PATCH',
-                    headers,
-                    body: JSON.stringify({ likes: count })
-                });
-            } catch(err) {}
-        }
-
-        function toggleSub(e, authorId, btn) {
-            e.stopPropagation();
-            if (!requireAuth()) return;
-            haptic('light');
-            let subs = JSON.parse(localStorage.getItem('ut_subs') || '[]');
-            if (subs.includes(authorId)) {
-                subs = subs.filter(x => x !== authorId);
-                btn.textContent = 'Подписаться';
-                btn.classList.remove('subscribed');
-            } else {
-                subs.push(authorId);
-                btn.textContent = 'Вы подписаны';
-                btn.classList.add('subscribed');
-            }
-            localStorage.setItem('ut_subs', JSON.stringify(subs));
-        }
-
-        function switchFeedTab(tab) {
-            if (tab === 'subs' && !requireAuth()) return;
-            haptic('light');
-            currentFeedTab = tab;
-            document.getElementById('tabAll').classList.toggle('active', tab === 'all');
+        function switchTab(tab) {
+            if (tab === 'subs' && isGuest) return openSheet('guestSheet');
+            currentTab = tab;
+            document.getElementById('tabForYou').classList.toggle('active', tab === 'all');
             document.getElementById('tabSubs').classList.toggle('active', tab === 'subs');
             renderFeed();
         }
 
-        function switchMainTab(tab) {
+        function refreshFeed() {
             haptic('light');
-            document.getElementById('feedView').classList.toggle('active', tab === 'feed');
-            document.getElementById('profileView').classList.toggle('active', tab === 'profile');
-            document.getElementById('topBar').style.display = tab === 'feed' ? 'flex' : 'none';
-            document.getElementById('navFeed').classList.toggle('active', tab === 'feed');
-            document.getElementById('navProfile').classList.toggle('active', tab === 'profile');
+            showToast('Обновляем ленту...', 1200);
+            fetchVideos(true);
+        }
 
-            if (tab === 'profile') {
+        function showScreen(screen) {
+            document.getElementById('navHome').classList.toggle('active', screen === 'feed');
+            document.getElementById('navProfile').classList.toggle('active', screen === 'profile');
+            document.getElementById('profileView').classList.toggle('active', screen === 'profile');
+            document.getElementById('topBar').style.display = screen === 'feed' ? 'flex' : 'none';
+            if (screen === 'profile') {
                 document.querySelectorAll('video').forEach(v => v.pause());
-                renderProfile();
-            } else {
-                setupObserver();
+                updateProfile();
             }
         }
 
-        function handleUploadClick() {
-            if (!requireAuth()) return;
-            haptic('light');
+        function updateProfile() {
+            document.getElementById('profName').textContent = userName;
+            if (isGuest) {
+                document.getElementById('profStatus').textContent = 'Режим гостя (только просмотр)';
+                document.getElementById('profLoginBtn').style.display = 'block';
+                document.getElementById('profileGrid').innerHTML = '';
+                return;
+            }
+            document.getElementById('profStatus').textContent = 'Аккаунт Telegram подтверждён ✓';
+            const av = document.getElementById('profAvatar');
+            if (tgUser.photo_url) av.innerHTML = `<img src="${tgUser.photo_url}">`;
+            else av.textContent = (tgUser.first_name || 'U')[0].toUpperCase();
+
+            const myVids = allVideos.filter(v => String(v.author_id) === userId);
+            document.getElementById('statVideos').textContent = myVids.length;
+            document.getElementById('statViews').textContent = myVids.reduce((s, v) => s + (Number(v.views) || 0), 0);
+            document.getElementById('statLikes').textContent = myVids.reduce((s, v) => s + (Number(v.likes) || 0), 0);
+
+            const grid = document.getElementById('profileGrid');
+            grid.innerHTML = '';
+            myVids.forEach(v => {
+                const item = document.createElement('div');
+                item.className = 'grid-item';
+                item.innerHTML = `<video src="${v.video_url}#t=0.5" preload="metadata" muted></video><div class="grid-views">👁 ${v.views || 0}</div>`;
+                item.onclick = () => {
+                    allVideos = [v, ...allVideos.filter(x => String(x.id) !== String(v.id))];
+                    showScreen('feed');
+                    renderFeed();
+                };
+                grid.appendChild(item);
+            });
+        }
+
+        function handleAddClick() {
+            if (isGuest) return openSheet('guestSheet');
             openSheet('uploadSheet');
         }
 
         function onFilePicked(input) {
-            const file = input.files?.[0];
-            if (file) {
-                document.getElementById('fileLabel').textContent = `✅ Выбрано: ${file.name}`;
+            if (input.files?.[0]) {
+                document.getElementById('fileLabel').textContent = `✅ Выбрано: ${input.files[0].name}`;
             }
         }
 
-        async function publishVideo() {
-            if (!requireAuth()) return;
+        // Моментальная публикация (Optimistic UI + фоновый XHR upload)
+        async function publishInstant() {
             const file = document.getElementById('videoFile').files?.[0];
-            let finalUrl = document.getElementById('videoUrlInput').value.trim();
+            const directUrl = document.getElementById('videoUrlInput').value.trim();
             const desc = document.getElementById('videoDescInput').value.trim();
 
-            if (!file && !finalUrl) return showToast('Выберите видео или вставьте ссылку');
-            if (file && file.size > 50 * 1024 * 1024) return showToast('Файл больше 50 МБ');
+            if (!file && !directUrl) return showToast('Выберите видео или вставьте ссылку');
 
-            const btn = document.getElementById('publishBtn');
-            btn.disabled = true;
+            const tempId = 'local_' + Date.now();
+            const localPreviewUrl = file ? URL.createObjectURL(file) : directUrl;
 
+            const optimisticVideo = {
+                id: tempId,
+                author_id: userId,
+                user_id: userId,
+                author_name: userName,
+                description: desc,
+                video_url: localPreviewUrl,
+                likes: 0,
+                views: 0,
+                _isLocal: Boolean(file)
+            };
+
+            // 1. Мгновенно закрываем окно и ставим ролик первым в ленту
+            closeSheet('uploadSheet');
+            showScreen('feed');
+            allVideos.unshift(optimisticVideo);
+            renderFeed();
+            haptic('medium');
+            showToast('⚡ Видео опубликовано в ленту!');
+
+            document.getElementById('videoFile').value = '';
+            document.getElementById('fileLabel').textContent = '📁 Выбрать видео с устройства';
+            document.getElementById('videoUrlInput').value = '';
+            document.getElementById('videoDescInput').value = '';
+
+            // 2. Фоновая выгрузка файла в облако с прогрессом и автоповторами
             try {
+                let finalUrl = directUrl;
                 if (file) {
-                    btn.textContent = 'Загрузка в облако...';
-                    const ext = file.name.split('.').pop() || 'mp4';
-                    const path = `${currentUser.id}_${Date.now()}.${ext}`;
-                    const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/videos/${path}`, {
-                        method: 'POST',
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                            'Content-Type': file.type || 'video/mp4',
-                            'x-upsert': 'true'
-                        },
-                        body: file
-                    });
-                    if (!upRes.ok) {
-                        const errTxt = await upRes.text();
-                        throw new Error(`Storage: ${errTxt}`);
-                    }
-                    finalUrl = `${SUPABASE_URL}/storage/v1/object/public/videos/${path}`;
+                    const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+                    const path = `${userId}_${Date.now()}.${ext}`;
+                    finalUrl = await uploadFileXHR(file, path);
                 }
 
-                btn.textContent = 'Публикация в ленту...';
-                const payload = {
-                    user_id: String(currentUser.id),
-                    author_id: currentUser.id,
-                    author_name: currentUser.name,
-                    description: desc,
-                    video_url: finalUrl,
-                    likes: 0,
-                    views: 0
+                const inserted = await apiFetch('/rest/v1/videos', {
+                    method: 'POST',
+                    headers: { 'Prefer': 'return=representation' },
+                    body: JSON.stringify({
+                        author_id: Number(userId),
+                        user_id: userId,
+                        author_name: userName,
+                        description: desc,
+                        video_url: finalUrl,
+                        likes: 0,
+                        views: 0
+                    })
+                });
+
+                const idx = allVideos.findIndex(v => v.id === tempId);
+                if (idx !== -1 && inserted?.[0]) {
+                    allVideos[idx] = inserted[0];
+                    const badge = document.querySelector(`.video-card[data-id="${tempId}"] .local-badge`);
+                    if (badge) badge.remove();
+                    const card = document.querySelector(`.video-card[data-id="${tempId}"]`);
+                    if (card) card.dataset.id = String(inserted[0].id);
+                }
+                showToast('✅ Сохранено в облаке');
+                updateProfile();
+            } catch (err) {
+                console.error(err);
+                showToast('⚠️ Ошибка облака: проверьте интернет/VPN', 4000);
+            }
+        }
+
+        function uploadFileXHR(file, fileName, attempt = 1) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `${SUPABASE_URL}/storage/v1/object/videos/${fileName}`);
+                xhr.setRequestHeader('apikey', SUPABASE_KEY);
+                xhr.setRequestHeader('Authorization', `Bearer ${SUPABASE_KEY}`);
+                xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+                xhr.setRequestHeader('x-upsert', 'true');
+
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const pct = Math.round((e.loaded / e.total) * 100);
+                        showToast(`☁️ Загрузка в облако: ${pct}%`, 1500);
+                    }
                 };
 
-                const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
-                    method: 'POST',
-                    headers: { ...headers, 'Prefer': 'return=representation' },
-                    body: JSON.stringify(payload)
-                });
-                if (!dbRes.ok) {
-                    const errDb = await dbRes.text();
-                    throw new Error(`DB: ${errDb}`);
-                }
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(`${SUPABASE_URL}/storage/v1/object/public/videos/${fileName}`);
+                    } else if (attempt < 3) {
+                        setTimeout(() => uploadFileXHR(file, fileName, attempt + 1).then(resolve).catch(reject), 1200);
+                    } else {
+                        reject(new Error(xhr.responseText || 'Upload failed'));
+                    }
+                };
 
-                document.getElementById('videoFile').value = '';
-                document.getElementById('fileLabel').textContent = 'Выбрать видеофайл с устройства';
-                document.getElementById('videoUrlInput').value = '';
-                document.getElementById('videoDescInput').value = '';
-                closeSheet('uploadSheet');
-                showToast('Видео опубликовано!');
-                await fetchVideos(false);
-            } catch (err) {
-                alert('Ошибка загрузки: ' + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Опубликовать в ленту';
-            }
+                xhr.onerror = () => {
+                    if (attempt < 3) {
+                        setTimeout(() => uploadFileXHR(file, fileName, attempt + 1).then(resolve).catch(reject), 1200);
+                    } else {
+                        reject(new Error('Network error'));
+                    }
+                };
+
+                xhr.send(file);
+            });
         }
 
         // Комментарии
-        async function openComments(e, vid) {
-            e.stopPropagation();
-            activeCommentVideoId = vid;
-            openSheet('commentsSheet');
+        async function openComments(vid) {
+            activeVideo = allVideos.find(v => String(v.id) === String(vid));
+            document.getElementById('commentFormWrap').style.display = isGuest ? 'none' : 'flex';
+            document.getElementById('commentGuestBtn').style.display = isGuest ? 'block' : 'none';
             const listEl = document.getElementById('commentsList');
-            listEl.innerHTML = '<div style="text-align:center; color:var(--muted); padding:20px;">Загрузка...</div>';
-
-            const inputArea = document.getElementById('commentInputArea');
-            if (isGuest) {
-                inputArea.innerHTML = `<button class="btn-main" onclick="openBot()">Войти через Telegram, чтобы комментировать</button>`;
-            } else {
-                inputArea.innerHTML = `
-                    <div class="comment-form">
-                        <input type="text" class="input-field" id="commentInput" placeholder="Написать комментарий...">
-                        <button class="btn-main" style="width:auto; padding:0 16px;" onclick="sendComment()">➤</button>
-                    </div>`;
-            }
+            listEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:16px;">Загрузка...</div>';
+            openSheet('commentsSheet');
 
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${vid}&order=created_at.asc`, { headers });
-                const comments = await res.json();
-                document.getElementById('commentsTitle').textContent = `Комментарии (${comments.length || 0})`;
-                if (!comments.length) {
-                    listEl.innerHTML = '<div style="text-align:center; color:var(--muted); padding:24px;">Пока нет комментариев. Будьте первым!</div>';
-                } else {
-                    listEl.innerHTML = comments.map(c => `
-                        <div class="comment-item">
-                            <div class="comment-author">${c.author_name}</div>
-                            <div class="comment-text">${c.text}</div>
-                        </div>
-                    `).join('');
+                const rows = await apiFetch(`/rest/v1/comments?video_id=eq.${vid}&order=created_at.desc&limit=50`);
+                if (!rows || !rows.length) {
+                    listEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:16px;">Комментариев пока нет. Будьте первым!</div>';
+                    return;
                 }
-            } catch(err) {
-                listEl.innerHTML = '<div style="text-align:center; color:var(--muted);">Не удалось загрузить комментарии</div>';
+                listEl.innerHTML = rows.map(c => `
+                    <div class="comment-item">
+                        <div class="comment-author">${c.author_name}</div>
+                        <div class="comment-text">${c.text.replace(/</g, '&lt;')}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                listEl.innerHTML = '<div style="text-align:center;color:var(--muted);">Не удалось загрузить комментарии</div>';
             }
         }
 
         async function sendComment() {
-            if (!requireAuth() || !activeCommentVideoId) return;
-            const inp = document.getElementById('commentInput');
-            const text = inp.value.trim();
+            if (isGuest || !activeVideo) return;
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
             if (!text) return;
-            inp.value = '';
+            input.value = '';
+            haptic('light');
+
+            const listEl = document.getElementById('commentsList');
+            if (listEl.textContent.includes('Комментариев пока нет')) listEl.innerHTML = '';
+            listEl.insertAdjacentHTML('afterbegin', `
+                <div class="comment-item">
+                    <div class="comment-author">${userName}</div>
+                    <div class="comment-text">${text.replace(/</g, '&lt;')}</div>
+                </div>
+            `);
+
             try {
-                await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+                await apiFetch('/rest/v1/comments', {
                     method: 'POST',
-                    headers,
                     body: JSON.stringify({
-                        video_id: String(activeCommentVideoId),
-                        user_id: String(currentUser.id),
-                        author_name: currentUser.name,
+                        video_id: String(activeVideo.id),
+                        user_id: userId,
+                        author_name: userName,
                         text
                     })
                 });
-                openComments({ stopPropagation: ()=>{} }, activeCommentVideoId);
-            } catch(e) {
-                showToast('Ошибка отправки');
-            }
+            } catch (e) { showToast('Ошибка отправки комментария'); }
         }
 
-        function shareVideo(e, vid, author) {
-            e.stopPropagation();
-            haptic('light');
-            const link = `${BOT_LINK}?startapp=v_${vid}`;
-            const text = `Смотри видео от ${author} в Undertow!`;
-            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+        // Репосты (в Историю Telegram и в чаты)
+        function openShare(vid) {
+            activeVideo = allVideos.find(v => String(v.id) === String(vid));
+            openSheet('shareSheet');
+        }
+
+        function getDeepLink(vid) {
+            return `${BOT_LINK}?startapp=v_${vid}`;
+        }
+
+        function shareToTgStory() {
+            if (!activeVideo) return;
+            const link = getDeepLink(activeVideo.id);
+            closeSheet('shareSheet');
+
+            if (tg?.shareToStory && activeVideo.video_url.startsWith('http')) {
+                try {
+                    tg.shareToStory(activeVideo.video_url, {
+                        text: `${activeVideo.description || 'Смотри видео в Undertow!'} ${link}`,
+                        widget_link: { url: link, name: 'Смотреть в Undertow' }
+                    });
+                    return;
+                } catch (e) { console.warn(e); }
+            }
+            navigator.clipboard?.writeText(link);
+            showToast('📋 Ссылка скопирована — вставьте её в Историю Telegram!', 3200);
+        }
+
+        function shareToTgChat() {
+            if (!activeVideo) return;
+            const link = getDeepLink(activeVideo.id);
+            const text = encodeURIComponent(activeVideo.description || 'Смотри крутое видео в Undertow!');
+            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`;
+            closeSheet('shareSheet');
             if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl);
             else window.open(shareUrl, '_blank');
         }
 
-        // Профиль
-        function renderProfile() {
-            const box = document.getElementById('profileContent');
-            if (isGuest) {
-                box.innerHTML = `
-                    <div class="profile-header">
-                        <div class="profile-avatar"><div>👤</div></div>
-                        <div class="profile-name">Режим гостя</div>
-                        <div class="profile-badge guest">Только просмотр</div>
-                    </div>
-                    <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; text-align:center;">
-                        <p style="font-size:14px; color:var(--muted); line-height:1.5; margin-bottom:14px;">
-                            Войдите через официального бота <b>@undertow_vids_bot</b>, чтобы получить свой профиль, выкладывать ролики и собирать просмотры.
-                        </p>
-                        <button class="btn-main" onclick="openBot()">Открыть в Telegram</button>
-                    </div>`;
-                return;
-            }
-
-            const myVideos = allVideos.filter(v => Number(v.author_id || v.user_id) === currentUser.id);
-            const totalViews = myVideos.reduce((acc, v) => acc + Number(v.views || 0), 0);
-            const totalLikes = myVideos.reduce((acc, v) => acc + Number(v.likes || 0), 0);
-
-            box.innerHTML = `
-                <div class="profile-header">
-                    <div class="profile-avatar">
-                        ${currentUser.photo ? `<img src="${currentUser.photo}" alt="avatar">` : `<div>${currentUser.name.replace('@','')[0]?.toUpperCase() || 'U'}</div>`}
-                    </div>
-                    <div class="profile-name">${currentUser.name}</div>
-                    <div class="profile-badge">Аккаунт Telegram подтверждён</div>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-box"><div class="stat-val">${myVideos.length}</div><div class="stat-lbl">Видео</div></div>
-                    <div class="stat-box"><div class="stat-val">${formatNum(totalViews)}</div><div class="stat-lbl">Просмотры</div></div>
-                    <div class="stat-box"><div class="stat-val">${formatNum(totalLikes)}</div><div class="stat-lbl">Лайки</div></div>
-                </div>
-                <div class="section-title">Мои ролики (${myVideos.length})</div>
-                ${myVideos.length === 0
-                    ? `<div style="text-align:center; color:var(--muted); padding:30px 10px; font-size:14px;">У вас пока нет опубликованных видео. Нажмите <b>+</b> внизу, чтобы загрузить первый ролик!</div>`
-                    : `<div class="videos-grid">
-                        ${myVideos.map(v => `
-                            <div class="grid-item" onclick="playSpecificVideo('${v.id}')">
-                                <video src="${v.video_url}#t=0.5" preload="metadata" muted></video>
-                                <div class="grid-views">👁️ ${formatNum(v.views)}</div>
-                                <button class="grid-del" onclick="deleteMyVideo(event, '${v.id}')" title="Удалить">✕</button>
-                            </div>
-                        `).join('')}
-                       </div>`
-                }
-            `;
+        function copyVideoLink() {
+            if (!activeVideo) return;
+            const link = getDeepLink(activeVideo.id);
+            navigator.clipboard?.writeText(link);
+            closeSheet('shareSheet');
+            showToast('🔗 Ссылка на видео скопирована');
         }
 
-        function playSpecificVideo(vid) {
-            const idx = allVideos.findIndex(v => String(v.id) === String(vid));
-            if (idx > 0) {
-                const [item] = allVideos.splice(idx, 1);
-                allVideos.unshift(item);
-            }
-            currentFeedTab = 'all';
-            document.getElementById('tabAll').classList.add('active');
-            document.getElementById('tabSubs').classList.remove('active');
-            renderFeed();
-            switchMainTab('feed');
-            document.getElementById('feed').scrollTo({ top: 0 });
-        }
-
-        async function deleteMyVideo(e, vid) {
-            e.stopPropagation();
-            if (!confirm('Удалить это видео?')) return;
-            try {
-                await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${vid}`, {
-                    method: 'DELETE',
-                    headers
-                });
-                allVideos = allVideos.filter(v => String(v.id) !== String(vid));
-                renderProfile();
-                renderFeed();
-                showToast('Видео удалено');
-            } catch(err) {
-                showToast('Ошибка удаления');
-            }
-        }
-
-        // Инициализация
-        syncUserRecord();
-        fetchVideos(false);
-        setInterval(() => fetchVideos(true), 12000);
+        // Старт приложения
+        (async () => {
+            setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1800);
+            await loadUserState();
+            await fetchVideos(true);
+        })();
     </script>
 </body>
 </html>
