@@ -291,6 +291,7 @@ async function fetchVideos() {
 
   // Обработка глубоких ссылок (Deep Link)
   const startParam = tg?.initDataUnsafe?.start_param || new URLSearchParams(location.search).get('startapp');
+  
   if (startParam && startParam.startsWith('v_')) {
     const targetId = startParam.slice(2);
     let idx = allVideos.findIndex(v => String(v.id) === targetId);
@@ -732,6 +733,7 @@ async function publishVideoInstant() {
 document.getElementById('btnPublish').addEventListener('click', publishVideoInstant);
 
 async function openComments(vidId) {
+  if (!vidId || String(vidId).startsWith('temp_')) return showToast('Дождитесь завершения загрузки');
   const listEl = document.getElementById('commentsList'), inputArea = document.getElementById('commentInputArea');
   listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">Загрузка...</div>';
   if (isGuest) {
@@ -743,12 +745,19 @@ async function openComments(vidId) {
     document.getElementById('newCommentInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendComment(vidId); });
   }
   openSheet('commentsSheet');
+  
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${encodeURIComponent(vidId)}&order=created_at.desc&limit=50`, { headers });
-    const rows = res.ok ? await res.json() : [];
-    if (!rows.length) listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px">Комментариев пока нет. Будьте первым!</div>';
-    else listEl.innerHTML = rows.map(c => `<div class="comment-item"><div class="comment-author">${escapeHtml(c.author_name)}</div><div class="comment-text">${escapeHtml(c.text)}</div></div>`).join('');
-  } catch (e) {}
+    if (!res.ok) throw new Error('Ошибка загрузки комментариев');
+    const rows = await res.json();
+    if (!rows || !rows.length) {
+      listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px">Комментариев пока нет. Будьте первым!</div>';
+    } else {
+      listEl.innerHTML = rows.map(c => `<div class="comment-item"><div class="comment-author">${escapeHtml(c.author_name || 'Пользователь')}</div><div class="comment-text">${escapeHtml(c.text)}</div></div>`).join('');
+    }
+  } catch (e) {
+    listEl.innerHTML = '<div style="text-align:center;color:var(--accent-2);padding:24px">Не удалось загрузить комментарии</div>';
+  }
 }
 
 async function sendComment(vidId) {
@@ -761,8 +770,12 @@ async function sendComment(vidId) {
   const listEl = document.getElementById('commentsList');
   if (listEl.textContent.includes('Комментариев пока нет')) listEl.innerHTML = '';
   listEl.insertAdjacentHTML('afterbegin', `<div class="comment-item"><div class="comment-author">${escapeHtml(currentUser.name)}</div><div class="comment-text">${escapeHtml(text)}</div></div>`);
-  try { await fetch(`${SUPABASE_URL}/rest/v1/comments`, { method: 'POST', headers, body: JSON.stringify({ video_id: vidId, user_id: currentUser.id, author_name: currentUser.name, text }) }); }
-  catch (e) { showToast('Не отправлено — попробуйте ещё раз'); }
+  
+  try { 
+    await fetch(`${SUPABASE_URL}/rest/v1/comments`, { method: 'POST', headers, body: JSON.stringify({ video_id: vidId, user_id: currentUser.id, author_name: currentUser.name, text }) }); 
+  } catch (e) { 
+    showToast('Не отправлено — попробуйте ещё раз'); 
+  }
 }
 
 function openShare(v) { activeShareVideo = v; openSheet('shareSheet'); }
@@ -804,7 +817,6 @@ document.getElementById('tabAll').addEventListener('click', () => switchFeedTab(
 document.getElementById('tabSubs').addEventListener('click', () => switchFeedTab('subs'));
 document.getElementById('refreshBtn').addEventListener('click', refreshFeed);
 
-// Слушаем ЛЮБОЕ действие пользователя, чтобы принудительно включить звук
 document.addEventListener('pointerdown', enableSound, { passive: true });
 document.addEventListener('touchstart', enableSound, { passive: true });
 document.addEventListener('scroll', enableSound, { passive: true });
