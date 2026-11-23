@@ -5,282 +5,295 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Undertow</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         body, html { width: 100%; height: 100%; background: #000; color: #fff; overflow: hidden; }
         
-        /* Экраны (Вкладки) */
-        .screen { display: none; width: 100%; height: calc(100vh - 60px); overflow-y: auto; }
-        .screen.active { display: block; }
-        
-        /* Лента видео */
+        /* Экран входа через Telegram */
+        .auth-screen { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; gap: 20px; }
+        .auth-screen.hidden { display: none; }
+        .auth-logo { width: 80px; height: 80px; border-radius: 22px; background: linear-gradient(135deg, #0088cc, #00f2fe); display: flex; align-items: center; justify-content: center; font-size: 38px; box-shadow: 0 10px 30px rgba(0, 136, 204, 0.4); }
+        .auth-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+        .auth-sub { font-size: 14px; color: #8e8e93; max-width: 280px; line-height: 1.4; }
+        .tg-login-btn { background: #2481cc; color: #fff; border: none; padding: 14px 24px; border-radius: 14px; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; cursor: pointer; width: 100%; max-width: 280px; justify-content: center; transition: transform 0.1s; }
+        .tg-login-btn:active { transform: scale(0.97); }
+        .guest-btn { background: none; border: none; color: #666; font-size: 13px; cursor: pointer; margin-top: 8px; }
+
+        /* Вкладки (Лента / Профиль) */
+        .tab-view { display: none; width: 100%; height: calc(100vh - 60px); }
+        .tab-view.active { display: block; }
+
+        /* Вертикальная лента */
         .feed { width: 100%; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
         .feed::-webkit-scrollbar { display: none; }
-        .video-card { position: relative; width: 100%; height: calc(100vh - 60px); scroll-snap-align: start; background: #0a0a0a; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        
+        .video-card { position: relative; width: 100%; height: 100%; scroll-snap-align: start; background: #0a0a0a; display: flex; align-items: center; justify-content: center; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Информация поверх видео */
-        .video-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.3) 100%); pointer-events: none; }
-        .video-info { position: absolute; bottom: 20px; left: 15px; right: 75px; z-index: 10; }
-        .author-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-        .author-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(45deg, #00f2fe, #ff2b54); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
-        .author-name { font-weight: 700; font-size: 15px; text-shadow: 0 1px 2px #000; }
-        .promo-badge { background: linear-gradient(45deg, #f5af19, #f12711); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; text-transform: uppercase; }
-        .sub-btn { background: #ff2b54; color: #fff; border: none; padding: 5px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; }
-        .sub-btn.subscribed { background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
-        .video-desc { font-size: 14px; line-height: 1.35; color: #f1f1f1; text-shadow: 0 1px 2px #000; }
+        /* Информация о видео */
+        .video-info { position: absolute; bottom: 25px; left: 15px; right: 75px; z-index: 10; text-shadow: 0 1px 4px rgba(0,0,0,0.9); pointer-events: none; }
+        .author-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; pointer-events: auto; }
+        .author-name { font-weight: 700; font-size: 16px; }
+        .promo-badge { background: linear-gradient(45deg, #ffaa00, #ff5500); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 6px; text-transform: uppercase; }
+        .sub-btn { background: #ff2b54; color: #fff; border: none; padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .sub-btn.subscribed { background: rgba(255,255,255,0.22); backdrop-filter: blur(4px); }
+        .video-desc { font-size: 14px; line-height: 1.35; }
         
-        /* Кнопки справа */
-        .actions { position: absolute; bottom: 25px; right: 12px; z-index: 10; display: flex; flex-direction: column; gap: 18px; align-items: center; }
-        .action-btn { background: none; border: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
-        .action-icon { width: 44px; height: 44px; border-radius: 50%; background: rgba(25,25,25,0.65); display: flex; align-items: center; justify-content: center; font-size: 20px; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.1); transition: transform 0.15s; }
-        .action-btn:active .action-icon { transform: scale(0.9); }
-        .action-btn.liked .action-icon { background: rgba(255,43,84,0.25); border-color: #ff2b54; color: #ff2b54; }
-        .action-count { font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px #000; }
-
+        /* Правая панель действий */
+        .actions { position: absolute; bottom: 30px; right: 12px; z-index: 10; display: flex; flex-direction: column; gap: 18px; align-items: center; }
+        .action-btn { background: none; border: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+        .action-icon { width: 44px; height: 44px; border-radius: 50%; background: rgba(25,25,25,0.6); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 20px; backdrop-filter: blur(6px); }
+        .action-btn.liked .action-icon { color: #ff2b54; border-color: rgba(255,43,84,0.4); }
+        .action-count { font-size: 12px; font-weight: 600; }
+        
         /* Профиль */
-        .profile-container { padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; }
-        .profile-header { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px; background: #141416; border-radius: 20px; border: 1px solid #222; }
-        .big-avatar { width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, #00f2fe, #ff2b54); display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; overflow: hidden; }
-        .big-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-page { padding: 24px 16px; overflow-y: auto; background: #000; }
+        .profile-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 24px; padding-top: 10px; }
+        .avatar { width: 84px; height: 84px; border-radius: 50%; background: #222; object-fit: cover; border: 2px solid #2481cc; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; }
         .profile-name { font-size: 20px; font-weight: 700; }
-        .profile-tag { font-size: 13px; color: #888; }
-        .stats-row { display: flex; gap: 24px; margin-top: 6px; }
+        .profile-tag { font-size: 13px; color: #8e8e93; }
+        .stats-row { display: flex; gap: 24px; margin-top: 8px; background: #141416; padding: 12px 24px; border-radius: 16px; border: 1px solid #222; }
         .stat-box { text-align: center; }
-        .stat-val { font-size: 18px; font-weight: 700; }
-        .stat-lbl { font-size: 12px; color: #888; }
-        
-        .section-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
-        .my-videos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .grid-item { aspect-ratio: 9/16; background: #1c1c1e; border-radius: 10px; overflow: hidden; position: relative; }
+        .stat-num { font-size: 17px; font-weight: 700; }
+        .stat-label { font-size: 11px; color: #8e8e93; }
+        .my-videos-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: #ccc; }
+        .video-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .grid-item { aspect-ratio: 9/16; background: #1c1c1e; border-radius: 6px; overflow: hidden; position: relative; }
         .grid-item video { width: 100%; height: 100%; object-fit: cover; }
-        .grid-likes { position: absolute; bottom: 5px; left: 6px; font-size: 11px; font-weight: 600; text-shadow: 0 1px 2px #000; }
 
-        /* Нижняя навигация */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #09090b; border-top: 1px solid #1f1f22; display: flex; justify-content: space-around; align-items: center; z-index: 20; }
-        .nav-item { color: #71717a; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; background: none; border: none; width: 70px; }
+        /* Нижнее меню */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: rgba(10,10,10,0.95); border-top: 1px solid #1f1f1f; display: flex; justify-content: space-around; align-items: center; z-index: 20; }
+        .nav-item { color: #777; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; background: none; border: none; }
         .nav-item.active { color: #fff; font-weight: 600; }
-        .nav-icon { font-size: 20px; }
-        .add-btn { background: linear-gradient(45deg, #00f2fe, #ff2b54); width: 46px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; font-weight: bold; box-shadow: 0 2px 10px rgba(255,43,84,0.4); }
-
+        .nav-icon { font-size: 18px; }
+        .add-btn { background: linear-gradient(45deg, #00f2fe, #ff2b54); width: 46px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; font-weight: bold; }
+        
         /* Модальные окна */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 30; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 50; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
         .modal.open { display: flex; }
-        .modal-sheet { background: #18181b; width: 100%; max-width: 480px; border-radius: 24px 24px 0 0; padding: 24px 20px 32px; display: flex; flex-direction: column; gap: 14px; border-top: 1px solid #27272a; animation: slideUp 0.2s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-box { background: #1c1c1e; width: 100%; max-width: 360px; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px; border: 1px solid #2c2c2e; }
         .modal-title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 4px; }
-        
-        .file-drop { border: 2px dashed #3f3f46; border-radius: 14px; padding: 24px 16px; text-align: center; cursor: pointer; background: #202024; }
-        .file-drop.selected { border-color: #00f2fe; background: rgba(0,242,254,0.08); }
-        textarea, input[type="number"] { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #3f3f46; background: #27272a; color: #fff; font-size: 15px; outline: none; }
-        
-        .btn { border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary { background: #0088cc; color: #fff; }
-        .btn-star { background: linear-gradient(45deg, #f59e0b, #ef4444); color: #fff; }
-        .btn-promo { background: linear-gradient(45deg, #8b5cf6, #ec4899); color: #fff; }
-        .btn-cancel { background: #27272a; color: #a1a1aa; }
-        
-        .loader { text-align: center; padding: 40px; color: #888; font-size: 14px; }
-        .status-toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #27272a; color: #fff; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 50; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5); border: 1px solid #3f3f46; }
+        input, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #333; background: #2c2c2e; color: #fff; font-size: 14px; outline: none; }
+        .file-label { display: block; padding: 14px; border: 1px dashed #2481cc; border-radius: 12px; text-align: center; color: #5ac8fa; font-size: 14px; font-weight: 600; cursor: pointer; background: rgba(36, 129, 204, 0.1); }
+        .btn-primary { background: #2481cc; color: #fff; border: none; padding: 13px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .btn-primary:disabled { opacity: 0.5; }
+        .btn-star { background: linear-gradient(45deg, #f5af19, #f12711); color: #fff; border: none; padding: 13px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .btn-close { background: #2c2c2e; color: #aaa; border: none; padding: 11px; border-radius: 12px; cursor: pointer; font-size: 14px; }
+        .empty-msg { text-align: center; color: #666; padding: 40px 20px; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div class="status-toast" id="toast"></div>
-
-    <!-- ЭКРАН 1: ЛЕНТА -->
-    <div class="screen active" id="screen-feed">
-        <div class="feed" id="feed">
-            <div class="loader">Загрузка ленты Undertow...</div>
-        </div>
+    <!-- Нативный экран входа по Telegram -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-logo">🌊</div>
+        <div class="auth-title">Undertow</div>
+        <div class="auth-sub">Вертикальная лента видео, донаты авторам и продвижение внутри Telegram</div>
+        <button class="tg-login-btn" onclick="loginWithTelegram()">
+            <span>✈️</span> Войти через Telegram
+        </button>
+        <button class="guest-btn" onclick="loginAsGuest()">Продолжить без аккаунта</button>
     </div>
 
-    <!-- ЭКРАН 2: ПРОФИЛЬ -->
-    <div class="screen" id="screen-profile">
-        <div class="profile-container">
-            <div class="profile-header">
-                <div class="big-avatar" id="profAvatar">U</div>
-                <div class="profile-name" id="profName">Загрузка...</div>
-                <div class="profile-tag" id="profId">Telegram ID: —</div>
-                <div class="stats-row">
-                    <div class="stat-box"><div class="stat-val" id="statVideos">0</div><div class="stat-lbl">Видео</div></div>
-                    <div class="stat-box"><div class="stat-val" id="statLikes">0</div><div class="stat-lbl">Лайков</div></div>
-                    <div class="stat-box"><div class="stat-val" id="statSubs">0</div><div class="stat-lbl">Подписок</div></div>
-                </div>
-            </div>
-            <div>
-                <div class="section-title">Мои публикации</div>
-                <div class="my-videos-grid" id="myVideosGrid"></div>
-            </div>
-        </div>
+    <!-- Вкладка 1: Лента -->
+    <div class="tab-view active" id="feedView">
+        <div class="feed" id="feed"></div>
     </div>
 
-    <!-- НИЖНЕЕ МЕНЮ -->
+    <!-- Вкладка 2: Профиль -->
+    <div class="tab-view profile-page" id="profileView">
+        <div class="profile-header">
+            <div class="avatar" id="profileAvatar">👤</div>
+            <div class="profile-name" id="profileName">Загрузка...</div>
+            <div class="profile-tag" id="profileTag">@username</div>
+            <div class="stats-row">
+                <div class="stat-box"><div class="stat-num" id="statVideos">0</div><div class="stat-label">Видео</div></div>
+                <div class="stat-box"><div class="stat-num" id="statLikes">0</div><div class="stat-label">Лайков</div></div>
+                <div class="stat-box"><div class="stat-num" id="statSubs">0</div><div class="stat-label">Подписок</div></div>
+            </div>
+        </div>
+        <div class="my-videos-title">Мои публикации</div>
+        <div class="video-grid" id="myVideosGrid"></div>
+    </div>
+
+    <!-- Нижняя панель -->
     <div class="bottom-nav">
-        <button class="nav-item active" id="nav-feed" onclick="switchTab('feed')"><span class="nav-icon">🔥</span><span>Лента</span></button>
-        <button class="nav-item" id="nav-subs" onclick="switchTab('subs')"><span class="nav-icon">👥</span><span>Подписки</span></button>
+        <button class="nav-item active" id="navFeed" onclick="switchTab('feed', 'all')"><span class="nav-icon">🏠</span><span>Лента</span></button>
+        <button class="nav-item" id="navSubs" onclick="switchTab('feed', 'subs')"><span class="nav-icon">👥</span><span>Подписки</span></button>
         <button class="nav-item" onclick="openModal('uploadModal')"><div class="add-btn">+</div></button>
-        <button class="nav-item" id="nav-profile" onclick="switchTab('profile')"><span class="nav-icon">👤</span><span>Профиль</span></button>
+        <button class="nav-item" id="navProfile" onclick="switchTab('profile')"><span class="nav-icon">👤</span><span>Профиль</span></button>
     </div>
 
-    <!-- МОДАЛКА ЗАГРУЗКИ ВИДЕО -->
+    <!-- Окно загрузки видео -->
     <div class="modal" id="uploadModal">
-        <div class="modal-sheet">
+        <div class="modal-box">
             <div class="modal-title">Опубликовать видео</div>
-            <label class="file-drop" id="fileDropArea">
-                <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/quicktime" style="display:none" onchange="onFileSelect(this)">
-                <div id="fileLabel">📁 Нажми, чтобы выбрать видео с устройства<br><span style="font-size:12px;color:#888">(MP4 / MOV до 50 МБ)</span></div>
-            </label>
-            <textarea id="videoDescInput" rows="2" placeholder="Придумай описание или хештеги..."></textarea>
-            <button class="btn btn-primary" id="publishBtn" onclick="uploadAndPublish()">Опубликовать в ленту</button>
-            <button class="btn btn-cancel" onclick="closeModal('uploadModal')">Отмена</button>
+            <label class="file-label" for="videoFileInput" id="fileLabelText">📁 Выбрать видео с устройства (.mp4 / .mov)</label>
+            <input type="file" id="videoFileInput" accept="video/*" style="display:none" onchange="handleFileSelect(this)">
+            <input type="url" id="videoUrlInput" placeholder="Или вставь прямую ссылку на .mp4">
+            <textarea id="videoDescInput" rows="2" placeholder="Напиши описание к видео..."></textarea>
+            <button class="btn-primary" id="publishBtn" onclick="publishVideo()">Опубликовать</button>
+            <button class="btn-close" onclick="closeModal('uploadModal')">Отмена</button>
         </div>
     </div>
 
-    <!-- МОДАЛКА ЗВЁЗД (ДОНАТ И ПРОДВИЖЕНИЕ) -->
+    <!-- Окно доната и продвижения -->
     <div class="modal" id="starModal">
-        <div class="modal-sheet">
-            <div class="modal-title">Telegram Stars ⭐</div>
-            <div style="font-size:13px;color:#a1a1aa;text-align:center;">Поддержи автора ролика или выведи видео в ТОП ленты</div>
-            <input type="number" id="donateAmount" value="25" min="1" placeholder="Сколько звёзд подарить?">
-            <button class="btn btn-star" onclick="payStars('donate')">⭐ Отправить донат автору</button>
-            <button class="btn btn-promo" onclick="payStars('promote')">🚀 Продвинуть видео в ТОП (10 ⭐)</button>
-            <button class="btn btn-cancel" onclick="closeModal('starModal')">Закрыть</button>
+        <div class="modal-box">
+            <div class="modal-title">Поддержка и продвижение</div>
+            <input type="number" id="donateAmount" value="50" min="1" placeholder="Количество звёзд">
+            <button class="btn-star" onclick="sendAction('donate')">⭐ Отправить донат автору</button>
+            <button class="btn-primary" onclick="sendAction('promote')">🚀 Продвинуть в ТОП (10 ⭐)</button>
+            <button class="btn-close" onclick="closeModal('starModal')">Закрыть</button>
         </div>
     </div>
 
     <script>
-        // Твои подключенные ключи Supabase Undertow
         const SUPABASE_URL = 'https://pgnqjobutdlaxtjrrxio.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
-        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_ANON_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/undertow-api`;
 
-        // Инициализация Telegram WebApp
         const tg = window.Telegram?.WebApp;
         if (tg) {
             tg.ready();
             tg.expand();
-            tg.setHeaderColor('#000000');
-            tg.setBackgroundColor('#000000');
         }
 
-        const tgUser = tg?.initDataUnsafe?.user;
-        const currentUser = tgUser ? {
-            id: tgUser.id,
-            name: tgUser.username ? `@${tgUser.username}` : [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' '),
-            photo: tgUser.photo_url || null,
-            isTelegram: true
-        } : {
-            id: 999000 + Math.floor(Math.random() * 999),
-            name: 'Гость (открой через бота)',
-            photo: null,
-            isTelegram: false
-        };
+        let currentUser = null;
+        let videos = [];
+        let activeVideoId = null;
 
-        let allVideos = [];
-        let activeVideo = null;
-        let currentTab = 'feed';
+        // Автоматический вход, если открыто из Telegram
+        function initAuth() {
+            const tgUser = tg?.initDataUnsafe?.user;
+            const savedUser = JSON.parse(localStorage.getItem('undertow_user') || 'null');
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.style.display = 'block';
-            setTimeout(() => { t.style.display = 'none'; }, 3000);
-        }
-
-        // Заполнение профиля
-        function initProfile() {
-            document.getElementById('profName').textContent = currentUser.name;
-            document.getElementById('profId').textContent = currentUser.isTelegram
-                ? `Telegram ID: ${currentUser.id}`
-                : '⚠️ Открыто в браузере (войди через @undertow_vids_bot)';
-            if (currentUser.photo) {
-                document.getElementById('profAvatar').innerHTML = `<img src="${currentUser.photo}" alt="">`;
-            } else {
-                document.getElementById('profAvatar').textContent = currentUser.name.replace('@','')[0]?.toUpperCase() || 'U';
+            if (tgUser) {
+                setUser({
+                    id: tgUser.id,
+                    username: tgUser.username ? `@${tgUser.username}` : `id${tgUser.id}`,
+                    first_name: tgUser.first_name || 'Пользователь',
+                    photo_url: tgUser.photo_url || ''
+                });
+                document.getElementById('authScreen').classList.add('hidden');
+            } else if (savedUser) {
+                setUser(savedUser);
+                document.getElementById('authScreen').classList.add('hidden');
             }
         }
 
-        // Загрузка видео из базы Supabase
-        async function loadVideos() {
-            const { data, error } = await sb
-                .from('videos')
-                .select('*')
-                .order('is_promoted', { ascending: false })
-                .order('created_at', { ascending: false });
+        function loginWithTelegram() {
+            const tgUser = tg?.initDataUnsafe?.user;
+            if (tgUser) {
+                setUser({
+                    id: tgUser.id,
+                    username: tgUser.username ? `@${tgUser.username}` : `id${tgUser.id}`,
+                    first_name: tgUser.first_name || 'Пользователь',
+                    photo_url: tgUser.photo_url || ''
+                });
+                document.getElementById('authScreen').classList.add('hidden');
+            } else {
+                // Если открыли в обычном браузере — перенаправляем в бота для нативного входа
+                if (tg && tg.showAlert) {
+                    tg.showAlert('Для входа через Telegram открой приложение через синюю кнопку меню в боте @undertow_vids_bot');
+                } else {
+                    window.location.href = 'https://t.me/undertow_vids_bot';
+                }
+            }
+        }
 
-            if (error) {
-                console.error(error);
-                document.getElementById('feed').innerHTML = `<div class="loader">Ошибка загрузки базы: ${error.message}</div>`;
+        function loginAsGuest() {
+            setUser({ id: 999000, username: '@guest', first_name: 'Гость', photo_url: '' });
+            document.getElementById('authScreen').classList.add('hidden');
+        }
+
+        async function setUser(user) {
+            currentUser = user;
+            localStorage.setItem('undertow_user', JSON.stringify(user));
+            updateProfileUI();
+
+            // Сохраняем/обновляем пользователя в Supabase
+            if (user.id !== 999000) {
+                fetch(`${SUPABASE_URL}/rest/v1/users`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'resolution=merge-duplicates'
+                    },
+                    body: JSON.stringify({
+                        user_id: String(user.id),
+                        username: user.username,
+                        avatar_url: user.photo_url || ''
+                    })
+                }).catch(() => {});
+            }
+        }
+
+        function updateProfileUI() {
+            if (!currentUser) return;
+            document.getElementById('profileName').textContent = currentUser.first_name;
+            document.getElementById('profileTag').textContent = `${currentUser.username} • ID: ${currentUser.id}`;
+            const avatarEl = document.getElementById('profileAvatar');
+            if (currentUser.photo_url) {
+                avatarEl.innerHTML = `<img src="${currentUser.photo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            } else {
+                avatarEl.textContent = currentUser.first_name[0]?.toUpperCase() || '👤';
+            }
+        }
+
+        async function loadVideos() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=is_promoted.desc,created_at.desc`, {
+                    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+                });
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    videos = data.filter(v => v.video_url);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            renderFeed(videos);
+            renderProfileVideos();
+        }
+
+        function renderFeed(list) {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = '';
+            if (!list.length) {
+                feed.innerHTML = '<div class="empty-msg">Пока нет видео. Нажми <b>+</b> внизу, чтобы загрузить первое!</div>';
                 return;
             }
 
-            allVideos = data || [];
-            renderCurrentTab();
-        }
-
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.getElementById(`nav-${tab}`)?.classList.add('active');
-
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            if (tab === 'profile') {
-                document.getElementById('screen-profile').classList.add('active');
-                renderProfile();
-            } else {
-                document.getElementById('screen-feed').classList.add('active');
-                renderFeed(tab === 'subs');
-            }
-        }
-
-        function renderCurrentTab() {
-            if (currentTab === 'profile') renderProfile();
-            else renderFeed(currentTab === 'subs');
-        }
-
-        function renderFeed(onlySubs = false) {
-            const feed = document.getElementById('feed');
             const subs = JSON.parse(localStorage.getItem('undertow_subs') || '[]');
             const liked = JSON.parse(localStorage.getItem('undertow_likes') || '[]');
 
-            const list = onlySubs ? allVideos.filter(v => subs.includes(String(v.author_id))) : allVideos;
-
-            if (!list.length) {
-                feed.innerHTML = `<div class="loader">${onlySubs ? 'Вы пока ни на кого не подписаны' : 'Пока нет видео. Нажми + внизу, чтобы загрузить первое!'}</div>`;
-                return;
-            }
-
-            feed.innerHTML = '';
             list.forEach(v => {
-                const isSub = subs.includes(String(v.author_id));
+                const authorId = v.author_id || v.user_id;
+                const isSub = subs.includes(String(authorId));
                 const isLiked = liked.includes(String(v.id));
-                const authorName = v.author_name || v.username || 'Автор';
-                const videoSrc = v.video_url || v.url;
-
                 const card = document.createElement('div');
                 card.className = 'video-card';
                 card.innerHTML = `
-                    <video src="${videoSrc}" loop playsinline webkit-playsinline preload="metadata" onclick="togglePlay(this)"></video>
-                    <div class="video-overlay"></div>
+                    <video src="${v.video_url}" loop playsinline onclick="togglePlay(this)"></video>
                     <div class="video-info">
                         <div class="author-row">
-                            <div class="author-avatar">${authorName.replace('@','')[0]?.toUpperCase() || 'A'}</div>
-                            <span class="author-name">${authorName}</span>
-                            ${v.is_promoted ? '<span class="promo-badge">🚀 ТОП</span>' : ''}
-                            <button class="sub-btn ${isSub ? 'subscribed' : ''}" onclick="toggleSub('${v.author_id}', this)">
+                            <span class="author-name">${v.author_name || '@user'}</span>
+                            ${v.is_promoted ? '<span class="promo-badge">ТОП</span>' : ''}
+                            <button class="sub-btn ${isSub ? 'subscribed' : ''}" onclick="toggleSub('${authorId}', this)">
                                 ${isSub ? 'Вы подписаны' : 'Подписаться'}
                             </button>
                         </div>
-                        <div class="video-desc">${v.description || v.title || ''}</div>
+                        <div class="video-desc">${v.description || ''}</div>
                     </div>
                     <div class="actions">
                         <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${v.id}', ${v.likes || 0}, this)">
                             <div class="action-icon">❤️</div>
                             <span class="action-count">${v.likes || 0}</span>
                         </button>
-                        <button class="action-btn" onclick="openStarModal('${v.id}', '${v.author_id}')">
+                        <button class="action-btn" onclick="openStarModal('${v.id}')">
                             <div class="action-icon">⭐</div>
                             <span class="action-count">Звёзды</span>
                         </button>
@@ -288,12 +301,12 @@
                 `;
                 feed.appendChild(card);
             });
-
             setupAutoPlay();
         }
 
-        function renderProfile() {
-            const myVids = allVideos.filter(v => String(v.author_id) === String(currentUser.id));
+        function renderProfileVideos() {
+            if (!currentUser) return;
+            const myVids = videos.filter(v => String(v.author_id || v.user_id) === String(currentUser.id));
             const totalLikes = myVids.reduce((acc, v) => acc + (v.likes || 0), 0);
             const subs = JSON.parse(localStorage.getItem('undertow_subs') || '[]');
 
@@ -302,184 +315,218 @@
             document.getElementById('statSubs').textContent = subs.length;
 
             const grid = document.getElementById('myVideosGrid');
-            if (!myVids.length) {
-                grid.innerHTML = '<div style="grid-column:1/-1;color:#71717a;font-size:13px;">Ты ещё не загрузил ни одного видео.</div>';
-                return;
-            }
-            grid.innerHTML = myVids.map(v => `
-                <div class="grid-item">
-                    <video src="${v.video_url || v.url}" muted preload="metadata"></video>
-                    <div class="grid-likes">❤️ ${v.likes || 0}</div>
-                </div>
-            `).join('');
+            grid.innerHTML = '';
+            myVids.forEach(v => {
+                const item = document.createElement('div');
+                item.className = 'grid-item';
+                item.innerHTML = `<video src="${v.video_url}#t=0.5" muted preload="metadata"></video>`;
+                grid.appendChild(item);
+            });
         }
 
         function setupAutoPlay() {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
-                    const vid = entry.target.querySelector('video');
-                    if (!vid) return;
+                    const video = entry.target.querySelector('video');
+                    if (!video) return;
                     if (entry.isIntersecting) {
-                        vid.play().catch(() => {});
+                        video.play().catch(() => {});
                     } else {
-                        vid.pause();
-                        vid.currentTime = 0;
+                        video.pause();
+                        video.currentTime = 0;
                     }
                 });
             }, { threshold: 0.65 });
 
-            document.querySelectorAll('.video-card').forEach(c => observer.observe(c));
+            document.querySelectorAll('.video-card').forEach(card => observer.observe(card));
         }
 
-        function togglePlay(vid) {
-            if (vid.paused) vid.play();
-            else vid.pause();
+        function togglePlay(video) {
+            video.paused ? video.play() : video.pause();
         }
 
-        async function toggleLike(videoId, currentLikes, btn) {
+        async function toggleLike(id, currentLikes, btn) {
             let liked = JSON.parse(localStorage.getItem('undertow_likes') || '[]');
             const countEl = btn.querySelector('.action-count');
-            let count = parseInt(countEl.textContent) || 0;
-            const idStr = String(videoId);
+            let count = parseInt(countEl.textContent);
+            const strId = String(id);
 
-            if (liked.includes(idStr)) {
-                liked = liked.filter(x => x !== idStr);
+            if (liked.includes(strId)) {
+                liked = liked.filter(x => x !== strId);
                 btn.classList.remove('liked');
                 count = Math.max(0, count - 1);
             } else {
-                liked.push(idStr);
+                liked.push(strId);
                 btn.classList.add('liked');
                 count = count + 1;
             }
             countEl.textContent = count;
             localStorage.setItem('undertow_likes', JSON.stringify(liked));
 
-            await sb.from('videos').update({ likes: count }).eq('id', videoId);
+            fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ likes: count })
+            }).catch(() => {});
         }
 
         function toggleSub(authorId, btn) {
             let subs = JSON.parse(localStorage.getItem('undertow_subs') || '[]');
-            const idStr = String(authorId);
-            if (subs.includes(idStr)) {
-                subs = subs.filter(x => x !== idStr);
+            const strId = String(authorId);
+            if (subs.includes(strId)) {
+                subs = subs.filter(x => x !== strId);
                 btn.textContent = 'Подписаться';
                 btn.classList.remove('subscribed');
             } else {
-                subs.push(idStr);
+                subs.push(strId);
                 btn.textContent = 'Вы подписаны';
                 btn.classList.add('subscribed');
-                showToast('Вы подписались на автора');
             }
             localStorage.setItem('undertow_subs', JSON.stringify(subs));
+            renderProfileVideos();
+        }
+
+        function switchTab(tab, filter = 'all') {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+
+            if (tab === 'profile') {
+                document.getElementById('navProfile').classList.add('active');
+                document.getElementById('profileView').classList.add('active');
+                renderProfileVideos();
+            } else {
+                document.getElementById('feedView').classList.add('active');
+                if (filter === 'subs') {
+                    document.getElementById('navSubs').classList.add('active');
+                    const subs = JSON.parse(localStorage.getItem('undertow_subs') || '[]');
+                    renderFeed(videos.filter(v => subs.includes(String(v.author_id || v.user_id))));
+                } else {
+                    document.getElementById('navFeed').classList.add('active');
+                    renderFeed(videos);
+                }
+            }
+        }
+
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                document.getElementById('fileLabelText').textContent = `✅ Выбран: ${input.files[0].name}`;
+            }
         }
 
         function openModal(id) { document.getElementById(id).classList.add('open'); }
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        function openStarModal(videoId) { activeVideoId = videoId; openModal('starModal'); }
 
-        function openStarModal(videoId, authorId) {
-            activeVideo = { id: videoId, author_id: authorId };
-            openModal('starModal');
-        }
-
-        function onFileSelect(input) {
-            const file = input.files[0];
-            if (file) {
-                document.getElementById('fileDropArea').classList.add('selected');
-                document.getElementById('fileLabel').innerHTML = `✅ Выбрано: <b>${file.name}</b><br><span style="font-size:12px;color:#888">${(file.size/1024/1024).toFixed(1)} МБ</span>`;
-            }
-        }
-
-        async function uploadAndPublish() {
+        async function publishVideo() {
             const fileInput = document.getElementById('videoFileInput');
-            const file = fileInput.files[0];
+            let url = document.getElementById('videoUrlInput').value.trim();
             const desc = document.getElementById('videoDescInput').value.trim();
-
-            if (!file) return showToast('Сначала выбери видеофайл!');
-
             const btn = document.getElementById('publishBtn');
+
+            if (!fileInput.files[0] && !url) {
+                return alert('Выбери файл с устройства или вставь ссылку на .mp4!');
+            }
+
             btn.disabled = true;
-            btn.textContent = 'Загрузка в облако...';
+            btn.textContent = 'Загрузка...';
 
             try {
-                const ext = file.name.split('.').pop() || 'mp4';
-                const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
+                // Если выбран файл с устройства — загружаем в Supabase Storage (bucket: videos)
+                if (fileInput.files[0]) {
+                    const file = fileInput.files[0];
+                    const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`;
+                    const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/videos/${fileName}`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': file.type || 'video/mp4'
+                        },
+                        body: file
+                    });
 
-                // 1. Загружаем файл в Storage бакет videos
-                const { error: uploadErr } = await sb.storage
-                    .from('videos')
-                    .upload(fileName, file, { contentType: file.type || 'video/mp4' });
+                    if (!uploadRes.ok) {
+                        const err = await uploadRes.json();
+                        throw new Error(err.message || 'Ошибка загрузки файла в Storage');
+                    }
+                    url = `${SUPABASE_URL}/storage/v1/object/public/videos/${fileName}`;
+                }
 
-                if (uploadErr) throw uploadErr;
+                const userId = currentUser ? currentUser.id : 999000;
+                const authorName = currentUser ? currentUser.username : '@guest';
 
-                // 2. Получаем публичную ссылку на видео
-                const { data: pubUrl } = sb.storage.from('videos').getPublicUrl(fileName);
-
-                // 3. Сохраняем запись в таблицу videos
-                const { error: dbErr } = await sb.from('videos').insert([{
-                    author_id: currentUser.id,
-                    author_name: currentUser.name,
+                const payload = {
+                    user_id: String(userId),
+                    author_id: Number(userId),
+                    author_name: authorName,
                     description: desc,
-                    video_url: pubUrl.publicUrl,
+                    video_url: url,
                     likes: 0,
                     is_promoted: false
-                }]);
+                };
 
-                if (dbErr) throw dbErr;
+                const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-                showToast('Видео опубликовано!');
-                fileInput.value = '';
+                if (!dbRes.ok) {
+                    const err = await dbRes.json();
+                    throw new Error(err.message || 'Ошибка сохранения в базу');
+                }
+
+                document.getElementById('videoUrlInput').value = '';
                 document.getElementById('videoDescInput').value = '';
-                document.getElementById('fileDropArea').classList.remove('selected');
-                document.getElementById('fileLabel').innerHTML = '📁 Нажми, чтобы выбрать видео с устройства';
+                fileInput.value = '';
+                document.getElementById('fileLabelText').textContent = '📁 Выбрать видео с устройства (.mp4 / .mov)';
                 closeModal('uploadModal');
                 await loadVideos();
-            } catch (err) {
-                console.error(err);
-                alert('Ошибка загрузки: ' + (err.message || JSON.stringify(err)));
+            } catch (e) {
+                alert('Ошибка загрузки: ' + e.message);
             } finally {
                 btn.disabled = false;
-                btn.textContent = 'Опубликовать в ленту';
+                btn.textContent = 'Опубликовать';
             }
         }
 
-        async function payStars(action) {
-            if (!activeVideo) return;
-            const stars = action === 'promote' ? 10 : parseInt(document.getElementById('donateAmount').value || 25);
-
+        async function sendAction(type) {
+            const stars = type === 'promote' ? 10 : parseInt(document.getElementById('donateAmount').value || 50);
             try {
-                showToast('Создаём счёт в Telegram Stars...');
-                const res = await fetch(`${SUPABASE_URL}/functions/v1/undertow-api`, {
+                const res = await fetch(FUNCTION_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        action,
-                        video_id: activeVideo.id,
-                        author_id: activeVideo.author_id,
-                        sender_id: currentUser.id,
-                        stars
+                        action: type,
+                        video_id: activeVideoId,
+                        user_id: currentUser?.id,
+                        stars: stars
                     })
                 });
                 const data = await res.json();
                 if (data.invoice_url && tg?.openInvoice) {
-                    closeModal('starModal');
                     tg.openInvoice(data.invoice_url, (status) => {
-                        if (status === 'paid') {
-                            showToast(action === 'promote' ? '🚀 Видео выведено в ТОП!' : '⭐ Донат отправлен!');
-                            loadVideos();
-                        }
+                        if (status === 'paid') loadVideos();
                     });
                 } else {
-                    alert(data.error || 'Открой приложение внутри Telegram, чтобы оплатить звёздами.');
+                    alert(data.error || 'Не удалось создать счёт на оплату звёздами. Проверь Edge Function undertow-api.');
                 }
             } catch (e) {
-                alert('Ошибка связи с сервером оплаты: ' + e.message);
+                alert('Ошибка соединения с сервером оплаты.');
             }
+            closeModal('starModal');
         }
 
-        initProfile();
+        initAuth();
         loadVideos();
     </script>
 </body>
