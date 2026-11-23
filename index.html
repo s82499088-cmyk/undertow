@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Undertow</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body, html { width: 100%; height: 100%; background: #000; color: #fff; overflow: hidden; }
+        
+        /* Вертикальная лента */
+        .feed { width: 100%; height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
+        .feed::-webkit-scrollbar { display: none; }
+        
+        .video-card { position: relative; width: 100%; height: 100vh; scroll-snap-align: start; background: #111; display: flex; align-items: center; justify-content: center; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Нижняя информация о видео */
+        .video-info { position: absolute; bottom: 80px; left: 15px; right: 80px; z-index: 10; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+        .author-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .author-name { font-weight: 700; font-size: 16px; }
+        .promo-badge { background: #ffaa00; color: #000; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+        .sub-btn { background: #ff2b54; color: #fff; border: none; padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .sub-btn.subscribed { background: rgba(255,255,255,0.2); }
+        .video-desc { font-size: 14px; line-height: 1.3; }
+        
+        /* Правая панель действий */
+        .actions { position: absolute; bottom: 85px; right: 12px; z-index: 10; display: flex; flex-direction: column; gap: 18px; align-items: center; }
+        .action-btn { background: none; border: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+        .action-icon { width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; font-size: 20px; backdrop-filter: blur(4px); }
+        .action-btn.liked .action-icon { color: #ff2b54; }
+        .action-count { font-size: 12px; font-weight: 600; }
+        
+        /* Нижнее меню */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: rgba(0,0,0,0.9); border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; z-index: 20; }
+        .nav-item { color: #888; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; background: none; border: none; }
+        .nav-item.active { color: #fff; font-weight: 600; }
+        .add-btn { background: linear-gradient(45deg, #00f2fe, #ff2b54); width: 44px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: bold; }
+        
+        /* Модальные окна */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 30; align-items: center; justify-content: center; padding: 20px; }
+        .modal.open { display: flex; }
+        .modal-box { background: #1c1c1e; width: 100%; max-width: 360px; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+        .modal-title { font-size: 18px; font-weight: 700; text-align: center; }
+        input, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #2c2c2e; color: #fff; font-size: 14px; }
+        .btn-primary { background: #0088cc; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .btn-star { background: linear-gradient(45deg, #f5af19, #f12711); color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .btn-close { background: #333; color: #fff; border: none; padding: 10px; border-radius: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="feed" id="feed"></div>
+
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="filterFeed('all')">🏠<span>Лента</span></button>
+        <button class="nav-item" onclick="openModal('uploadModal')"><div class="add-btn">+</div></button>
+        <button class="nav-item" onclick="filterFeed('subs')">👥<span>Подписки</span></button>
+    </div>
+
+    <!-- Окно загрузки видео -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-box">
+            <div class="modal-title">Новое видео в Undertow</div>
+            <input type="url" id="videoUrlInput" placeholder="Прямая ссылка на .mp4 видео">
+            <textarea id="videoDescInput" rows="2" placeholder="Описание видео..."></textarea>
+            <button class="btn-primary" onclick="publishVideo()">Опубликовать</button>
+            <button class="btn-close" onclick="closeModal('uploadModal')">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Окно доната и продвижения -->
+    <div class="modal" id="starModal">
+        <div class="modal-box">
+            <div class="modal-title">Поддержать и продвинуть</div>
+            <input type="number" id="donateAmount" value="50" min="1" placeholder="Количество звёзд">
+            <button class="btn-star" onclick="sendAction('donate')">⭐ Отправить донат автору</button>
+            <button class="btn-primary" onclick="sendAction('promote')">🚀 Продвинуть видео (10 ⭐)</button>
+            <button class="btn-close" onclick="closeModal('starModal')">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        // ВСТАВЬ СВОИ ДАННЫЕ ИЗ SUPABASE НИЖЕ:
+        const SUPABASE_URL = 'ВСТАВЬ_СЮДА_PROJECT_URL';
+        const SUPABASE_ANON_KEY = 'ВСТАВЬ_СЮДА_ANON_PUBLIC_KEY';
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/undertow-api`;
+
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const currentUser = tg.initDataUnsafe?.user || { id: 123456, username: 'guest_user', first_name: 'Гость' };
+        let videos = [];
+        let activeVideoId = null;
+
+        // Тестовые видео (показываются, пока база пустая или не подключена)
+        const demoVideos = [
+            { id: '1', author_id: 111, author_name: '@undertow_official', description: 'Добро пожаловать в Undertow! Листай вверх ⬆️', video_url: 'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4', likes: 124, is_promoted: true },
+            { id: '2', author_id: 222, author_name: '@creator_pro', description: 'Зацените плавную ленту видео 🌊', video_url: 'https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4', likes: 89, is_promoted: false }
+        ];
+
+        async function loadVideos() {
+            if (SUPABASE_URL.includes('ВСТАВЬ')) {
+                videos = demoVideos;
+                renderFeed(videos);
+                return;
+            }
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=is_promoted.desc,created_at.desc`, {
+                    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+                });
+                const data = await res.json();
+                videos = data.length ? data : demoVideos;
+            } catch (e) {
+                videos = demoVideos;
+            }
+            renderFeed(videos);
+        }
+
+        function renderFeed(list) {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = '';
+            const subs = JSON.parse(localStorage.getItem('undertow_subs') || '[]');
+            const liked = JSON.parse(localStorage.getItem('undertow_likes') || '[]');
+
+            list.forEach(v => {
+                const isSub = subs.includes(v.author_id);
+                const isLiked = liked.includes(v.id);
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                card.innerHTML = `
+                    <video src="${v.video_url}" loop playsinline onclick="togglePlay(this)"></video>
+                    <div class="video-info">
+                        <div class="author-row">
+                            <span class="author-name">${v.author_name}</span>
+                            ${v.is_promoted ? '<span class="promo-badge">ТОП</span>' : ''}
+                            <button class="sub-btn ${isSub ? 'subscribed' : ''}" onclick="toggleSub(${v.author_id}, this)">
+                                ${isSub ? 'Вы подписаны' : 'Подписаться'}
+                            </button>
+                        </div>
+                        <div class="video-desc">${v.description}</div>
+                    </div>
+                    <div class="actions">
+                        <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${v.id}', this)">
+                            <div class="action-icon">❤️</div>
+                            <span class="action-count">${v.likes || 0}</span>
+                        </button>
+                        <button class="action-btn" onclick="openStarModal('${v.id}')">
+                            <div class="action-icon">⭐</div>
+                            <span class="action-count">Звёзды</span>
+                        </button>
+                    </div>
+                `;
+                feed.appendChild(card);
+            });
+            setupAutoPlay();
+        }
+
+        function setupAutoPlay() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const video = entry.target.querySelector('video');
+                    if (entry.isIntersecting) {
+                        video.play().catch(() => {});
+                    } else {
+                        video.pause();
+                        video.currentTime = 0;
+                    }
+                });
+            }, { threshold: 0.6 });
+
+            document.querySelectorAll('.video-card').forEach(card => observer.observe(card));
+        }
+
+        function togglePlay(video) {
+            video.paused ? video.play() : video.pause();
+        }
+
+        function toggleLike(id, btn) {
+            let liked = JSON.parse(localStorage.getItem('undertow_likes') || '[]');
+            const countEl = btn.querySelector('.action-count');
+            let count = parseInt(countEl.textContent);
+            if (liked.includes(id)) {
+                liked = liked.filter(x => x !== id);
+                btn.classList.remove('liked');
+                countEl.textContent = Math.max(0, count - 1);
+            } else {
+                liked.push(id);
+                btn.classList.add('liked');
+                countEl.textContent = count + 1;
+            }
+            localStorage.setItem('undertow_likes', JSON.stringify(liked));
+        }
+
+        function toggleSub(authorId, btn) {
+            let subs = JSON.parse(localStorage.getItem('undertow_subs') || '[]');
+            if (subs.includes(authorId)) {
+                subs = subs.filter(x => x !== authorId);
+                btn.textContent = 'Подписаться';
+                btn.classList.remove('subscribed');
+            } else {
+                subs.push(authorId);
+                btn.textContent = 'Вы подписаны';
+                btn.classList.add('subscribed');
+            }
+            localStorage.setItem('undertow_subs', JSON.stringify(subs));
+        }
+
+        function filterFeed(type) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            if (type === 'subs') {
+                const subs = JSON.parse(localStorage.getItem('undertow_subs') || '[]');
+                renderFeed(videos.filter(v => subs.includes(v.author_id)));
+            } else {
+                renderFeed(videos);
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        function openStarModal(videoId) { activeVideoId = videoId; openModal('starModal'); }
+
+        async function publishVideo() {
+            const url = document.getElementById('videoUrlInput').value.trim();
+            const desc = document.getElementById('videoDescInput').value.trim();
+            if (!url) return alert('Вставь ссылку на видео!');
+
+            const newVideo = {
+                id: Date.now().toString(),
+                author_id: currentUser.id,
+                author_name: currentUser.username ? `@${currentUser.username}` : currentUser.first_name,
+                description: desc,
+                video_url: url,
+                likes: 0,
+                is_promoted: false
+            };
+
+            if (!SUPABASE_URL.includes('ВСТАВЬ')) {
+                await fetch(`${SUPABASE_URL}/rest/v1/videos`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newVideo)
+                });
+            }
+            videos.unshift(newVideo);
+            renderFeed(videos);
+            closeModal('uploadModal');
+        }
+
+        async function sendAction(type) {
+            const stars = type === 'promote' ? 10 : parseInt(document.getElementById('donateAmount').value || 50);
+            if (SUPABASE_URL.includes('ВСТАВЬ')) {
+                alert(`Тестовый режим: запрос на ${stars} ⭐ (${type}). Подключи ключи Supabase для реальной оплаты.`);
+                closeModal('starModal');
+                return;
+            }
+            const res = await fetch(FUNCTION_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: type, video_id: activeVideoId, user_id: currentUser.id, stars })
+            });
+            const data = await res.json();
+            if (data.invoice_url) {
+                tg.openInvoice(data.invoice_url);
+            }
+            closeModal('starModal');
+        }
+
+        loadVideos();
+    </script>
+</body>
+</html>
