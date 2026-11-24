@@ -1,3 +1,4 @@
+html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -268,7 +269,7 @@ const PROFILE_META_KEY = 'ut_profile_meta_' + baseUser.id;
 const ALL_PROFILES_KEY = 'ut_all_profiles_map';
 const LIKES_CACHE_KEY = 'ut_likes_' + baseUser.id;
 const SAVED_CACHE_KEY = 'ut_saved_' + baseUser.id;
-const VIDEOS_CACHE_KEY = 'ut_videos_native_v1';
+const VIDEOS_CACHE_KEY = 'ut_videos_native_v2';
 function getStoredMeta() {
 try { return JSON.parse(localStorage.getItem(PROFILE_META_KEY) || '{}'); } catch (e) { return {}; }
 }
@@ -1218,7 +1219,7 @@ container.appendChild(h);
 setTimeout(() => h.remove(), 820);
 }
 (async function init() {
-setTimeout(() => document.getElementById('splash')?.classList.add('hidden'), 1500);
+setTimeout(() => document.getElementById('splash')?.classList.add('hidden'), 1200);
 buildStickerDrawer();
 try {
 const cached = JSON.parse(localStorage.getItem(VIDEOS_CACHE_KEY) || '[]');
