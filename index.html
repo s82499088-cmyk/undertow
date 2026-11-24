@@ -14,16 +14,22 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .splash-logo{font-size:38px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#00e5ff,#7000ff,#ff2b54);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,0.12);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.top-bar{position:fixed;top:calc(12px + var(--safe-top));left:12px;right:12px;z-index:25;display:flex;align-items:center;justify-content:space-between;pointer-events:none;gap:8px}
+.top-bar{position:fixed;top:calc(12px + var(--safe-top));left:12px;right:12px;z-index:25;display:flex;align-items:center;justify-content:space-between;pointer-events:none;gap:6px}
 .top-bar>*{pointer-events:auto}
-.brand-pill{background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);padding:7px 13px;border-radius:20px;font-weight:800;font-size:14px;background-image:linear-gradient(135deg,#fff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.brand-pill{background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);padding:7px 11px;border-radius:20px;font-weight:800;font-size:13px;background-image:linear-gradient(135deg,#fff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;flex-shrink:0}
 .tabs-pill{display:flex;background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:22px;padding:3px}
-.tab-btn{background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:600;padding:6px 14px;border-radius:18px;cursor:pointer;transition:.2s}
+.tab-btn{background:none;border:none;color:var(--text-muted);font-size:12px;font-weight:600;padding:6px 11px;border-radius:18px;cursor:pointer;transition:.2s;white-space:nowrap}
 .tab-btn.active{background:rgba(255,255,255,0.15);color:#fff}
-.top-actions{display:flex;gap:8px}
-.icon-pill{width:36px;height:36px;border-radius:50%;background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:.2s}
+.top-actions{display:flex;gap:6px;flex-shrink:0}
+.icon-pill{width:34px;height:34px;border-radius:50%;background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:.2s}
 .icon-pill:active{transform:scale(.92)}
 .icon-pill.spinning{animation:spin .8s linear infinite}
+.search-overlay{position:fixed;top:calc(54px + var(--safe-top));left:12px;right:12px;z-index:35;background:rgba(18,18,24,0.96);backdrop-filter:blur(18px);border:1px solid var(--border-strong);border-radius:18px;padding:12px;display:none;flex-direction:column;gap:10px;box-shadow:0 12px 32px rgba(0,0,0,0.65)}
+.search-overlay.open{display:flex}
+.search-row{display:flex;gap:8px;align-items:center}
+.search-tags{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.search-tags::-webkit-scrollbar{display:none}
+.chip-tag{background:rgba(0,229,255,0.12);border:1px solid rgba(0,229,255,0.3);color:var(--accent);padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer}
 .speed-pill{position:fixed;top:calc(58px + var(--safe-top));left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);border:1px solid var(--border-strong);padding:4px 12px;border-radius:14px;font-size:12px;font-weight:700;color:var(--accent);z-index:40;display:none}
 #toast{position:fixed;top:calc(62px + var(--safe-top));left:50%;transform:translateX(-50%) translateY(-12px);background:rgba(20,22,28,0.94);border:1px solid var(--border-strong);backdrop-filter:blur(14px);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:100;opacity:0;pointer-events:none;transition:.25s;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -35,8 +41,7 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .feed{width:100%;height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
 .feed::-webkit-scrollbar{display:none}
 .video-card{position:relative;width:100%;height:100vh;scroll-snap-align:start;scroll-snap-stop:always;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.video-card video,.video-card iframe{width:100%;height:100%;object-fit:contain;background:#000;display:block;border:none}
-.ext-shield{position:absolute;inset:0 0 110px 0;z-index:4;background:transparent}
+.video-card video{width:100%;height:100%;object-fit:contain;background:#000;display:block;border:none}
 .source-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:8px;font-size:11px;font-weight:700;margin-bottom:6px;backdrop-filter:blur(8px)}
 .source-yt{background:rgba(255,0,0,0.25);border:1px solid rgba(255,68,68,0.5);color:#ff6b6b}
 .source-tt{background:rgba(0,229,255,0.18);border:1px solid rgba(0,229,255,0.45);color:#67e8f9}
@@ -50,7 +55,8 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .video-info{position:absolute;bottom:calc(78px + var(--safe-bottom));left:16px;right:78px;z-index:10}
 .author-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
 .avatar-ring{width:36px;height:36px;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--accent),var(--accent-2));flex-shrink:0}
-.avatar-inner{width:100%;height:100%;border-radius:50%;background:#18181f;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff}
+.avatar-inner{width:100%;height:100%;border-radius:50%;background:#18181f;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;overflow:hidden}
+.avatar-inner img{width:100%;height:100%;object-fit:cover}
 .author-name{font-weight:700;font-size:15px;text-shadow:0 1px 4px rgba(0,0,0,0.85)}
 .author-link{cursor:pointer}
 .author-link:active{opacity:.75}
@@ -58,38 +64,44 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .sub-btn.subscribed{background:rgba(255,255,255,0.18)}
 .video-desc{font-size:14px;line-height:1.35;color:rgba(255,255,255,0.94);text-shadow:0 1px 3px rgba(0,0,0,0.85);word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .video-desc.expanded{-webkit-line-clamp:unset}
-.actions{position:absolute;bottom:calc(80px + var(--safe-bottom));right:10px;z-index:10;display:flex;flex-direction:column;gap:16px;align-items:center}
-.action-btn{background:none;border:none;color:#fff;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
-.action-circle{width:46px;height:46px;border-radius:50%;background:rgba(20,20,26,0.58);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;transition:.15s}
+.inline-tag{color:var(--accent);font-weight:600}
+.actions{position:absolute;bottom:calc(78px + var(--safe-bottom));right:10px;z-index:10;display:flex;flex-direction:column;gap:13px;align-items:center}
+.action-btn{background:none;border:none;color:#fff;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.action-circle{width:44px;height:44px;border-radius:50%;background:rgba(20,20,26,0.58);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;transition:.15s}
 .action-btn:active .action-circle{transform:scale(.9)}
 .action-btn.liked .action-circle{background:rgba(255,43,84,0.28);border-color:var(--accent-2);color:var(--accent-2)}
-.action-count{font-size:12px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.9)}
+.action-btn.saved .action-circle{background:rgba(250,204,21,0.25);border-color:#facc15;color:#facc15}
+.action-count{font-size:11px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.9)}
 .progress-wrap{position:absolute;bottom:calc(64px + var(--safe-bottom));left:0;right:0;height:18px;display:flex;align-items:flex-end;z-index:15;cursor:pointer;padding:0 2px}
 .progress-bar{width:100%;height:3px;background:rgba(255,255,255,0.2);position:relative;border-radius:2px;overflow:hidden}
 .progress-buffer{position:absolute;left:0;top:0;height:100%;width:0%;background:rgba(255,255,255,0.28)}
 .progress-fill{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+Используйте код с осторожностью.
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(62px + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:rgba(8,8,11,0.94);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;z-index:30}
 .nav-btn{background:none;border:none;color:var(--text-muted);font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;width:70px}
 .nav-btn.active{color:#fff}
 .create-btn{width:48px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:22px}
 #profileView{padding:calc(20px + var(--safe-top)) 16px calc(80px + var(--safe-bottom));overflow-y:auto;background:radial-gradient(circle at 50% 0%,#131d29 0%,#050507 55%)}
 .profile-top-bar{display:flex;align-items:center;justify-content:space-between;min-height:36px;margin-bottom:8px}
-Используйте код с осторожностью.
 .back-btn{background:var(--surface);border:1px solid var(--border);color:#fff;padding:7px 14px;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer;display:none;align-items:center;gap:6px}
 .back-btn.visible{display:inline-flex}
-.profile-header{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;margin-bottom:22px}
+.profile-header{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;margin-bottom:18px}
 .profile-avatar{width:82px;height:82px;border-radius:50%;padding:3px;background:linear-gradient(135deg,var(--accent),var(--accent-2))}
 .profile-avatar img,.profile-avatar div{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#16161c;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800}
 .profile-name{font-size:20px;font-weight:800}
+.profile-bio{font-size:13px;color:rgba(255,255,255,0.78);max-width:300px;line-height:1.35}
 .badge-tg{font-size:12px;padding:4px 12px;border-radius:12px;background:rgba(0,229,255,0.14);color:var(--accent);font-weight:600}
 .badge-guest{font-size:12px;padding:4px 12px;border-radius:12px;background:rgba(255,255,255,0.08);color:var(--text-muted)}
 .profile-sub-btn{background:var(--accent-2);color:#fff;border:none;padding:9px 24px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;margin-top:2px}
 .profile-sub-btn.subscribed{background:rgba(255,255,255,0.16);color:#fff}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;margin-top:8px}
+.profile-edit-btn{background:rgba(255,255,255,0.08);border:1px solid var(--border-strong);color:#fff;padding:7px 16px;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;margin-top:6px}
 .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:11px 4px}
 .stat-val{font-size:17px;font-weight:800;color:#fff}
 .stat-lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
-.grid-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.prof-tabs{display:flex;gap:8px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px}
+.prof-tab{background:none;border:none;color:var(--text-muted);font-size:14px;font-weight:700;padding:6px 12px;border-radius:12px;cursor:pointer}
+.prof-tab.active{background:rgba(255,255,255,0.12);color:#fff}
 .video-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .grid-item{position:relative;aspect-ratio:9/16;background:#141419;border-radius:10px;overflow:hidden;cursor:pointer}
 .grid-item video{width:100%;height:100%;object-fit:cover;pointer-events:none}
@@ -139,8 +151,16 @@ Undertow
 Подписки
 
 
+🔍
 🔊
 ↻
+
+
+
+
+
+✕
+
 
 
 
@@ -151,7 +171,9 @@ Undertow
 
 U
 Гость
+
 Режим просмотра
+✏️ Редактировать профиль
 Подписаться
 
 0Подписчики
@@ -160,13 +182,23 @@ U
 0Лайки
 
 
-Мои публикации
+
+Публикации
+🔖 Закладки
 
 
 
 Лента
 +
 Профиль
+
+
+Редактировать профиль
+
+
+
+Сохранить изменения
+Отмена
 
 
 Новое видео
@@ -212,10 +244,10 @@ const TG_STICKERS = [
 { code: 'clap_gg', label: 'Браво', url: 'gstatic.com' }
 ];
 const EXTERNAL_FEED = [
-{ id: 'ext_yt_1', source: 'youtube', embed_id: 'aqz-KE-bpKQ', author_name: 'YouTube', description: 'Тренды анимации и коротких историй #shorts' },
-{ id: 'ext_tt_1', source: 'tiktok', embed_id: '7349876543210987654', video_url: 'googleapis.com', author_name: 'TikTok', description: 'Яркие моменты дня из рекомендаций #fyp' },
-{ id: 'ext_yt_2', source: 'youtube', embed_id: 'LXb3EKWsInQ', author_name: 'YouTube', description: 'Невероятная природа в 4K #travel #shorts' },
-{ id: 'ext_tt_2', source: 'tiktok', embed_id: '7349876543210987655', video_url: 'googleapis.com', author_name: 'TikTok', description: 'Атмосферный вайб и динамика #viral' }
+{ id: 'ext_yt_1', source: 'youtube', video_url: 'googleapis.com', author_name: 'YouTube', description: 'Тренды и яркие моменты дня #shorts' },
+{ id: 'ext_tt_1', source: 'tiktok', video_url: 'googleapis.com', author_name: 'TikTok', description: 'Динамика и экшн из рекомендаций #fyp' },
+{ id: 'ext_yt_2', source: 'youtube', video_url: 'googleapis.com', author_name: 'YouTube', description: 'Короткая история за 15 секунд #shorts' },
+{ id: 'ext_tt_2', source: 'tiktok', video_url: 'googleapis.com', author_name: 'TikTok', description: 'Атмосферный вайб дня #viral' }
 ];
 const tg = window.Telegram?.WebApp || null;
 if (tg) {
@@ -229,16 +261,35 @@ if (tg.setBackgroundColor) tg.setBackgroundColor('#050507');
 }
 const tgUser = tg?.initDataUnsafe?.user || null;
 const isGuest = !tgUser || !tgUser.id;
-const currentUser = isGuest
-? { id: 'guest', name: 'Гость', username: 'guest', photo: null }
-: { id: String(tgUser.id), name: tgUser.username ? '@' + tgUser.username : (tgUser.first_name || 'Пользователь'), username: tgUser.username || tgUser.first_name || 'user', photo: tgUser.photo_url || null };
-const LIKES_CACHE_KEY = 'ut_likes_' + currentUser.id;
-const VIDEOS_CACHE_KEY = 'ut_videos_cache_v2';
-function loadLocalLikes() {
-try { return new Set(JSON.parse(localStorage.getItem(LIKES_CACHE_KEY) || '[]').map(String)); } catch (e) { return new Set(); }
+const baseUser = isGuest
+? { id: 'guest', name: 'Гость', username: 'guest', photo: null, bio: '' }
+: { id: String(tgUser.id), name: tgUser.username ? '@' + tgUser.username : (tgUser.first_name || 'Пользователь'), username: tgUser.username || tgUser.first_name || 'user', photo: tgUser.photo_url || null, bio: '' };
+const PROFILE_META_KEY = 'ut_profile_meta_' + baseUser.id;
+const ALL_PROFILES_KEY = 'ut_all_profiles_map';
+const LIKES_CACHE_KEY = 'ut_likes_' + baseUser.id;
+const SAVED_CACHE_KEY = 'ut_saved_' + baseUser.id;
+const VIDEOS_CACHE_KEY = 'ut_videos_cache_v4';
+function getStoredMeta() {
+try { return JSON.parse(localStorage.getItem(PROFILE_META_KEY) || '{}'); } catch (e) { return {}; }
 }
-function saveLocalLikes() {
-try { localStorage.setItem(LIKES_CACHE_KEY, JSON.stringify(Array.from(likedSet))); } catch (e) {}
+function getProfilesMap() {
+try { return JSON.parse(localStorage.getItem(ALL_PROFILES_KEY) || '{}'); } catch (e) { return {}; }
+}
+function saveProfilesMap(map) {
+try { localStorage.setItem(ALL_PROFILES_KEY, JSON.stringify(map)); } catch (e) {}
+}
+const savedMeta = getStoredMeta();
+const currentUser = {
+...baseUser,
+name: savedMeta.name || baseUser.name,
+bio: savedMeta.bio || '',
+photo: savedMeta.photo || baseUser.photo
+};
+function loadSet(key) {
+try { return new Set(JSON.parse(localStorage.getItem(key) || '[]').map(String)); } catch (e) { return new Set(); }
+}
+function saveSet(key, setObj) {
+try { localStorage.setItem(key, JSON.stringify(Array.from(setObj))); } catch (e) {}
 }
 function encodeVideoSlug(id) {
 const s = String(id);
@@ -254,10 +305,10 @@ if (!isNaN(num)) return String(num);
 }
 return slug;
 }
-let allVideos = [], likedSet = loadLocalLikes(), subsSet = new Set(), viewedSessionSet = new Set();
-let currentFeedTab = 'all', userWantsSound = true, selectedFile = null, currentObserver = null;
+let allVideos = [], likedSet = loadSet(LIKES_CACHE_KEY), savedSet = loadSet(SAVED_CACHE_KEY), subsSet = new Set(), viewedSessionSet = new Set();
+let currentFeedTab = 'all', searchQuery = '', userWantsSound = true, selectedFile = null, currentObserver = null;
 let pendingDelete = null, activeShareVideo = null, activeCommentVidId = null;
-let viewedProfileId = currentUser.id;
+let viewedProfileId = currentUser.id, currentProfTab = 'videos';
 const brokenVideoIds = new Set(), likeLocks = new Map();
 const headers = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
 function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c])); }
@@ -290,6 +341,9 @@ return result;
 }
 async function syncUserProfile() {
 if (isGuest) return;
+const pMap = getProfilesMap();
+pMap[currentUser.id] = { name: currentUser.name, bio: currentUser.bio, photo: currentUser.photo };
+saveProfilesMap(pMap);
 try {
 await fetch(SUPABASE_URL + '/rest/v1/users', { method: 'POST', headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id: currentUser.id, username: currentUser.username, first_name: currentUser.name }) });
 } catch (e) {}
@@ -304,7 +358,7 @@ fetch(SUPABASE_URL + '/rest/v1/user_subs?follower_id=eq.' + encodeURIComponent(c
 if (lr.ok) {
 const l = await lr.json();
 l.forEach(x => likedSet.add(String(x.video_id)));
-saveLocalLikes();
+saveSet(LIKES_CACHE_KEY, likedSet);
 }
 if (sr.ok) {
 const s = await sr.json();
@@ -337,16 +391,51 @@ if (item && item.video_url) combined.unshift(item);
 }
 }
 allVideos = combined;
+updateSearchTags();
 try { localStorage.setItem(VIDEOS_CACHE_KEY, JSON.stringify(allVideos.slice(0, 20))); } catch (e) {}
+}
+function updateSearchTags() {
+const container = document.getElementById('searchTags');
+const tagCounts = {};
+allVideos.forEach(v => {
+const matches = String(v.description || '').match(/#[а-яА-Яa-zA-Z0-9_]+/g) || [];
+matches.forEach(t => {
+const low = t.toLowerCase();
+tagCounts[low] = (tagCounts[low] || 0) + 1;
+});
+});
+const topTags = Object.entries(tagCounts).sort((a, b) => b.at(1) - a.at(1)).slice(0, 8).map(e => e.at(0));
+const defaults = ['#shorts', '#fyp', '#юмор', '#игры', '#музыка', '#travel'];
+const finalTags = topTags.length ? topTags : defaults;
+container.innerHTML = finalTags.map(t => '' + escapeHtml(t) + '').join('');
+container.querySelectorAll('.chip-tag').forEach(btn => {
+btn.addEventListener('click', () => {
+const inp = document.getElementById('searchInput');
+inp.value = btn.dataset.tag;
+searchQuery = btn.dataset.tag.toLowerCase();
+renderFeed(true);
+});
+});
 }
 function authorDisplayName(v) {
 if (v.source === 'youtube') return 'YouTube';
 if (v.source === 'tiktok') return 'TikTok';
-const raw = v.author_name;
 const authorId = String(v.author_id || v.user_id || '');
+const pMap = getProfilesMap();
+if (pMap[authorId]?.name) return pMap[authorId].name;
+const raw = v.author_name;
 if (raw && raw !== '@user') return raw;
 if (authorId === currentUser.id) return currentUser.name;
 return '@creator_' + (authorId || '01').slice(-4);
+}
+function authorAvatarUrl(v) {
+const authorId = String(v.author_id || v.user_id || '');
+const pMap = getProfilesMap();
+if (authorId === currentUser.id && currentUser.photo) return currentUser.photo;
+return pMap[authorId]?.photo || '';
+}
+function formatDescWithTags(text) {
+return escapeHtml(text || '').replace(/(#[а-яА-Яa-zA-Z0-9_]+)/g, '$1');
 }
 function renderFeed(resetScroll = true) {
 const feed = document.getElementById('feed');
@@ -354,8 +443,15 @@ let list = allVideos.filter(v => !brokenVideoIds.has(String(v.id)));
 if (currentFeedTab === 'subs') {
 list = list.filter(v => !v.source && subsSet.has(String(v.author_id || v.user_id || '')));
 }
+if (searchQuery) {
+list = list.filter(v => {
+const desc = String(v.description || '').toLowerCase();
+const author = authorDisplayName(v).toLowerCase();
+return desc.includes(searchQuery) || author.includes(searchQuery);
+});
+}
 if (!list.length) {
-feed.innerHTML = '🌊' + (currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста') + '' + (currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первое видео') + '';
+feed.innerHTML = '🌊' + (searchQuery ? 'По запросу ничего не найдено' : (currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста')) + '' + (searchQuery ? 'Попробуйте другой #тег или очистите поиск' : (currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первое видео')) + '';
 return;
 }
 if (currentObserver) { currentObserver.disconnect(); currentObserver = null; }
@@ -365,11 +461,13 @@ const vidId = String(v.id);
 const isExternal = Boolean(v.source);
 const authorId = String(v.author_id || v.user_id || '');
 const authorName = authorDisplayName(v);
+const avUrl = authorAvatarUrl(v);
 const isLiked = likedSet.has(vidId);
+const isSaved = savedSet.has(vidId);
 const isSub = subsSet.has(authorId);
 const isOwn = !isGuest && !isExternal && authorId === currentUser.id;
 const initial = (authorName.replace('@','') || 'U').toUpperCase();
-const desc = escapeHtml(v.description || '');
+const descHtml = formatDescWithTags(v.description || '');
 const card = document.createElement('div');
 card.className = 'video-card';
 card.dataset.id = vidId;
@@ -377,14 +475,12 @@ card.dataset.index = String(idx);
 const sourceBadgeHtml = v.source === 'youtube'
 ? '▶ Взято из YouTube'
 : (v.source === 'tiktok' ? '♪ Взято из TikTok' : '');
-const mediaHtml = v.source === 'youtube'
-? ''
-: '';
-const statsHtml = isExternal
-? '' + (isLiked ? '1' : '') + ''
-: '' + formatNum(v.likes) + '';
+const mediaHtml = '';
+const likeBtnHtml = '' + (isExternal ? (isLiked ? '1' : '') : formatNum(v.likes)) + '';
+const saveBtnHtml = '' + (isSaved ? 'В закл.' : 'Закл.') + '';
 const viewsBlock = isExternal ? '' : '' + formatNum(v.views) + '';
 const authorClickableClass = (!isExternal && authorId) ? ' author-link' : '';
+const avatarInnerHtml = avUrl ? '' : initial;
 card.innerHTML =
 mediaHtml +
 '' +
@@ -392,27 +488,43 @@ mediaHtml +
 '' +
 sourceBadgeHtml +
 '' +
-'' + initial + '' +
+'' + avatarInnerHtml + '' +
 '' + escapeHtml(authorName) + '' +
 ((!isOwn && !isExternal && authorId) ? '' + (isSub ? 'Вы подписаны' : 'Подписаться') + '' : '') +
 '' +
-'' + desc + '' +
+'' + descHtml + '' +
 '' +
 '' +
-statsHtml +
+likeBtnHtml +
 'Чат' +
+saveBtnHtml +
 viewsBlock +
 'Репост' +
 '' +
-(v.source === 'youtube' ? '' : '');
+'';
 const vidEl = card.querySelector('video');
 const buffering = card.querySelector('.buffering');
 const pauseEl = card.querySelector('.pause-indicator');
 const likeBtn = card.querySelector('[data-act="like"]');
+const saveBtn = card.querySelector('[data-act="save"]');
 const subBtn = card.querySelector('[data-act="sub"]');
 const commentBtn = card.querySelector('[data-act="comment"]');
 const shareBtn = card.querySelector('[data-act="share"]');
 const likeCntEl = card.querySelector('[data-like-count]');
+const descEl = card.querySelector('.video-desc');
+descEl.addEventListener('click', (e) => {
+const tagEl = e.target.closest('[data-hashtag]');
+if (tagEl) {
+e.stopPropagation();
+const tag = tagEl.dataset.hashtag.toLowerCase();
+document.getElementById('searchOverlay').classList.add('open');
+document.getElementById('searchInput').value = tag;
+searchQuery = tag;
+renderFeed(true);
+return;
+}
+descEl.classList.toggle('expanded');
+});
 if (!isExternal && authorId) {
 card.querySelectorAll('[data-act="profile"]').forEach(el => {
 el.addEventListener('click', (e) => {
@@ -448,7 +560,8 @@ progressWrap.addEventListener('pointerup', endScrub);
 progressWrap.addEventListener('pointercancel', endScrub);
 vidEl.addEventListener('timeupdate', () => { if (!scrubbing && vidEl.duration) fillEl.style.width = ((vidEl.currentTime / vidEl.duration) * 100) + '%'; });
 let holdTimer = null;
-card.addEventListener('pointerdown', (e) => {
+card.addEventListener('pointerdown
+', (e) => {
 if (e.target.closest('button') || e.target.closest('.progress-wrap') || e.target.closest('[data-act="profile"]')) return;
 holdTimer = setTimeout(() => {
 vidEl.playbackRate = 2.0;
@@ -465,6 +578,7 @@ document.getElementById('speedBadge').style.display = 'none';
 });
 }
 likeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLike(vidId, likeBtn, likeCntEl, isExternal); });
+saveBtn.addEventListener('click', (e) => { e.stopPropagation(); handleSave(vidId, saveBtn); });
 commentBtn.addEventListener('click', (e) => { e.stopPropagation(); openComments(vidId); });
 shareBtn.addEventListener('click', (e) => { e.stopPropagation(); openShare({ id: vidId, url: v.video_url || '', desc: v.description || '' }); });
 if (subBtn) subBtn.addEventListener('click', (e) => { e.stopPropagation(); handleSub(authorId, subBtn); });
@@ -489,6 +603,23 @@ feed.appendChild(card);
 });
 if (resetScroll) feed.scrollTop = 0;
 setupObserver();
+}
+function handleSave(vidId, btn) {
+if (vidId.startsWith('temp_')) return;
+haptic('light');
+const label = btn.querySelector('.action-count');
+if (savedSet.has(vidId)) {
+savedSet.delete(vidId);
+btn.classList.remove('saved');
+if (label) label.textContent = 'Закл.';
+showToast('Убрано из закладок');
+} else {
+savedSet.add(vidId);
+btn.classList.add('saved');
+if (label) label.textContent = 'В закл.';
+showToast('🔖 Сохранено в закладки');
+}
+saveSet(SAVED_CACHE_KEY, savedSet);
 }
 async function playCard(vid, card) {
 vid.muted = !userWantsSound;
@@ -556,7 +687,7 @@ const wasLiked = likedSet.has(vidId);
 if (isExternal) {
 if (wasLiked) { likedSet.delete(vidId); btn.classList.remove('liked'); if (cntEl) cntEl.textContent = ''; }
 else { likedSet.add(vidId); btn.classList.add('liked'); if (cntEl) cntEl.textContent = '1'; }
-saveLocalLikes();
+saveSet(LIKES_CACHE_KEY, likedSet);
 return;
 }
 likeLocks.set(vidId, true);
@@ -571,7 +702,7 @@ likedSet.add(vidId);
 btn.classList.add('liked');
 cur += 1;
 }
-saveLocalLikes();
+saveSet(LIKES_CACHE_KEY, likedSet);
 if (cntEl) cntEl.textContent = formatNum(cur);
 if (item) item.likes = cur;
 try {
@@ -589,7 +720,7 @@ if (item) item.likes = d.likes;
 if (typeof d.liked === 'boolean') {
 if (d.liked) { likedSet.add(vidId); btn.classList.add('liked'); }
 else { likedSet.delete(vidId); btn.classList.remove('liked'); }
-saveLocalLikes();
+saveSet(LIKES_CACHE_KEY, likedSet);
 }
 }
 } catch (e) {}
@@ -614,6 +745,21 @@ btn.textContent = 'Вы подписаны';
 }
 try { await fetch(SUPABASE_URL + '/rest/v1/rpc/toggle_user_sub', { method: 'POST', headers, body: JSON.stringify({ p_follower_id: currentUser.id, p_author_id: authorId }) }); } catch (e) {}
 }
+document.getElementById('searchToggleBtn').addEventListener('click', () => {
+const ov = document.getElementById('searchOverlay');
+ov.classList.toggle('open');
+if (ov.classList.contains('open')) document.getElementById('searchInput').focus();
+});
+document.getElementById('searchInput').addEventListener('input', (e) => {
+searchQuery = e.target.value.trim().toLowerCase();
+renderFeed(true);
+});
+document.getElementById('searchClearBtn').addEventListener('click', () => {
+document.getElementById('searchInput').value = '';
+searchQuery = '';
+document.getElementById('searchOverlay').classList.remove('open');
+renderFeed(true);
+});
 document.getElementById('soundBtn').addEventListener('click', () => {
 userWantsSound = !userWantsSound;
 document.getElementById('soundBtn').textContent = userWantsSound ? '🔊' : '🔇';
@@ -629,9 +775,11 @@ renderFeed(true);
 }
 function openUserProfile(targetId, fallbackName = '') {
 viewedProfileId = String(targetId);
+currentProfTab = 'videos';
 switchMainView('profile', fallbackName);
 }
 function switchMainView(view, fallbackName = '') {
+document.getElementById('searchOverlay').classList.remove('open');
 document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
 document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 document.getElementById('topBar').style.display = view === 'feed' ? 'flex' : 'none';
@@ -651,6 +799,45 @@ document.getElementById('btnProfileBack').addEventListener('click', () => {
 viewedProfileId = currentUser.id;
 switchMainView('feed');
 });
+document.getElementById('profEditBtn').addEventListener('click', () => {
+document.getElementById('editNameInput').value = currentUser.name;
+document.getElementById('editBioInput').value = currentUser.bio || '';
+document.getElementById('editAvatarInput').value = currentUser.photo || '';
+openSheet('editProfileSheet');
+});
+document.getElementById('btnSaveProfile').addEventListener('click', async () => {
+const newName = document.getElementById('editNameInput').value.trim();
+const newBio = document.getElementById('editBioInput').value.trim();
+const newAv = document.getElementById('editAvatarInput').value.trim();
+if (!newName) return showToast('Введите имя канала');
+currentUser.name = newName;
+currentUser.bio = newBio;
+if (newAv) currentUser.photo = newAv;
+try {
+localStorage.setItem(PROFILE_META_KEY, JSON.stringify({ name: currentUser.name, bio: currentUser.bio, photo: currentUser.photo }));
+} catch (e) {}
+const pMap = getProfilesMap();
+pMap[currentUser.id] = { name: currentUser.name, bio: currentUser.bio, photo: currentUser.photo };
+saveProfilesMap(pMap);
+closeSheet('editProfileSheet');
+renderProfile(currentUser.id);
+showToast('✅ Профиль обновлён');
+try {
+await fetch(SUPABASE_URL + '/rest/v1/videos?user_id=eq.' + encodeURIComponent(currentUser.id), {
+method: 'PATCH',
+headers: { ...headers, 'Prefer': 'return=minimal' },
+body: JSON.stringify({ author_name: currentUser.name })
+});
+} catch (e) {}
+});
+document.getElementById('profTabVideos').addEventListener('click', () => {
+currentProfTab = 'videos';
+renderProfile(viewedProfileId);
+});
+document.getElementById('profTabSaved').addEventListener('click', () => {
+currentProfTab = 'saved';
+renderProfile(viewedProfileId);
+});
 async function loadFollowersCount(targetId) {
 if (!targetId || targetId === 'guest') return 0;
 try {
@@ -659,7 +846,7 @@ headers: { ...headers, 'Prefer': 'count=exact' }
 });
 const contentRange = res.headers.get('content-range');
 if (contentRange && contentRange.includes('/')) {
-const total = Number(contentRange.split('/')[1]);
+const total = Number(contentRange.split('/'));
 if (!isNaN(total)) return total;
 }
 if (res.ok) {
@@ -673,26 +860,45 @@ async function renderProfile(targetId = currentUser.id, fallbackName = '') {
 const isMe = String(targetId) === String(currentUser.id);
 const backBtn = document.getElementById('btnProfileBack');
 const subBtn = document.getElementById('profSubBtn');
+const editBtn = document.getElementById('profEditBtn');
 const badge = document.getElementById('profBadge');
+const bioEl = document.getElementById('profBio');
+const savedTabBtn = document.getElementById('profTabSaved');
 backBtn.classList.toggle('visible', !isMe);
+savedTabBtn.style.display = isMe ? 'inline-block' : 'none';
+if (!isMe) currentProfTab = 'videos';
+document.getElementById('profTabVideos').classList.toggle('active', currentProfTab === 'videos');
+document.getElementById('profTabSaved').classList.toggle('active', currentProfTab === 'saved');
+document.getElementById('profTabVideos').textContent = isMe ? 'Мои видео' : 'Видео автора';
+const pMap = getProfilesMap();
+const storedAuthor = pMap[String(targetId)] || {};
 const authorVideos = allVideos.filter(v => !v.source && String(v.author_id || v.user_id) === String(targetId) && !brokenVideoIds.has(String(v.id)));
 const firstVid = authorVideos.at(0);
 const displayName = isMe
 ? currentUser.name
-: (fallbackName || (firstVid ? authorDisplayName(firstVid) : '@creator_' + String(targetId).slice(-4)));
+: (storedAuthor.name || fallbackName || (firstVid ? authorDisplayName(firstVid) : '@creator_' + String(targetId).slice(-4)));
+const bioText = isMe ? currentUser.bio : (storedAuthor.bio || '');
+const avatarPhoto = isMe ? currentUser.photo : (storedAuthor.photo || '');
 document.getElementById('profName').textContent = displayName;
-document.getElementById('profGridTitle').textContent = isMe ? 'Мои публикации' : 'Видео автора';
+if (bioText) {
+bioEl.textContent = bioText;
+bioEl.style.display = 'block';
+} else {
+bioEl.style.display = 'none';
+}
 const av = document.getElementById('profAvatar');
-if (isMe && currentUser.photo) {
+if (avatarPhoto) {
 av.innerHTML = '';
 } else {
-av.innerHTML = '' + (displayName.replace('@','')[0] || 'U').toUpperCase() + '';
+av.innerHTML = '' + (displayName.replace('@','') || 'U').toUpperCase() + '';
 }
 if (isMe) {
 subBtn.style.display = 'none';
+editBtn.style.display = isGuest ? 'none' : 'inline-block';
 if (isGuest) { badge.className = 'badge-guest'; badge.textContent = 'Режим гостя'; }
 else { badge.className = 'badge-tg'; badge.textContent = 'Аккаунт TG'; }
 } else {
+editBtn.style.display = 'none';
 badge.className = 'badge-tg';
 badge.textContent = 'Автор Undertow';
 subBtn.style.display = 'inline-block';
@@ -710,22 +916,29 @@ document.getElementById('statVideos').textContent = formatNum(isMe && isGuest ? 
 document.getElementById('statViews').textContent = formatNum(isMe && isGuest ? 0 : authorVideos.reduce((a, v) => a + (Number(v.views) || 0), 0));
 document.getElementById('statLikes').textContent = formatNum(isMe && isGuest ? 0 : authorVideos.reduce((a, v) => a + (Number(v.likes) || 0), 0));
 const grid = document.getElementById('profileGrid');
-if (isMe && isGuest) {
+if (isMe && isGuest && currentProfTab === 'videos') {
 document.getElementById('statSubs').textContent = '0';
 grid.innerHTML = 'Войдите в ботаВойти';
 document.getElementById('btnLoginInline').addEventListener('click', openBotAuth);
 return;
 }
-if (!authorVideos.length) {
-grid.innerHTML = 'Нет публикаций';
+const displayList = currentProfTab === 'saved'
+? allVideos.filter(v => savedSet.has(String(v.id)) && !brokenVideoIds.has(String(v.id)))
+: authorVideos;
+if (!displayList.length) {
+grid.innerHTML = '' + (currentProfTab === 'saved' ? 'В закладках пока пусто' : 'Нет публикаций') + '';
 } else {
 grid.innerHTML = '';
-authorVideos.forEach(v => {
+displayList.forEach(v => {
 const item = document.createElement('div');
 item.className = 'grid-item';
-item.innerHTML = '👁 ' + formatNum(v.views) + '' + (isMe ? '×' : '');
+const thumbHtml = '';
+const badgeText = v.source ? (v.source === 'youtube' ? '▶ YT' : '♪ TT') : ('👁 ' + formatNum(v.views));
+item.innerHTML = thumbHtml + '' + badgeText + '' + (isMe && currentProfTab === 'videos' ? '×' : '');
 item.addEventListener('click', () => {
 currentFeedTab = 'all';
+searchQuery = '';
+document.getElementById('searchInput').value = '';
 document.getElementById('tabAll').classList.add('active');
 document.getElementById('tabSubs').classList.remove('active');
 const idx = allVideos.findIndex(x => String(x.id) === String(v.id));
@@ -737,7 +950,7 @@ viewedProfileId = currentUser.id;
 switchMainView('feed');
 renderFeed(true);
 });
-if (isMe) {
+if (isMe && currentProfTab === 'videos') {
 item.querySelector('.delete-btn').addEventListener('click', (e) => {
 e.stopPropagation();
 pendingDelete = { id: v.id, video_url: v.video_url };
@@ -872,6 +1085,7 @@ if (savedRow) {
 const idx = allVideos.findIndex(x => x.id === tempId);
 if (idx !== -1) allVideos[idx] = savedRow;
 URL.revokeObjectURL(localBlobUrl);
+updateSearchTags();
 renderFeed(true);
 }
 showToast('✅ Опубликовано');
@@ -1027,6 +1241,7 @@ switchMainView('feed');
 });
 document.getElementById('navProfile').addEventListener('click', () => {
 viewedProfileId = currentUser.id;
+currentProfTab = 'videos';
 switchMainView('profile');
 });
 document.getElementById('tabAll').addEventListener('click', () => switchFeedTab('all'));
@@ -1047,6 +1262,7 @@ try {
 const cached = JSON.parse(localStorage.getItem(VIDEOS_CACHE_KEY) || '[]');
 if (cached.length > 0 && !getStartParam()) {
 allVideos = cached;
+updateSearchTags();
 renderFeed(true);
 document.getElementById('splash').classList.add('hidden');
 }
