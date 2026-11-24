@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Undertow</title>
-<script src="https://telegram.org"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{--bg:#050507;--surface:rgba(24,24,29,0.75);--surface-solid:#16161b;--border:rgba(255,255,255,0.10);--border-strong:rgba(255,255,255,0.18);--accent:#00e5ff;--accent-2:#ff2b54;--text:#ffffff;--text-muted:#9898a6;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);}
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -76,7 +76,6 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(62px + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:rgba(8,8,11,0.94);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;z-index:30}
 .nav-btn{background:none;border:none;color:var(--text-muted);font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;width:70px}
 .nav-btn.active{color:#fff}
-Используйте код с осторожностью.
 .create-btn{width:48px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:22px}
 #profileView{padding:calc(20px + var(--safe-top)) 16px calc(80px + var(--safe-bottom));overflow-y:auto;background:radial-gradient(circle at 50% 0%,#131d29 0%,#050507 55%)}
 .profile-top-bar{display:flex;align-items:center;justify-content:space-between;min-height:36px;margin-bottom:8px}
@@ -291,9 +290,17 @@ try { return new Set(JSON.parse(localStorage.getItem(key) || '[]').map(String));
 function saveSet(key, setObj) {
 try { localStorage.setItem(key, JSON.stringify(Array.from(setObj))); } catch (e) {}
 }
+function isDigitsOnly(str) {
+if (!str) return false;
+for (let i = 0; i < str.length; i++) {
+const code = str.charCodeAt(i);
+if (code < 48 || code > 57) return false;
+}
+return true;
+}
 function encodeVideoSlug(id) {
 const s = String(id);
-if (/^\d+$/.test(s)) return 'u' + Number(s).toString(36) + 'x' + ((Number(s) * 7 + 13) % 36).toString(36);
+if (isDigitsOnly(s)) return 'u' + Number(s).toString(36) + 'x' + ((Number(s) * 7 + 13) % 36).toString(36);
 return s;
 }
 function decodeVideoSlug(slug) {
@@ -363,7 +370,7 @@ let idx = native.findIndex(v => String(v.id) === targetId);
 if (idx > 0) {
 const [found] = native.splice(idx, 1);
 native.unshift(found);
-} else if (idx === -1 && /^\d+$/.test(targetId)) {
+} else if (idx === -1 && isDigitsOnly(targetId)) {
 try {
 const vRes = await fetch(SUPABASE_URL + '/rest/v1/videos?id=eq.' + targetId + '&select=*', { headers });
 if (vRes.ok) {
@@ -382,10 +389,12 @@ function updateSearchTags() {
 const container = document.getElementById('searchTags');
 const tagCounts = {};
 allVideos.forEach(v => {
-const matches = String(v.description || '').match(/#[а-яА-Яa-zA-Z0-9_]+/g) || [];
-matches.forEach(t => {
-const low = t.toLowerCase();
+const words = String(v.description || '').split(/\s+/);
+words.forEach(w => {
+if (w.startsWith('#') && w.length > 1) {
+const low = w.toLowerCase();
 tagCounts[low] = (tagCounts[low] || 0) + 1;
+}
 });
 });
 const topTags = Object.entries(tagCounts).sort((a, b) => b.at(1) - a.at(1)).slice(0, 8).map(e => e.at(0));
@@ -417,7 +426,13 @@ if (authorId === currentUser.id && currentUser.photo) return currentUser.photo;
 return pMap[authorId]?.photo || '';
 }
 function formatDescWithTags(text) {
-return escapeHtml(text || '').replace(/(#[а-яА-Яa-zA-Z0-9_]+)/g, '$1');
+return String(text || '').split(/(\s+)/).map(part => {
+if (part.startsWith('#') && part.length > 1) {
+const safe = escapeHtml(part);
+return '' + safe + '';
+}
+return escapeHtml(part);
+}).join('');
 }
 function renderFeed(resetScroll = true) {
 const feed = document.getElementById('feed');
@@ -821,7 +836,7 @@ headers: { ...headers, 'Prefer': 'count=exact' }
 });
 const contentRange = res.headers.get('content-range');
 if (contentRange && contentRange.includes('/')) {
-const total = Number(contentRange.split('/'));
+const total = Number(contentRange.split('/')[1]);
 if (!isNaN(total)) return total;
 }
 if (res.ok) {
