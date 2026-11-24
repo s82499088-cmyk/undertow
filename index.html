@@ -42,9 +42,6 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .feed::-webkit-scrollbar{display:none}
 .video-card{position:relative;width:100%;height:100vh;scroll-snap-align:start;scroll-snap-stop:always;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .video-card video{width:100%;height:100%;object-fit:contain;background:#000;display:block;border:none}
-.source-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:8px;font-size:11px;font-weight:700;margin-bottom:6px;backdrop-filter:blur(8px)}
-.source-yt{background:rgba(255,0,0,0.25);border:1px solid rgba(255,68,68,0.5);color:#ff6b6b}
-.source-tt{background:rgba(0,229,255,0.18);border:1px solid rgba(0,229,255,0.45);color:#67e8f9}
 .buffering{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:6;pointer-events:none}
 .buffering.show{display:flex}.buffering-spinner{width:44px;height:44px;border:3px solid rgba(255,255,255,0.18);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 .gradient-bottom{position:absolute;left:0;right:0;bottom:0;height:44%;background:linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.4) 60%,transparent 100%);pointer-events:none;z-index:5}
@@ -76,10 +73,10 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .progress-bar{width:100%;height:3px;background:rgba(255,255,255,0.2);position:relative;border-radius:2px;overflow:hidden}
 .progress-buffer{position:absolute;left:0;top:0;height:100%;width:0%;background:rgba(255,255,255,0.28)}
 .progress-fill{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
-Используйте код с осторожностью.
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(62px + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:rgba(8,8,11,0.94);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;z-index:30}
 .nav-btn{background:none;border:none;color:var(--text-muted);font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;width:70px}
 .nav-btn.active{color:#fff}
+Используйте код с осторожностью.
 .create-btn{width:48px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:22px}
 #profileView{padding:calc(20px + var(--safe-top)) 16px calc(80px + var(--safe-bottom));overflow-y:auto;background:radial-gradient(circle at 50% 0%,#131d29 0%,#050507 55%)}
 .profile-top-bar{display:flex;align-items:center;justify-content:space-between;min-height:36px;margin-bottom:8px}
@@ -134,6 +131,7 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
 .sticker-cell img{width:54px;height:54px;object-fit:contain}
 .sticker-cell span{font-size:10px;color:var(--text-muted);margin-top:2px}
 .empty-state{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;gap:12px;color:var(--text-muted)}
+.rules-footer{font-size:11px;color:var(--text-muted);text-align:center;margin-top:16px;line-height:1.4}
 
 
 
@@ -187,6 +185,8 @@ U
 🔖 Закладки
 
 
+Весь контент проходит ИИ-модерацию и соответствует правилам Telegram.
+
 
 Лента
 +
@@ -218,6 +218,12 @@ U
 🔗 Скопировать прямую ссылку
 
 
+Пожаловаться на видео
+Если ролик нарушает правила Telegram (18+, насилие, спам или авторские права), отправьте жалобу модератору.
+🚩 Отправить жалобу
+Отмена
+
+
 Доступно в Telegram
 Вы находитесь в режиме просмотра. Войдите через официального бота @undertow_vids_bot, чтобы ставить лайки, подписываться, комментировать и загружать видео.
 Открыть в @undertow_vids_bot
@@ -243,12 +249,6 @@ const TG_STICKERS = [
 { code: 'cool_star', label: 'Круто', url: 'gstatic.com' },
 { code: 'clap_gg', label: 'Браво', url: 'gstatic.com' }
 ];
-const EXTERNAL_FEED = [
-{ id: 'ext_yt_1', source: 'youtube', video_url: 'googleapis.com', author_name: 'YouTube', description: 'Тренды и яркие моменты дня #shorts' },
-{ id: 'ext_tt_1', source: 'tiktok', video_url: 'googleapis.com', author_name: 'TikTok', description: 'Динамика и экшн из рекомендаций #fyp' },
-{ id: 'ext_yt_2', source: 'youtube', video_url: 'googleapis.com', author_name: 'YouTube', description: 'Короткая история за 15 секунд #shorts' },
-{ id: 'ext_tt_2', source: 'tiktok', video_url: 'googleapis.com', author_name: 'TikTok', description: 'Атмосферный вайб дня #viral' }
-];
 const tg = window.Telegram?.WebApp || null;
 if (tg) {
 try {
@@ -268,7 +268,7 @@ const PROFILE_META_KEY = 'ut_profile_meta_' + baseUser.id;
 const ALL_PROFILES_KEY = 'ut_all_profiles_map';
 const LIKES_CACHE_KEY = 'ut_likes_' + baseUser.id;
 const SAVED_CACHE_KEY = 'ut_saved_' + baseUser.id;
-const VIDEOS_CACHE_KEY = 'ut_videos_cache_v4';
+const VIDEOS_CACHE_KEY = 'ut_videos_native_v1';
 function getStoredMeta() {
 try { return JSON.parse(localStorage.getItem(PROFILE_META_KEY) || '{}'); } catch (e) { return {}; }
 }
@@ -307,7 +307,7 @@ return slug;
 }
 let allVideos = [], likedSet = loadSet(LIKES_CACHE_KEY), savedSet = loadSet(SAVED_CACHE_KEY), subsSet = new Set(), viewedSessionSet = new Set();
 let currentFeedTab = 'all', searchQuery = '', userWantsSound = true, selectedFile = null, currentObserver = null;
-let pendingDelete = null, activeShareVideo = null, activeCommentVidId = null;
+let pendingDelete = null, activeShareVideo = null, activeCommentVidId = null, pendingReportId = null;
 let viewedProfileId = currentUser.id, currentProfTab = 'videos';
 const brokenVideoIds = new Set(), likeLocks = new Map();
 const headers = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
@@ -323,21 +323,6 @@ function getStartParam() {
 if (tg?.initDataUnsafe?.start_param) return String(tg.initDataUnsafe.start_param);
 const q = new URLSearchParams(location.search);
 return q.get('startapp') || q.get('tgWebAppStartParam') || '';
-}
-function mergeExternalFeed(nativeList) {
-const result = [];
-let extIdx = 0;
-if (nativeList.length === 0) return [...EXTERNAL_FEED];
-for (let i = 0; i < nativeList.length; i++) {
-result.push(nativeList.at(i));
-if ((i + 1) % 2 === 0 && extIdx < EXTERNAL_FEED.length) {
-result.push(EXTERNAL_FEED.at(extIdx++));
-}
-}
-while (extIdx < EXTERNAL_FEED.length) {
-result.push(EXTERNAL_FEED.at(extIdx++));
-}
-return result;
 }
 async function syncUserProfile() {
 if (isGuest) return;
@@ -370,27 +355,26 @@ async function fetchVideos() {
 const res = await fetch(SUPABASE_URL + '/rest/v1/videos?select=*&order=id.desc&limit=50', { headers });
 if (!res.ok) throw new Error('fetch failed');
 const rows = await res.json();
-const native = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('http'));
-let combined = mergeExternalFeed(native);
+let native = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('http'));
 const rawParam = getStartParam();
 if (rawParam && rawParam.startsWith('v_')) {
 const targetId = decodeVideoSlug(rawParam.slice(2));
-let idx = combined.findIndex(v => String(v.id) === targetId);
+let idx = native.findIndex(v => String(v.id) === targetId);
 if (idx > 0) {
-const [found] = combined.splice(idx, 1);
-combined.unshift(found);
+const [found] = native.splice(idx, 1);
+native.unshift(found);
 } else if (idx === -1 && /^\d+$/.test(targetId)) {
 try {
 const vRes = await fetch(SUPABASE_URL + '/rest/v1/videos?id=eq.' + targetId + '&select=*', { headers });
 if (vRes.ok) {
 const vRows = await vRes.json();
 const item = vRows.at(0);
-if (item && item.video_url) combined.unshift(item);
+if (item && item.video_url) native.unshift(item);
 }
 } catch (e) {}
 }
 }
-allVideos = combined;
+allVideos = native;
 updateSearchTags();
 try { localStorage.setItem(VIDEOS_CACHE_KEY, JSON.stringify(allVideos.slice(0, 20))); } catch (e) {}
 }
@@ -405,7 +389,7 @@ tagCounts[low] = (tagCounts[low] || 0) + 1;
 });
 });
 const topTags = Object.entries(tagCounts).sort((a, b) => b.at(1) - a.at(1)).slice(0, 8).map(e => e.at(0));
-const defaults = ['#shorts', '#fyp', '#юмор', '#игры', '#музыка', '#travel'];
+const defaults = ['#shorts', '#юмор', '#игры', '#музыка', '#влог', '#топ'];
 const finalTags = topTags.length ? topTags : defaults;
 container.innerHTML = finalTags.map(t => '' + escapeHtml(t) + '').join('');
 container.querySelectorAll('.chip-tag').forEach(btn => {
@@ -418,8 +402,6 @@ renderFeed(true);
 });
 }
 function authorDisplayName(v) {
-if (v.source === 'youtube') return 'YouTube';
-if (v.source === 'tiktok') return 'TikTok';
 const authorId = String(v.author_id || v.user_id || '');
 const pMap = getProfilesMap();
 if (pMap[authorId]?.name) return pMap[authorId].name;
@@ -441,7 +423,7 @@ function renderFeed(resetScroll = true) {
 const feed = document.getElementById('feed');
 let list = allVideos.filter(v => !brokenVideoIds.has(String(v.id)));
 if (currentFeedTab === 'subs') {
-list = list.filter(v => !v.source && subsSet.has(String(v.author_id || v.user_id || '')));
+list = list.filter(v => subsSet.has(String(v.author_id || v.user_id || '')));
 }
 if (searchQuery) {
 list = list.filter(v => {
@@ -458,48 +440,40 @@ if (currentObserver) { currentObserver.disconnect(); currentObserver = null; }
 feed.innerHTML = '';
 list.forEach((v, idx) => {
 const vidId = String(v.id);
-const isExternal = Boolean(v.source);
 const authorId = String(v.author_id || v.user_id || '');
 const authorName = authorDisplayName(v);
 const avUrl = authorAvatarUrl(v);
 const isLiked = likedSet.has(vidId);
 const isSaved = savedSet.has(vidId);
 const isSub = subsSet.has(authorId);
-const isOwn = !isGuest && !isExternal && authorId === currentUser.id;
+const isOwn = !isGuest && authorId === currentUser.id;
 const initial = (authorName.replace('@','') || 'U').toUpperCase();
 const descHtml = formatDescWithTags(v.description || '');
 const card = document.createElement('div');
 card.className = 'video-card';
 card.dataset.id = vidId;
 card.dataset.index = String(idx);
-const sourceBadgeHtml = v.source === 'youtube'
-? '▶ Взято из YouTube'
-: (v.source === 'tiktok' ? '♪ Взято из TikTok' : '');
-const mediaHtml = '';
-const likeBtnHtml = '' + (isExternal ? (isLiked ? '1' : '') : formatNum(v.likes)) + '';
-const saveBtnHtml = '' + (isSaved ? 'В закл.' : 'Закл.') + '';
-const viewsBlock = isExternal ? '' : '' + formatNum(v.views) + '';
-const authorClickableClass = (!isExternal && authorId) ? ' author-link' : '';
+const authorClickableClass = authorId ? ' author-link' : '';
 const avatarInnerHtml = avUrl ? '' : initial;
 card.innerHTML =
-mediaHtml +
 '' +
 '' +
 '' +
-sourceBadgeHtml +
+'' +
 '' +
 '' + avatarInnerHtml + '' +
 '' + escapeHtml(authorName) + '' +
-((!isOwn && !isExternal && authorId) ? '' + (isSub ? 'Вы подписаны' : 'Подписаться') + '' : '') +
+((!isOwn && authorId) ? '' + (isSub ? 'Вы подписаны' : 'Подписаться') + '' : '') +
 '' +
 '' + descHtml + '' +
 '' +
 '' +
-likeBtnHtml +
+'' + formatNum(v.likes) + '' +
 'Чат' +
-saveBtnHtml +
-viewsBlock +
+'' + (isSaved ? 'В закл.' : 'Закл.') + '' +
+'' + formatNum(v.views) + '' +
 'Репост' +
+(!isOwn ? '🚩' : '') +
 '' +
 '';
 const vidEl = card.querySelector('video');
@@ -510,6 +484,7 @@ const saveBtn = card.querySelector('[data-act="save"]');
 const subBtn = card.querySelector('[data-act="sub"]');
 const commentBtn = card.querySelector('[data-act="comment"]');
 const shareBtn = card.querySelector('[data-act="share"]');
+const reportBtn = card.querySelector('[data-act="report"]');
 const likeCntEl = card.querySelector('[data-like-count]');
 const descEl = card.querySelector('.video-desc');
 descEl.addEventListener('click', (e) => {
@@ -525,7 +500,7 @@ return;
 }
 descEl.classList.toggle('expanded');
 });
-if (!isExternal && authorId) {
+if (authorId) {
 card.querySelectorAll('[data-act="profile"]').forEach(el => {
 el.addEventListener('click', (e) => {
 e.stopPropagation();
@@ -533,7 +508,6 @@ openUserProfile(authorId, authorName);
 });
 });
 }
-if (vidEl) {
 const fillEl = card.querySelector('.progress-fill');
 const bufferEl = card.querySelector('.progress-buffer');
 const progressWrap = card.querySelector('.progress-wrap');
@@ -560,8 +534,7 @@ progressWrap.addEventListener('pointerup', endScrub);
 progressWrap.addEventListener('pointercancel', endScrub);
 vidEl.addEventListener('timeupdate', () => { if (!scrubbing && vidEl.duration) fillEl.style.width = ((vidEl.currentTime / vidEl.duration) * 100) + '%'; });
 let holdTimer = null;
-card.addEventListener('pointerdown
-', (e) => {
+card.addEventListener('pointerdown', (e) => {
 if (e.target.closest('button') || e.target.closest('.progress-wrap') || e.target.closest('[data-act="profile"]')) return;
 holdTimer = setTimeout(() => {
 vidEl.playbackRate = 2.0;
@@ -576,11 +549,11 @@ vidEl.playbackRate = 1.0;
 document.getElementById('speedBadge').style.display = 'none';
 }
 });
-}
-likeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLike(vidId, likeBtn, likeCntEl, isExternal); });
+likeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLike(vidId, likeBtn, likeCntEl); });
 saveBtn.addEventListener('click', (e) => { e.stopPropagation(); handleSave(vidId, saveBtn); });
 commentBtn.addEventListener('click', (e) => { e.stopPropagation(); openComments(vidId); });
 shareBtn.addEventListener('click', (e) => { e.stopPropagation(); openShare({ id: vidId, url: v.video_url || '', desc: v.description || '' }); });
+if (reportBtn) reportBtn.addEventListener('click', (e) => { e.stopPropagation(); pendingReportId = vidId; openSheet('reportSheet'); });
 if (subBtn) subBtn.addEventListener('click', (e) => { e.stopPropagation(); handleSub(authorId, subBtn); });
 let tapTimer = null;
 card.addEventListener('click', (e) => {
@@ -589,11 +562,10 @@ if (tapTimer) {
 clearTimeout(tapTimer);
 tapTimer = null;
 spawnHeart(card, e.clientX, e.clientY);
-if (!likedSet.has(vidId)) handleLike(vidId, likeBtn, likeCntEl, isExternal);
+if (!likedSet.has(vidId)) handleLike(vidId, likeBtn, likeCntEl);
 } else {
 tapTimer = setTimeout(() => {
 tapTimer = null;
-if (!vidEl) return;
 if (vidEl.paused) { vidEl.play().catch(() => {}); pauseEl.classList.remove('visible'); }
 else { vidEl.pause(); pauseEl.classList.add('visible'); }
 }, 260);
@@ -604,6 +576,15 @@ feed.appendChild(card);
 if (resetScroll) feed.scrollTop = 0;
 setupObserver();
 }
+document.getElementById('btnSendReport').addEventListener('click', () => {
+closeSheet('reportSheet');
+if (pendingReportId) {
+brokenVideoIds.add(pendingReportId);
+renderFeed(false);
+showToast('🚩 Жалоба отправлена. Видео скрыто.');
+}
+pendingReportId = null;
+});
 function handleSave(vidId, btn) {
 if (vidId.startsWith('temp_')) return;
 haptic('light');
@@ -670,7 +651,7 @@ vid.load();
 });
 }
 async function registerView(vidId) {
-if (!vidId || vidId.startsWith('temp_') || vidId.startsWith('ext_') || viewedSessionSet.has(vidId)) return;
+if (!vidId || vidId.startsWith('temp_') || viewedSessionSet.has(vidId)) return;
 viewedSessionSet.add(vidId);
 const viewerKey = isGuest ? (localStorage.getItem('ut_guest_id') || (() => { const id = 'g_' + Math.random().toString(36).slice(2); localStorage.setItem('ut_guest_id', id); return id; })()) : currentUser.id;
 try {
@@ -678,18 +659,12 @@ const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/register_unique_view', { me
 if (res.ok) { const newViews = await res.json(); const card = document.querySelector('.video-card[data-id="' + vidId + '"]'); const el = card?.querySelector('[data-view-count]'); if (el && typeof newViews === 'number') el.textContent = formatNum(newViews); }
 } catch (e) {}
 }
-async function handleLike(vidId, btn, cntEl, isExternal = false) {
+async function handleLike(vidId, btn, cntEl) {
 if (isGuest) return openSheet('guestSheet');
 if (vidId.startsWith('temp_')) return showToast('Загрузка...');
 if (likeLocks.has(vidId)) return;
 haptic('medium');
 const wasLiked = likedSet.has(vidId);
-if (isExternal) {
-if (wasLiked) { likedSet.delete(vidId); btn.classList.remove('liked'); if (cntEl) cntEl.textContent = ''; }
-else { likedSet.add(vidId); btn.classList.add('liked'); if (cntEl) cntEl.textContent = '1'; }
-saveSet(LIKES_CACHE_KEY, likedSet);
-return;
-}
 likeLocks.set(vidId, true);
 const item = allVideos.find(x => String(x.id) === vidId);
 let cur = Number(item?.likes || 0);
@@ -872,7 +847,7 @@ document.getElementById('profTabSaved').classList.toggle('active', currentProfTa
 document.getElementById('profTabVideos').textContent = isMe ? 'Мои видео' : 'Видео автора';
 const pMap = getProfilesMap();
 const storedAuthor = pMap[String(targetId)] || {};
-const authorVideos = allVideos.filter(v => !v.source && String(v.author_id || v.user_id) === String(targetId) && !brokenVideoIds.has(String(v.id)));
+const authorVideos = allVideos.filter(v => String(v.author_id || v.user_id) === String(targetId) && !brokenVideoIds.has(String(v.id)));
 const firstVid = authorVideos.at(0);
 const displayName = isMe
 ? currentUser.name
@@ -932,9 +907,7 @@ grid.innerHTML = '';
 displayList.forEach(v => {
 const item = document.createElement('div');
 item.className = 'grid-item';
-const thumbHtml = '';
-const badgeText = v.source ? (v.source === 'youtube' ? '▶ YT' : '♪ TT') : ('👁 ' + formatNum(v.views));
-item.innerHTML = thumbHtml + '' + badgeText + '' + (isMe && currentProfTab === 'videos' ? '×' : '');
+item.innerHTML = '👁 ' + formatNum(v.views) + '' + (isMe && currentProfTab === 'videos' ? '×' : '');
 item.addEventListener('click', () => {
 currentFeedTab = 'all';
 searchQuery = '';
@@ -1112,12 +1085,13 @@ if (activeCommentVidId) sendComment(activeCommentVidId, '[sticker:' + code + ']'
 });
 }
 function renderCommentBody(rawText) {
-const m = String(rawText || '').match(/^\(sticker:([a-z0-9_{]}+)\)$/);
-if (m) {
-const st = TG_STICKERS.find(s => s.code === m.at(1));
+const txt = String(rawText || '');
+if (txt.startsWith('[sticker:') && txt.endsWith(']')) {
+const code = txt.slice(9, -1);
+const st = TG_STICKERS.find(s => s.code === code);
 if (st) return '';
 }
-return '' + escapeHtml(rawText) + '';
+return '' + escapeHtml(txt) + '';
 }
 async function openComments(vidId) {
 if (!vidId || String(vidId).startsWith('temp_')) return showToast('Загрузка...');
@@ -1142,12 +1116,6 @@ document.getElementById('btnSendComment').addEventListener('click', () => sendCo
 document.getElementById('newCommentInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendComment(vidId); });
 }
 openSheet('commentsSheet');
-if (String(vidId).startsWith('ext_')) {
-const localComments = JSON.parse(localStorage.getItem('ut_ext_comm_' + vidId) || '[]');
-if (!localComments.length) listEl.innerHTML = 'Нет комментариев. Отправь утку или вишенки!';
-else listEl.innerHTML = localComments.map(c => '' + escapeHtml(c.author_name) + '' + renderCommentBody(c.text) + '').join('');
-return;
-}
 try {
 const res = await fetch(SUPABASE_URL + '/rest/v1/comments?video_id=eq.' + encodeURIComponent(vidId) + '&order=created_at.desc&limit=50', { headers });
 if (!res.ok) throw new Error();
@@ -1181,13 +1149,6 @@ haptic('light');
 const listEl = document.getElementById('commentsList');
 if (listEl.textContent.includes('Нет комментариев')) listEl.innerHTML = '';
 listEl.insertAdjacentHTML('afterbegin', '' + escapeHtml(currentUser.name) + '' + renderCommentBody(text) + '');
-if (String(vidId).startsWith('ext_')) {
-const key = 'ut_ext_comm_' + vidId;
-const arr = JSON.parse(localStorage.getItem(key) || '[]');
-arr.unshift({ author_name: currentUser.name, text });
-localStorage.setItem(key, JSON.stringify(arr.slice(0, 30)));
-return;
-}
 try {
 await fetch(SUPABASE_URL + '/rest/v1/comments', { method: 'POST', headers, body: JSON.stringify({ video_id: vidId, user_id: currentUser.id, author_name: currentUser.name, text }) });
 } catch (e) {}
@@ -1257,6 +1218,7 @@ container.appendChild(h);
 setTimeout(() => h.remove(), 820);
 }
 (async function init() {
+setTimeout(() => document.getElementById('splash')?.classList.add('hidden'), 1500);
 buildStickerDrawer();
 try {
 const cached = JSON.parse(localStorage.getItem(VIDEOS_CACHE_KEY) || '[]');
@@ -1271,7 +1233,7 @@ try {
 await Promise.all([syncUserProfile(), loadUserRelations(), fetchVideos()]);
 } catch (e) {}
 renderFeed(true);
-setTimeout(() => document.getElementById('splash').classList.add('hidden'), 200);
+document.getElementById('splash').classList.add('hidden');
 })();
 
 
