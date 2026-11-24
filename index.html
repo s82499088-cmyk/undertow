@@ -4,91 +4,66 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Undertow</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://telegram.org"></script>
 <style>
-:root{
-  --bg:#050507;--surface:rgba(24,24,29,0.72);--surface-solid:#16161b;
-  --border:rgba(255,255,255,0.10);--border-strong:rgba(255,255,255,0.18);
-  --accent:#00e5ff;--accent-2:#ff2b54;--accent-3:#7000ff;
-  --text:#ffffff;--text-muted:#9898a6;
-  --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
-}
+:root{--bg:#050507;--surface:rgba(24,24,29,0.72);--surface-solid:#16161b;--border:rgba(255,255,255,0.10);--border-strong:rgba(255,255,255,0.18);--accent:#00e5ff;--accent-2:#ff2b54;--text:#ffffff;--text-muted:#9898a6;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);}
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
-body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow:hidden;user-select:none;-webkit-user-select:none}
-button{font-family:inherit}
-
+body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow:hidden;user-select:none;-webkit-user-select:none}button{font-family:inherit}
 #splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 35%,#111c26 0%,#050507 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .4s ease,visibility .4s ease}
 #splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
 .splash-logo{font-size:38px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#00e5ff,#7000ff,#ff2b54);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:pulseGlow 1.8s infinite ease-in-out}
 .spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,0.12);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulseGlow{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulseGlow{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 .top-bar{position:fixed;top:calc(12px + var(--safe-top));left:12px;right:12px;z-index:25;display:flex;align-items:center;justify-content:space-between;pointer-events:none;gap:8px}
 .top-bar>*{pointer-events:auto}
-.brand-pill{background:var(--surface);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border:1px solid var(--border);padding:7px 13px;border-radius:20px;font-weight:800;font-size:14px;letter-spacing:.3px;background-image:linear-gradient(135deg,#fff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;box-shadow:0 4px 24px rgba(0,0,0,.3)}
-.tabs-pill{display:flex;background:var(--surface);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border:1px solid var(--border);border-radius:22px;padding:3px;box-shadow:0 4px 24px rgba(0,0,0,.3)}
+.brand-pill{background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);padding:7px 13px;border-radius:20px;font-weight:800;font-size:14px;background-image:linear-gradient(135deg,#fff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;box-shadow:0 4px 24px rgba(0,0,0,.3)}
+.tabs-pill{display:flex;background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:22px;padding:3px;box-shadow:0 4px 24px rgba(0,0,0,.3)}
 .tab-btn{background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:600;padding:6px 14px;border-radius:18px;cursor:pointer;transition:.2s}
 .tab-btn.active{background:rgba(255,255,255,0.15);color:#fff}
 .top-actions{display:flex;gap:8px}
-.icon-pill{width:36px;height:36px;border-radius:50%;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:.2s}
-.icon-pill:active{transform:scale(.92);background:rgba(255,255,255,0.14)}
+.icon-pill{width:36px;height:36px;border-radius:50%;background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:.2s}
+.icon-pill:active{transform:scale(.92)}
 .icon-pill.spinning{animation:spin .8s linear infinite}
-
-#toast{position:fixed;top:calc(62px + var(--safe-top));left:50%;transform:translateX(-50%) translateY(-12px);background:rgba(20,22,28,0.94);border:1px solid var(--border-strong);backdrop-filter:blur(14px);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:100;opacity:0;pointer-events:none;transition:.28s cubic-bezier(.2,.8,.2,1);white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+#toast{position:fixed;top:calc(62px + var(--safe-top));left:50%;transform:translateX(-50%) translateY(-12px);background:rgba(20,22,28,0.94);border:1px solid var(--border-strong);backdrop-filter:blur(14px);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:100;opacity:0;pointer-events:none;transition:.28s;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
 #uploadBanner{position:fixed;top:calc(60px + var(--safe-top));left:16px;right:16px;z-index:90;background:rgba(15,23,32,0.95);backdrop-filter:blur(16px);border:1px solid rgba(0,229,255,0.35);border-radius:14px;padding:10px 14px;display:none;flex-direction:column;gap:6px;box-shadow:0 8px 30px rgba(0,229,255,0.15)}
 .upload-row{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--accent)}
 .upload-track{width:100%;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
-.upload-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .2s;box-shadow:0 0 8px rgba(0,229,255,0.6)}
-
-.view{display:none;width:100%;height:100vh}
-.view.active{display:block}
-.feed{width:100%;height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain}
+.upload-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .2s}
+.view{display:none;width:100%;height:100vh}.view.active{display:block}
+.feed{width:100%;height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior-y:contain}
 .feed::-webkit-scrollbar{display:none}
-
 .video-card{position:relative;width:100%;height:100vh;scroll-snap-align:start;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .video-card video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
-
 .buffering{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:6;pointer-events:none}
-.buffering.show{display:flex}
-.buffering-spinner{width:44px;height:44px;border:3px solid rgba(255,255,255,0.18);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;box-shadow:0 0 20px rgba(0,229,255,0.3)}
-
+.buffering.show{display:flex}.buffering-spinner{width:44px;height:44px;border:3px solid rgba(255,255,255,0.18);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 .gradient-bottom{position:absolute;left:0;right:0;bottom:0;height:44%;background:linear-gradient(to top,rgba(0,0,0,0.9) 0%,rgba(0,0,0,0.38) 60%,transparent 100%);pointer-events:none;z-index:5}
 .pause-indicator{position:absolute;top:50%;left:50%;width:70px;height:70px;border-radius:50%;background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;transform:translate(-50%,-50%) scale(.8);transition:.22s;pointer-events:none;z-index:8}
 .pause-indicator.visible{opacity:1;transform:translate(-50%,-50%) scale(1)}
-.heart-burst{position:absolute;font-size:88px;pointer-events:none;z-index:15;animation:burst .78s cubic-bezier(.2,.8,.2,1) forwards}
+.heart-burst{position:absolute;font-size:88px;pointer-events:none;z-index:15;animation:burst .78s ease-out forwards}
 @keyframes burst{0%{transform:scale(.3);opacity:0}35%{transform:scale(1.25);opacity:1}100%{transform:scale(1.55);opacity:0}}
-
 .video-info{position:absolute;bottom:calc(78px + var(--safe-bottom));left:16px;right:78px;z-index:10}
 .author-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
 .avatar-ring{width:36px;height:36px;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--accent),var(--accent-2));flex-shrink:0}
 .avatar-inner{width:100%;height:100%;border-radius:50%;background:#18181f;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff}
 .author-name{font-weight:700;font-size:15px;text-shadow:0 1px 4px rgba(0,0,0,0.85)}
 .sub-btn{background:var(--accent-2);color:#fff;border:none;padding:5px 12px;border-radius:16px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s}
-.sub-btn:active{transform:scale(.94)}
-.sub-btn.subscribed{background:rgba(255,255,255,0.18);backdrop-filter:blur(8px)}
+.sub-btn.subscribed{background:rgba(255,255,255,0.18)}
 .video-desc{font-size:14px;line-height:1.35;color:rgba(255,255,255,0.94);text-shadow:0 1px 3px rgba(0,0,0,0.85);word-break:break-word}
-
 .actions{position:absolute;bottom:calc(80px + var(--safe-bottom));right:10px;z-index:10;display:flex;flex-direction:column;gap:16px;align-items:center}
 .action-btn{background:none;border:none;color:#fff;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
-.action-circle{width:46px;height:46px;border-radius:50%;background:rgba(20,20,26,0.58);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;transition:.15s}
+.action-circle{width:46px;height:46px;border-radius:50%;background:rgba(20,20,26,0.58);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;transition:.15s}
 .action-btn:active .action-circle{transform:scale(.9)}
 .action-btn.liked .action-circle{background:rgba(255,43,84,0.28);border-color:var(--accent-2);color:var(--accent-2)}
 .action-count{font-size:12px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.9)}
-
 .progress-wrap{position:absolute;bottom:calc(64px + var(--safe-bottom));left:0;right:0;height:18px;display:flex;align-items:flex-end;z-index:15;cursor:pointer;padding:0 2px}
 .progress-bar{width:100%;height:3px;background:rgba(255,255,255,0.2);position:relative;border-radius:2px;overflow:hidden}
-.progress-buffer{position:absolute;left:0;top:0;height:100%;width:0%;background:rgba(255,255,255,0.28);transition:width .2s}
-.progress-fill{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 0 6px rgba(0,229,255,0.7)}
-
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(62px + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:rgba(8,8,11,0.94);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;z-index:30}
-.nav-btn{background:none;border:none;color:var(--text-muted);font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;width:70px;transition:.2s}
+.progress-buffer{position:absolute;left:0;top:0;height:100%;width:0%;background:rgba(255,255,255,0.28)}
+.progress-fill{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(62px + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:rgba(8,8,11,0.94);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;justify-content:space-around;align-items:center;z-index:30}
+.nav-btn{background:none;border:none;color:var(--text-muted);font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;width:70px}
 .nav-btn.active{color:#fff}
-.create-btn{width:48px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:22px;box-shadow:0 0 18px rgba(0,229,255,0.45)}
-.create-btn:active{transform:scale(.94)}
-
+.create-btn{width:48px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:22px}
 #profileView{padding:calc(74px + var(--safe-top)) 16px calc(80px + var(--safe-bottom));overflow-y:auto;background:radial-gradient(circle at 50% 0%,#131d29 0%,#050507 55%)}
 .profile-header{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;margin-bottom:22px}
 .profile-avatar{width:82px;height:82px;border-radius:50%;padding:3px;background:linear-gradient(135deg,var(--accent),var(--accent-2))}
@@ -97,212 +72,360 @@ button{font-family:inherit}
 .badge-tg{font-size:12px;padding:4px 12px;border-radius:12px;background:rgba(0,229,255,0.14);color:var(--accent);font-weight:600}
 .badge-guest{font-size:12px;padding:4px 12px;border-radius:12px;background:rgba(255,255,255,0.08);color:var(--text-muted)}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;margin-top:8px}
-.stat-box{background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:14px;padding:12px 8px}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 8px}
 .stat-val{font-size:18px;font-weight:800;color:#fff}
+Используйте код с осторожностью.
 .stat-lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
 .grid-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
 .video-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.grid-item{position:relative;aspect-ratio:9/16;background:#141419;border-radius:10px;overflow:hidden;cursor:pointer;transition:.15s}
-.grid-item:active{transform:scale(.97)}
+.grid-item{position:relative;aspect-ratio:9/16;background:#141419;border-radius:10px;overflow:hidden;cursor:pointer}
 .grid-item video{width:100%;height:100%;object-fit:cover;pointer-events:none}
 .grid-views{position:absolute;bottom:6px;left:6px;font-size:11px;font-weight:700;background:rgba(0,0,0,0.62);padding:2px 6px;border-radius:6px}
-.delete-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(255,43,84,0.85);border:none;color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(6px);z-index:2;line-height:1}
-.delete-btn:active{transform:scale(.9)}
-
+.delete-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(255,43,84,0.85);border:none;color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;line-height:1}
 .sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);z-index:60;opacity:0;visibility:hidden;transition:.25s;display:flex;align-items:flex-end}
 .sheet-backdrop.open{opacity:1;visibility:visible}
-.sheet{width:100%;background:var(--surface-solid);border-top:1px solid var(--border-strong);border-radius:22px 22px 0 0;padding:16px 18px calc(22px + var(--safe-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);max-height:82vh;display:flex;flex-direction:column;gap:14px;box-shadow:0 -12px 40px rgba(0,0,0,.5)}
+.sheet{width:100%;background:var(--surface-solid);border-top:1px solid var(--border-strong);border-radius:22px 22px 0 0;padding:16px 18px calc(22px + var(--safe-bottom));transform:translateY(100%);transition:transform .3s;max-height:82vh;display:flex;flex-direction:column;gap:14px}
 .sheet-backdrop.open .sheet{transform:translateY(0)}
 .sheet-handle{width:38px;height:4px;background:rgba(255,255,255,0.22);border-radius:2px;align-self:center;margin-bottom:4px}
 .sheet-title{font-size:17px;font-weight:700;text-align:center}
 .sheet-text{font-size:14px;color:var(--text-muted);text-align:center;line-height:1.45}
-
-.file-drop{border:1.5px dashed rgba(0,229,255,0.45);border-radius:14px;padding:20px;text-align:center;background:rgba(0,229,255,0.05);cursor:pointer;transition:.2s}
-.file-drop:active{background:rgba(0,229,255,0.1)}
+.file-drop{border:1.5px dashed rgba(0,229,255,0.45);border-radius:14px;padding:20px;text-align:center;background:rgba(0,229,255,0.05);cursor:pointer}
 input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none;font-family:inherit;resize:none}
-input[type="text"]:focus,textarea:focus{border-color:rgba(0,229,255,0.5)}
-.btn-main{width:100%;padding:13px;border-radius:14px;border:none;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--accent),#0099ff);color:#000;cursor:pointer;transition:.15s;box-shadow:0 4px 20px rgba(0,229,255,0.25)}
-.btn-main:active{transform:scale(.98)}
-.btn-secondary{width:100%;padding:12px;border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,0.06);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s}
-.btn-secondary:active{transform:scale(.98)}
-.btn-danger{width:100%;padding:13px;border-radius:14px;border:none;font-size:15px;font-weight:700;background:linear-gradient(135deg,#ff2b54,#c40030);color:#fff;cursor:pointer;transition:.15s;box-shadow:0 4px 20px rgba(255,43,84,0.3)}
-.btn-danger:active{transform:scale(.98)}
-
+.btn-main{width:100%;padding:13px;border-radius:14px;border:none;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--accent),#0099ff);color:#000;cursor:pointer}
+.btn-secondary{width:100%;padding:12px;border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,0.06);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.btn-danger{width:100%;padding:13px;border-radius:14px;border:none;font-size:15px;font-weight:700;background:linear-gradient(135deg,#ff2b54,#c40030);color:#fff;cursor:pointer}
 .comments-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;min-height:160px;max-height:45vh}
 .comment-item{background:rgba(255,255,255,0.04);padding:10px 12px;border-radius:12px}
 .comment-author{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:3px}
 .comment-text{font-size:14px;line-height:1.35;word-break:break-word}
 .comment-form{display:flex;gap:8px}
 .comment-send{background:var(--accent);color:#000;border:none;border-radius:12px;padding:0 16px;font-weight:700;cursor:pointer}
-.comment-send:active{transform:scale(.95)}
-
 .empty-state{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;gap:12px;color:var(--text-muted)}
-</style>
-</head>
-<body>
 
-<div id="splash"><div class="splash-logo">Undertow</div><div class="spinner"></div></div>
-<div id="toast"></div>
-<div id="uploadBanner">
-  <div class="upload-row"><span id="uploadStatusText">Публикация в облако...</span><span id="uploadPercent">0%</span></div>
-  <div class="upload-track"><div class="upload-fill" id="uploadFill"></div></div>
-</div>
 
-<div class="top-bar" id="topBar">
-  <div class="brand-pill">Undertow</div>
-  <div class="tabs-pill">
-    <button class="tab-btn active" id="tabAll" data-tab="all">Для вас</button>
-    <button class="tab-btn" id="tabSubs" data-tab="subs">Подписки</button>
-  </div>
-  <div class="top-actions"><button class="icon-pill" id="refreshBtn" title="Обновить">↻</button></div>
-</div>
 
-<div id="feedView" class="view active"><div class="feed" id="feed"></div></div>
+Undertow
 
-<div id="profileView" class="view">
-  <div class="profile-header">
-    <div class="profile-avatar" id="profAvatar"><div>U</div></div>
-    <div class="profile-name" id="profName">Гость</div>
-    <div id="profBadge" class="badge-guest">Режим просмотра</div>
-    <div class="stats-grid">
-      <div class="stat-box"><div class="stat-val" id="statVideos">0</div><div class="stat-lbl">Видео</div></div>
-      <div class="stat-box"><div class="stat-val" id="statViews">0</div><div class="stat-lbl">Просмотры</div></div>
-      <div class="stat-box"><div class="stat-val" id="statLikes">0</div><div class="stat-lbl">Лайки</div></div>
-    </div>
-  </div>
-  <div class="grid-title"><span>Мои публикации</span></div>
-  <div class="video-grid" id="profileGrid"></div>
-</div>
 
-<div class="bottom-nav">
-  <button class="nav-btn active" id="navFeed"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Лента</span></button>
-  <button class="nav-btn" id="navCreate"><div class="create-btn">+</div></button>
-  <button class="nav-btn" id="navProfile"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Профиль</span></button>
-</div>
+Публикация в облако...0%
 
-<div class="sheet-backdrop" id="uploadSheet" data-close="uploadSheet"><div class="sheet">
-  <div class="sheet-handle"></div><div class="sheet-title">Новое видео</div>
-  <label class="file-drop" for="videoFileInput">
-    <div style="font-size:26px;margin-bottom:6px">🎬</div>
-    <div id="fileLabel" style="font-weight:700;font-size:14px">Выбрать видео с устройства</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-top:4px">MP4 (H.264) до 50 МБ</div>
-  </label>
-  <input type="file" id="videoFileInput" accept="video/*" style="display:none">
-  <textarea id="videoDescInput" rows="2" placeholder="Добавьте описание к ролику..."></textarea>
-  <button class="btn-main" id="btnPublish">Опубликовать моментально</button>
-  <button class="btn-secondary" data-close-btn="uploadSheet">Отмена</button>
-</div></div>
 
-<div class="sheet-backdrop" id="commentsSheet" data-close="commentsSheet"><div class="sheet">
-  <div class="sheet-handle"></div><div class="sheet-title">Комментарии</div>
-  <div class="comments-list" id="commentsList"></div>
-  <div id="commentInputArea"></div>
-</div></div>
 
-<div class="sheet-backdrop" id="shareSheet" data-close="shareSheet"><div class="sheet">
-  <div class="sheet-handle"></div><div class="sheet-title">Поделиться роликом</div>
-  <button class="btn-main" id="btnShareStory">✨ Опубликовать в Историю Telegram</button>
-  <button class="btn-secondary" id="btnShareChat">✈️ Отправить в чат или другу</button>
-  <button class="btn-secondary" id="btnCopyLink">🔗 Скопировать прямую ссылку</button>
-</div></div>
+Undertow
 
-<div class="sheet-backdrop" id="guestSheet" data-close="guestSheet"><div class="sheet">
-  <div class="sheet-handle"></div><div class="sheet-title">Доступно в Telegram</div>
-  <p class="sheet-text">Вы находитесь в режиме просмотра. Войдите через официального бота <b>@undertow_vids_bot</b>, чтобы ставить лайки, подписываться, комментировать и загружать видео.</p>
-  <button class="btn-main" id="btnOpenBot">Открыть в @undertow_vids_bot</button>
-  <button class="btn-secondary" data-close-btn="guestSheet">Продолжить просмотр</button>
-</div></div>
+Для вас
+Подписки
 
-<div class="sheet-backdrop" id="deleteSheet" data-close="deleteSheet"><div class="sheet">
-  <div class="sheet-handle"></div><div class="sheet-title">Удалить видео?</div>
-  <p class="sheet-text">Видео будет удалено из ленты и из облачного хранилища. Это действие необратимо.</p>
-  <button class="btn-danger" id="btnConfirmDelete">🗑 Удалить навсегда</button>
-  <button class="btn-secondary" data-close-btn="deleteSheet">Отмена</button>
-</div></div>
+↻
 
-<script>
-const SUPABASE_URL = 'https://pgnqjobutdlaxtjrrxio.supabase.co';
+
+
+
+U
+Гость
+Режим просмотра
+
+0Видео
+0Просмотры
+0Лайки
+
+
+Мои публикации
+
+
+
+Лента
++
+Профиль
+
+
+Новое видео
+Опубликовать моментально
+Отмена
+
+
+Комментарии
+
+
+
+
+Поделиться роликом
+✨ Опубликовать в Историю Telegram
+✈️ Отправить в чат или другу
+🔗 Скопировать прямую ссылку
+
+
+Доступно в Telegram
+Вы находитесь в режиме просмотра. Войдите через официального бота @undertow_vids_bot, чтобы ставить лайки, подписываться, комментировать и загружать видео.
+Открыть в @undertow_vids_bot
+Продолжить просмотр
+
+
+Удалить видео?
+Видео будет удалено из ленты и из облачного хранилища. Это действие необратимо.
+🗑 Удалить навсегда
+Отмена
+const SUPABASE_URL = 'supabase.co';
 const SUPABASE_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
 const BOT_USERNAME = 'undertow_vids_bot';
-const BOT_APP_URL  = 'https://t.me/undertow_vids_bot/app';
-
+const BOT_APP_URL  = 't.me';
 const tg = window.Telegram?.WebApp || null;
 if (tg) { try { tg.ready(); tg.expand(); if (tg.setHeaderColor) tg.setHeaderColor('#050507'); if (tg.setBackgroundColor) tg.setBackgroundColor('#050507'); } catch (e) {} }
 const tgUser = tg?.initDataUnsafe?.user || null;
 const isGuest = !tgUser || !tgUser.id;
 const currentUser = isGuest
-  ? { id: 'guest', name: 'Гость', username: 'guest', photo: null }
-  : { id: String(tgUser.id),
-      name: tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Пользователь'),
-      username: tgUser.username || tgUser.first_name || 'user',
-      photo: tgUser.photo_url || null };
-
-let allVideos = [];
-let likedSet = new Set();
-let subsSet = new Set();
-let viewedSessionSet = new Set();
-let currentFeedTab = 'all';
-let userWantsSound = true;
-let selectedFile = null;
-let currentObserver = null;
-let pollTimer = null;
-let pendingDelete = null;
-let activeShareVideo = null;
-const brokenVideoIds = new Set();
-const likeLocks = new Map();
-
-const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
-
-function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+? { id: 'guest', name: 'Гость', username: 'guest', photo: null }
+: { id: String(tgUser.id), name: tgUser.username ? @${tgUser.username} : (tgUser.first_name || 'Пользователь'), username: tgUser.username || tgUser.first_name || 'user', photo: tgUser.photo_url || null };
+let allVideos = [], likedSet = new Set(), subsSet = new Set(), viewedSessionSet = new Set();
+let currentFeedTab = 'all', userWantsSound = true, selectedFile = null, currentObserver = null;
+let pollTimer = null, pendingDelete = null, activeShareVideo = null;
+const brokenVideoIds = new Set(), likeLocks = new Map();
+const headers = { 'apikey': SUPABASE_KEY, 'Authorization': Bearer ${SUPABASE_KEY}, 'Content-Type': 'application/json' };
+function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'''}[c])); }
 function formatNum(n) { n = Number(n) || 0; if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M'; if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K'; return String(n); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2600); }
 function haptic(type='light') { try { tg?.HapticFeedback?.impactOccurred(type); } catch (e) {} }
 function openSheet(id) { document.getElementById(id)?.classList.add('open'); }
 function closeSheet(id) { document.getElementById(id)?.classList.remove('open'); }
-
 document.querySelectorAll('[data-close]').forEach(bd => bd.addEventListener('click', (e) => { if (e.target === bd) closeSheet(bd.dataset.close); }));
 document.querySelectorAll('[data-close-btn]').forEach(btn => btn.addEventListener('click', () => closeSheet(btn.dataset.closeBtn)));
-
+function encodeVideoCode(id) {
+const s = String(id);
+if (/^\d+$/.test(s)) {
+const n = Number(s);
+return 'u' + n.toString(36) + 'x' + ((n * 7 + 13) % 36).toString(36);
+}
+return s;
+}
+function decodeVideoCode(code) {
+if (!code) return '';
+if (code.startsWith('u') && code.includes('x')) {
+const num = parseInt(code.slice(1, code.lastIndexOf('x')), 36);
+if (!isNaN(num)) return String(num);
+}
+return code;
+}
 async function syncUserProfile() {
-  if (isGuest) return;
-  try {
-    await fetch(`${SUPABASE_URL}/rest/v1/users`, { method: 'POST', headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id: currentUser.id, username: currentUser.username, first_name: currentUser.name }) });
-    await fetch(`${SUPABASE_URL}/rest/v1/videos?user_id=eq.${encodeURIComponent(currentUser.id)}&author_name=eq.${encodeURIComponent('@user')}`, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ author_name: currentUser.name }) });
-  } catch (e) {}
+if (isGuest) return;
+try {
+await fetch(${SUPABASE_URL}/rest/v1/users, { method: 'POST', headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id: currentUser.id, username: currentUser.username, first_name: currentUser.name }) });
+await fetch(${SUPABASE_URL}/rest/v1/videos?user_id=eq.${encodeURIComponent(currentUser.id)}&author_name=eq.${encodeURIComponent('@user')}, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ author_name: currentUser.name }) });
+} catch (e) {}
 }
-
 async function loadUserRelations() {
-  if (isGuest) return;
-  try {
-    const [lr, sr] = await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/video_likes?user_id=eq.${encodeURIComponent(currentUser.id)}&select=video_id`, { headers }),
-      fetch(`${SUPABASE_URL}/rest/v1/user_subs?follower_id=eq.${encodeURIComponent(currentUser.id)}&select=author_id`, { headers })
-    ]);
-    if (lr.ok) { const l = await lr.json(); likedSet = new Set(l.map(x => String(x.video_id))); }
-    if (sr.ok) { const s = await sr.json(); subsSet = new Set(s.map(x => String(x.author_id))); }
-  } catch (e) {}
+if (isGuest) return;
+try {
+const [lr, sr] = await Promise.all([
+fetch(${SUPABASE_URL}/rest/v1/video_likes?user_id=eq.${encodeURIComponent(currentUser.id)}&select=video_id, { headers }),
+fetch(${SUPABASE_URL}/rest/v1/user_subs?follower_id=eq.${encodeURIComponent(currentUser.id)}&select=author_id, { headers })
+]);
+if (lr.ok) { const l = await lr.json(); likedSet = new Set(l.map(x => String(x.video_id))); }
+if (sr.ok) { const s = await sr.json(); subsSet = new Set(s.map(x => String(x.author_id))); }
+} catch (e) {}
 }
-
 async function fetchVideos() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=id.desc&limit=50`, { headers });
-  if (!res.ok) throw new Error('fetch failed');
-  const rows = await res.json();
-  allVideos = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('http'));
+const res = await fetch(${SUPABASE_URL}/rest/v1/videos?select=*&order=id.desc&limit=50, { headers });
+if (!res.ok) throw new Error('fetch failed');
+const rows = await res.json();
+allVideos = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('http'));
+const startParam = tg?.initDataUnsafe?.start_param || new URLSearchParams(location.search).get('startapp');
+if (startParam && startParam.startsWith('v_')) {
+const targetId = decodeVideoCode(startParam.slice(2));
+let idx = allVideos.findIndex(v => String(v.id) === targetId);
+if (idx > 0) { const [t] = allVideos.splice(idx, 1); allVideos.unshift(t); }
+else if (idx === -1) {
+try {
+const vRes = await fetch(${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(targetId)}&select=*, { headers });
+if (vRes.ok) { const vRows = await vRes.json(); if (vRows.length > 0 && vRows[0].video_url) allVideos.unshift(vRows[0]); }
+} catch (e) {}
+}
+}
+}
+async function silentRefresh() {
+try {
+const res = await fetch(${SUPABASE_URL}/rest/v1/videos?select=*&order=id.desc&limit=50, { headers });
+if (!res.ok) return;
+const rows = await res.json();
+const fresh = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('http'));
+const known = new Set(allVideos.map(v => String(v.id)));
+const newOnes = fresh.filter(v => !known.has(String(v.id)));
+if (!newOnes.length) return;
+allVideos = [...newOnes, ...allVideos.filter(v => !String(v.id).startsWith('temp_'))];
+const feed = document.getElementById('feed');
+if (feed.scrollTop < feed.clientHeight * 0.5) renderFeed();
+} catch (e) {}
+}
+function startPolling() { stopPolling(); pollTimer = setInterval(() => { if (document.visibilityState === 'visible' && document.getElementById('feedView').classList.contains('active')) silentRefresh(); }, 12000); }
+function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+function authorDisplayName(v) { const raw = v.author_name; const authorId = String(v.author_id || v.user_id || ''); if (raw && raw !== '@user') return raw; if (authorId === currentUser.id) return currentUser.name; return @creator_${(authorId || '01').slice(-4)}; }
+function renderFeed() {
+const feed = document.getElementById('feed');
+let list = allVideos.filter(v => !brokenVideoIds.has(String(v.id)));
+if (currentFeedTab === 'subs') list = list.filter(v => subsSet.has(String(v.author_id || v.user_id || '')));
+if (!list.length) { feed.innerHTML = <div class="empty-state"><div style="font-size:44px">🌊</div><div style="font-weight:700;color:#fff">${currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста'}</div><div style="font-size:13px">${currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первое видео'}</div></div>; return; }
+if (currentObserver) { currentObserver.disconnect(); currentObserver = null; }
+feed.innerHTML = '';
+list.forEach((v, idx) => {
+const vidId = String(v.id), authorId = String(v.author_id || v.user_id || ''), authorName = authorDisplayName(v);
+const isLiked = likedSet.has(vidId), isSub = subsSet.has(authorId), isOwn = !isGuest && authorId === currentUser.id;
+const initial = (authorName.replace('@','')[0] || 'U').toUpperCase(), desc = escapeHtml(v.description || '');
+const card = document.createElement('div');
+card.className = 'video-card'; card.dataset.id = vidId; card.dataset.index = String(idx);
+card.innerHTML = `
+${initial}${escapeHtml(authorName)}${(!isOwn && authorId) ? <button class="sub-btn ${isSub?'subscribed':''}" data-act="sub">${isSub?'Вы подписаны':'Подписаться'}</button> : ''}${desc}
 
-  const startParam = tg?.initDataUnsafe?.start_param || new URLSearchParams(location.search).get('startapp');
-  if (startParam && startParam.startsWith('v_')) {
-    const targetId = startParam.slice(2);
-    let idx = allVideos.findIndex(v => String(v.id) === targetId);
-    if (idx > 0) { const [t] = allVideos.splice(idx, 1); allVideos.unshift(t); }
-    else if (idx === -1) {
-      try {
-        const vRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${targetId}&select=*`, { headers });
-        if (vRes.ok) {
-          const vRows = await vRes.json();
-          if (vRows.length > 0 && vRows[0].video_url && String(vRows[0].video_url).startsWith('http')) {
-            allVideos.unshift(vRows[0]);
-          }
-        }
-      } catch (e) {}
-    }
- 
+${formatNum(v.likes)}
+Чат
+${formatNum(v.views)}
+Репост
+
+; const vidEl = card.querySelector('video'), buffering = card.querySelector('.buffering'), pauseEl = card.querySelector('.pause-indicator'); const fillEl = card.querySelector('.progress-fill'), bufferEl = card.querySelector('.progress-buffer'), likeBtn = card.querySelector('[data-act="like"]'); const subBtn = card.querySelector('[data-act="sub"]'), commentBtn = card.querySelector('[data-act="comment"]'), shareBtn = card.querySelector('[data-act="share"]'); const likeCntEl = card.querySelector('[data-like-count]'), progressWrap = card.querySelector('.progress-wrap'); const showBuf = () => buffering.classList.add('show'), hideBuf = () => buffering.classList.remove('show'); vidEl.addEventListener('canplay', () => hideBuf()); vidEl.addEventListener('playing', () => { hideBuf(); pauseEl.classList.remove('visible'); }); vidEl.addEventListener('waiting', () => showBuf()); vidEl.addEventListener('stalled', () => showBuf()); vidEl.addEventListener('error', () => { hideBuf(); brokenVideoIds.add(vidId); const next = card.nextElementSibling; if (next) next.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => card.remove(), 420); }); vidEl.addEventListener('progress', () => { if (vidEl.buffered.length && vidEl.duration) { const end = vidEl.buffered.end(vidEl.buffered.length - 1); bufferEl.style.width = ${Math.min(100, (end / vidEl.duration) * 100)}%; } }); let scrubbing = false; const applyRatio = (r) => { if (!vidEl.duration) return; vidEl.currentTime = r * vidEl.duration; fillEl.style.width = ${r*100}%; }; const ratioFromEvent = (e) => { const rect = progressWrap.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); }; progressWrap.addEventListener('pointerdown', (e) => { scrubbing = true; try { progressWrap.setPointerCapture(e.pointerId); } catch(_){} applyRatio(ratioFromEvent(e)); e.stopPropagation(); }); progressWrap.addEventListener('pointermove', (e) => { if (scrubbing) applyRatio(ratioFromEvent(e)); }); const endScrub = () => { scrubbing = false; }; progressWrap.addEventListener('pointerup', endScrub); progressWrap.addEventListener('pointercancel', endScrub); progressWrap.addEventListener('pointerleave', endScrub); vidEl.addEventListener('timeupdate', () => { if (!scrubbing && vidEl.duration) fillEl.style.width = ${(vidEl.currentTime / vidEl.duration) * 100}%; }); likeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLike(vidId, likeBtn, likeCntEl); }); commentBtn.addEventListener('click', (e) => { e.stopPropagation(); openComments(vidId); }); shareBtn.addEventListener('click', (e) => { e.stopPropagation(); openShare({ id: vidId, url: v.video_url, desc: v.description || '' }); }); if (subBtn) subBtn.addEventListener('click', (e) => { e.stopPropagation(); handleSub(authorId, subBtn); }); let tapTimer = null; card.addEventListener('click', (e) => { if (e.target.closest('button') || e.target.closest('.action-btn') || e.target.closest('.progress-wrap')) return; if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; spawnHeart(card, e.clientX, e.clientY); if (!likedSet.has(vidId)) handleLike(vidId, likeBtn, likeCntEl); } else { tapTimer = setTimeout(() => { tapTimer = null; if (!card.isConnected) return; if (vidEl.paused) { vidEl.play().catch(() => {}); pauseEl.classList.remove('visible'); } else { vidEl.pause(); pauseEl.classList.add('visible'); } }, 280); } }); feed.appendChild(card); }); setupObserver(); } async function playCard(vid, card) { vid.muted = !userWantsSound; try { await vid.play(); card.querySelector('.pause-indicator')?.classList.remove('visible'); } catch (err) { if (!vid.muted) { vid.muted = true; try { await vid.play(); card.querySelector('.pause-indicator')?.classList.remove('visible'); } catch (e) { card.querySelector('.pause-indicator')?.classList.add('visible'); } } else { card.querySelector('.pause-indicator')?.classList.add('visible'); } } } function setupObserver() { if (currentObserver) currentObserver.disconnect(); currentObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { const card = entry.target, vid = card.querySelector('video'); if (!vid) return; if (entry.isIntersecting) { playCard(vid, card); registerView(card.dataset.id); manageMemory(card); } else { vid.pause(); card.querySelector('.buffering')?.classList.remove('show'); } }); }, { threshold: 0.65, root: document.getElementById('feed') }); document.querySelectorAll('.video-card').forEach(c => currentObserver.observe(c)); } function manageMemory(activeCard) { const cards = Array.from(document.querySelectorAll('.video-card')); const activeIdx = cards.indexOf(activeCard); if (activeIdx < 0) return; cards.forEach((c, i) => { const vid = c.querySelector('video'); if (!vid) return; if (Math.abs(i - activeIdx) <= 3) { if (!vid.getAttribute('src') && c.dataset.src) { vid.setAttribute('src', c.dataset.src); vid.load(); } } else { if (vid.getAttribute('src')) { c.dataset.src = vid.getAttribute('src'); vid.removeAttribute('src'); vid.load(); } } }); } async function registerView(vidId) { if (!vidId || vidId.startsWith('temp_') || viewedSessionSet.has(vidId)) return; viewedSessionSet.add(vidId); const viewerKey = isGuest ? (localStorage.getItem('ut_guest_id') || (() => { const id = 'g_' + Math.random().toString(36).slice(2); localStorage.setItem('ut_guest_id', id); return id; })()) : currentUser.id; try { const res = await fetch(${SUPABASE_URL}/rest/v1/rpc/register_unique_view, { method: 'POST', headers, body: JSON.stringify({ p_viewer_id: viewerKey, p_video_id: vidId }) }); if (res.ok) { const newViews = await res.json(); const card = document.querySelector(.video-card[data-id="${vidId}"]); const el = card?.querySelector('[data-view-count]'); if (el && typeof newViews === 'number') el.textContent = formatNum(newViews); } } catch (e) {} } async function handleLike(vidId, btn, cntEl) { if (isGuest) return openSheet('guestSheet'); if (vidId.startsWith('temp_')) return showToast('Загрузка...'); if (likeLocks.has(vidId)) return; const lockTimer = setTimeout(() => likeLocks.delete(vidId), 8000); likeLocks.set(vidId, lockTimer); haptic('medium'); const wasLiked = likedSet.has(vidId), item = allVideos.find(x => String(x.id) === vidId); let cur = Number(item?.likes || 0); if (wasLiked) { likedSet.delete(vidId); btn.classList.remove('liked'); cur = Math.max(0, cur - 1); } else { likedSet.add(vidId); btn.classList.add('liked'); cur += 1; } if (cntEl) cntEl.textContent = formatNum(cur); if (item) item.likes = cur; try { const res = await fetch(${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`, { method: 'POST', headers, body: JSON.stringify({ p_user_id: currentUser.id, p_video_id: vidId }) });
+if (!res.ok) throw new Error(); const d = await res.json();
+if (typeof d.likes === 'number') { if (cntEl) cntEl.textContent = formatNum(d.likes); if (item) item.likes = d.likes; }
+if (typeof d.liked === 'boolean') { if (d.liked) { likedSet.add(vidId); btn.classList.add('liked'); } else { likedSet.delete(vidId); btn.classList.remove('liked'); } }
+} catch (e) {
+if (wasLiked) { likedSet.add(vidId); btn.classList.add('liked'); cur += 1; } else { likedSet.delete(vidId); btn.classList.remove('liked'); cur = Math.max(0, cur - 1); }
+if (cntEl) cntEl.textContent = formatNum(cur); if (item) item.likes = cur; showToast('Ошибка');
+} finally { clearTimeout(lockTimer); likeLocks.delete(vidId); }
+}
+async function handleSub(authorId, btn) {
+if (isGuest) return openSheet('guestSheet'); haptic('light');
+const wasSub = subsSet.has(authorId);
+if (wasSub) { subsSet.delete(authorId); btn.classList.remove('subscribed'); btn.textContent = 'Подписаться'; }
+else { subsSet.add(authorId); btn.classList.add('subscribed'); btn.textContent = 'Вы подписаны'; }
+try { await fetch(${SUPABASE_URL}/rest/v1/rpc/toggle_user_sub, { method: 'POST', headers, body: JSON.stringify({ p_follower_id: currentUser.id, p_author_id: authorId }) }); } catch (e) {}
+}
+function enableSound() { userWantsSound = true; document.querySelectorAll('.video-card video').forEach(v => { if (v.muted) { v.muted = false; v.play().catch(() => {}); } }); }
+function switchFeedTab(tab) {
+if (tab === 'subs' && isGuest) return openSheet('guestSheet'); currentFeedTab = tab;
+document.getElementById('tabAll').classList.toggle('active', tab === 'all'); document.getElementById('tabSubs').classList.toggle('active', tab === 'subs'); renderFeed();
+}
+function switchMainView(view) {
+document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+document.getElementById('topBar').style.display = view === 'feed' ? 'flex' : 'none';
+if (view === 'feed') { document.getElementById('feedView').classList.add('active'); document.getElementById('navFeed').classList.add('active'); }
+else { document.getElementById('profileView').classList.add('active'); document.getElementById('navProfile').classList.add('active'); document.querySelectorAll('.video-card video').forEach(v => v.pause()); renderProfile(); }
+}
+function renderProfile() {
+document.getElementById('profName').textContent = currentUser.name; const badge = document.getElementById('profBadge');
+if (isGuest) { badge.className = 'badge-guest'; badge.textContent = 'Режим гостя'; } else { badge.className = 'badge-tg'; badge.textContent = 'Аккаунт TG'; }
+const av = document.getElementById('profAvatar'); if (currentUser.photo) av.innerHTML = <img src="${currentUser.photo}" alt="">; else av.innerHTML = <div>${(currentUser.name.replace('@','')[0] || 'G').toUpperCase()}</div>;
+const myVideos = isGuest ? [] : allVideos.filter(v => String(v.author_id || v.user_id) === currentUser.id && !brokenVideoIds.has(String(v.id)));
+document.getElementById('statVideos').textContent = formatNum(myVideos.length);
+document.getElementById('statViews').textContent = formatNum(myVideos.reduce((a, v) => a + (Number(v.views) || 0), 0));
+document.getElementById('statLikes').textContent = formatNum(myVideos.reduce((a, v) => a + (Number(v.likes) || 0), 0));
+const grid = document.getElementById('profileGrid');
+if (isGuest) { grid.innerHTML = <div style="grid-column:1/-1;text-align:center;padding:24px;"><p style="margin-bottom:14px;color:#aaa;">Войдите в бота</p><button class="btn-main" id="btnLoginInline">Войти</button></div>; document.getElementById('btnLoginInline').addEventListener('click', openBotAuth); return; }
+if (!myVideos.length) { grid.innerHTML = <div style="grid-column:1/-1;text-align:center;color:#aaa;padding:30px 0">Нет видео</div>; return; }
+grid.innerHTML = '';
+myVideos.forEach(v => {
+const item = document.createElement('div'); item.className = 'grid-item';
+item.innerHTML = <video src="${v.video_url}" preload="metadata" muted playsinline></video><div class="grid-views">👁 ${formatNum(v.views)}</div><button class="delete-btn">×</button>;
+item.addEventListener('click', () => { const idx = allVideos.findIndex(x => String(x.id) === String(v.id)); if (idx > 0) { const [m] = allVideos.splice(idx, 1); allVideos.unshift(m); } switchMainView('feed'); renderFeed(); });
+item.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); pendingDelete = { id: v.id, video_url: v.video_url }; openSheet('deleteSheet'); });
+grid.appendChild(item);
+});
+}
+async function doDeleteVideo() {
+if (!pendingDelete) return; const v = pendingDelete; closeSheet('deleteSheet'); haptic('heavy');
+allVideos = allVideos.filter(x => String(x.id) !== String(v.id)); renderProfile();
+try {
+await fetch(${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(v.id)}, { method: 'DELETE', headers });
+const fileName = (v.video_url || '').split('/').pop();
+if (fileName) await fetch(${SUPABASE_URL}/storage/v1/object/videos/${encodeURIComponent(fileName)}, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': Bearer ${SUPABASE_KEY} } });
+showToast('🗑 Удалено'); silentRefresh();
+} catch (e) {}
+pendingDelete = null;
+}
+document.getElementById('btnConfirmDelete').addEventListener('click', doDeleteVideo);
+function handleCreateClick() { if (isGuest) return openSheet('guestSheet'); selectedFile = null; document.getElementById('fileLabel').textContent = 'Выбрать видео'; document.getElementById('videoDescInput').value = ''; openSheet('uploadSheet'); }
+document.getElementById('navCreate').addEventListener('click', handleCreateClick);
+document.getElementById('videoFileInput').addEventListener('change', function () { if (this.files && this.files[0]) { selectedFile = this.files[0]; document.getElementById('fileLabel').textContent = ✅ ${selectedFile.name}; } });
+function uploadFileXHR(file, fileName, onProgress) {
+return new Promise((resolve, reject) => {
+const attempt = (r) => {
+const xhr = new XMLHttpRequest(); xhr.open('POST', ${SUPABASE_URL}/storage/v1/object/videos/${encodeURIComponent(fileName)}, true);
+xhr.setRequestHeader('apikey', SUPABASE_KEY); xhr.setRequestHeader('Authorization', Bearer ${SUPABASE_KEY});
+xhr.setRequestHeader('x-upsert', 'true'); xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) resolve(${SUPABASE_URL}/storage/v1/object/public/videos/${fileName}); else if (r > 0) setTimeout(() => attempt(r - 1), 700); else reject(); };
+xhr.onerror = () => { if (r > 0) setTimeout(() => attempt(r - 1), 700); else reject(); };
+xhr.send(file);
+};
+attempt(3);
+});
+}
+async function publishVideoInstant() {
+if (!selectedFile) return showToast('Выберите видео'); if (selectedFile.size > 52 * 1024 * 1024) return showToast('Максимум 50 МБ');
+const file = selectedFile, desc = document.getElementById('videoDescInput').value.trim(), localBlobUrl = URL.createObjectURL(file), tempId = 'temp_' + Date.now();
+allVideos.unshift({ id: tempId, user_id: currentUser.id, author_id: Number(currentUser.id), author_name: currentUser.name, video_url: localBlobUrl, description: desc, likes: 0, views: 1 });
+closeSheet('uploadSheet'); switchMainView('feed'); renderFeed(); haptic('heavy');
+const b = document.getElementById('uploadBanner'), f = document.getElementById('uploadFill'), p = document.getElementById('uploadPercent');
+b.style.display = 'flex'; f.style.width = '5%'; p.textContent = '5%';
+try {
+const ext = (file.name.split('.').pop() || 'mp4').replace(/[^a-z0-9]/gi, '') || 'mp4', fileName = ${currentUser.id}_${Date.now()}.${ext};
+const publicUrl = await uploadFileXHR(file, fileName, (pct) => { f.style.width = ${pct}%; p.textContent = ${pct}%; });
+let savedRow = null;
+const checkRes = await fetch(${SUPABASE_URL}/rest/v1/videos?video_url=eq.${encodeURIComponent(publicUrl)}&select=*, { headers }), existing = checkRes.ok ? await checkRes.json() : [];
+if (existing.length > 0) { const patchRes = await fetch(${SUPABASE_URL}/rest/v1/videos?id=eq.${existing[0].id}, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=representation' }, body: JSON.stringify({ author_name: currentUser.name, description: desc }) }); savedRow = patchRes.ok ? (await patchRes.json())[0] || existing[0] : existing[0]; }
+else { const insRes = await fetch(${SUPABASE_URL}/rest/v1/videos, { method: 'POST', headers: { ...headers, 'Prefer': 'return=representation' }, body: JSON.stringify({ user_id: currentUser.id, author_id: Number(currentUser.id), author_name: currentUser.name, video_url: publicUrl, description: desc, likes: 0, views: 0 }) }); savedRow = insRes.ok ? (await insRes.json())[0] : null; }
+if (savedRow) { const idx = allVideos.findIndex(x => x.id === tempId); if (idx !== -1) allVideos[idx] = savedRow; URL.revokeObjectURL(localBlobUrl); renderFeed(); }
+showToast('✅ Опубликовано');
+} catch (err) { showToast('Ошибка сети'); allVideos = allVideos.filter(x => x.id !== tempId); renderFeed(); }
+finally { setTimeout(() => { b.style.display = 'none'; f.style.width = '0%'; }, 1000); }
+}
+document.getElementById('btnPublish').addEventListener('click', publishVideoInstant);
+async function openComments(vidId) {
+if (!vidId || String(vidId).startsWith('temp_')) return showToast('Загрузка...');
+const listEl = document.getElementById('commentsList'), inputArea = document.getElementById('commentInputArea');
+listEl.innerHTML = 'Загрузка...';
+if (isGuest) { inputArea.innerHTML = <button class="btn-main" id="btnCommentLogin">Войти, чтобы написать</button>; document.getElementById('btnCommentLogin').addEventListener('click', () => { closeSheet('commentsSheet'); openSheet('guestSheet'); }); }
+else { inputArea.innerHTML = <div class="comment-form"><input type="text" id="newCommentInput" placeholder="Написать..."><button class="comment-send" id="btnSendComment">➤</button></div>; document.getElementById('btnSendComment').addEventListener('click', () => sendComment(vidId)); document.getElementById('newCommentInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendComment(vidId); }); }
+openSheet('commentsSheet');
+try {
+const res = await fetch(${SUPABASE_URL}/rest/v1/comments?video_id=eq.${encodeURIComponent(vidId)}&order=created_at.desc&limit=50, { headers });
+if (!res.ok) throw new Error(); const rows = await res.json();
+if (!rows.length) listEl.innerHTML = 'Нет комментариев';
+else listEl.innerHTML = rows.map(c => <div class="comment-item"><div class="comment-author">${escapeHtml(c.author_name || 'Юзер')}</div><div class="comment-text">${escapeHtml(c.text)}</div></div>).join('');
+} catch (e) { listEl.innerHTML = 'Ошибка загрузки'; }
+}
+async function sendComment(vidId) {
+if (isGuest) return openSheet('guestSheet'); const inp = document.getElementById('newCommentInput'); if (!inp) return;
+const text = inp.value.trim(); if (!text) return; inp.value = ''; haptic('light');
+const listEl = document.getElementById('commentsList'); if (listEl.textContent.includes('Нет комментариев')) listEl.innerHTML = '';
+listEl.insertAdjacentHTML('afterbegin', <div class="comment-item"><div class="comment-author">${escapeHtml(currentUser.name)}</div><div class="comment-text">${escapeHtml(text)}</div></div>);
+try { await fetch(${SUPABASE_URL}/rest/v1/comments, { method: 'POST', headers, body: JSON.stringify({ video_id: vidId, user_id: currentUser.id, author_name: currentUser.name, text }) }); } catch (e) {}
+}
+function openShare(v) { activeShareVideo = v; openSheet('shareSheet'); }
+function getDirectVideoLink() { return activeShareVideo ? ${BOT_APP_URL}?startapp=v_${encodeVideoCode(activeShareVideo.id)} : BOT_APP_URL; }
+document.getElementById('btnShareStory').addEventListener('click', () => {
+closeSheet('shareSheet'); const link = getDirectVideoLink();
+if (tg?.shareToStory) { try { tg.shareToStory(activeShareVideo.url, { text: activeShareVideo.desc || 'Смотри в Undertow', widget_link: { url: link, name: 'Смотреть' } }); return; } catch (e) {} }
+navigator.clipboard?.writeText(link); showToast('Скопировано');
+});
+document.getElementById('btnShareChat').addEventListener('click', () => {
+closeSheet('shareSheet'); const link = getDirectVideoLink(), shareUrl = https://t.me{encodeURIComponent(link)}&text=${encodeURIComponent(activeShareVideo?.desc || 'Зацени в Undertow 🔥')};
+if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl); else window.open(shareUrl, '_blank');
+});
+document.getElementById('btnCopyLink').addEventListener('click', () => { closeSheet('shareSheet'); navigator.clipboard?.writeText(getDirectVideoLink()); showToast('Ссылка скопирована'); });
+function openBotAuth() { if (tg?.openTelegramLink) tg.openTelegramLink(BOT_APP_URL); else window.open(BOT_APP_URL, '_blank'); }
+document.getElementById('btnOpenBot').addEventListener('click', openBotAuth);
+async function refreshFeed() {
+const btn = document.getElementById('refreshBtn'); btn.classList.add('spinning'); haptic('light');
+try { brokenVideoIds.clear(); await Promise.all([fetchVideos(), loadUserRelations()]); renderFeed(); showToast('Обновлено'); } catch (e) { showToast('Ошибка'); }
+finally { setTimeout(() => btn.classList.remove('spinning'), 450); }
+}
+document.getElementById('navFeed').addEventListener('click', () => switchMainView('feed'));
+document.getElementById('navProfile').addEventListener('click', () => switchMainView('profile'));
+document.getElementById('tabAll').addEventListener('click', () => switchFeedTab('all'));
+document.getElementById('tabSubs').addEventListener('click', () => switchFeedTab('subs'));
+document.getElementById('refreshBtn').addEventListener('click', refreshFeed);
+document.addEventListener('pointerdown', enableSound, { passive: true }); document.addEventListener('touchstart', enableSound, { passive: true }); document.addEventListener('scroll', enableSound, { passive: true }); document.addEventListener('click', enableSound, { passive: true });
+function spawnHeart(container, x, y) { const h = document.createElement('div'); h.className = 'heart-burst'; h.textContent = '❤️'; h.style.left = (x - 44) + 'px'; h.style.top = (y - 44) + 'px'; container.appendChild(h); setTimeout(() => h.remove(), 820); }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') silentRefresh(); });
+(async function init() {
+try { await Promise.all([syncUserProfile(), loadUserRelations(), fetchVideos()]); } catch (e) {}
+renderFeed(); startPolling();
+setTimeout(() => document.getElementById('splash').classList.add('hidden'), 280);
+})();
+
