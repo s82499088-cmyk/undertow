@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Undertow</title>
 <script src="https://telegram.org"></script>
-<style>
-:root{--bg:#050507;--surface:rgba(24,24,29,0.72);--surface-solid:#16161b;--border:rgba(255,255,255,0.10);--border-strong:rgba(255,255,255,0.18);--accent:#00e5ff;--accent-2:#ff2b54;--text:#ffffff;--text-muted:#9898a6;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);}
-*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+<style>:root{--bg:#050507;--surface:rgba(24,24,29,0.72);--surface-solid:#16161b;--border:rgba(255,255,255,0.10);--border-strong:rgba(255,255,255,0.18);--accent:#00e5ff;--accent-2:#ff2b54;--text:#ffffff;--text-muted:#9898a6;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);}
+{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
 body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow:hidden;user-select:none;-webkit-user-select:none}button{font-family:inherit}
 #splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 50% 35%,#111c26 0%,#050507 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .4s ease,visibility .4s ease}
 #splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
@@ -15,7 +14,7 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,0.12);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}@keyframes pulseGlow{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 .top-bar{position:fixed;top:calc(12px + var(--safe-top));left:12px;right:12px;z-index:25;display:flex;align-items:center;justify-content:space-between;pointer-events:none;gap:8px}
-.top-bar>*{pointer-events:auto}
+.top-bar>{pointer-events:auto}
 .brand-pill{background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);padding:7px 13px;border-radius:20px;font-weight:800;font-size:14px;background-image:linear-gradient(135deg,#fff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;box-shadow:0 4px 24px rgba(0,0,0,.3)}
 .tabs-pill{display:flex;background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:22px;padding:3px;box-shadow:0 4px 24px rgba(0,0,0,.3)}
 .tab-btn{background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:600;padding:6px 14px;border-radius:18px;cursor:pointer;transition:.2s}
@@ -31,7 +30,7 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .upload-track{width:100%;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
 .upload-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .2s}
 .view{display:none;width:100%;height:100vh}.view.active{display:block}
-.feed{width:100%;height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior-y:contain}
+.feed{width:100%;height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain}
 .feed::-webkit-scrollbar{display:none}
 .video-card{position:relative;width:100%;height:100vh;scroll-snap-align:start;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .video-card video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
@@ -74,7 +73,6 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;margin-top:8px}
 .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 8px}
 .stat-val{font-size:18px;font-weight:800;color:#fff}
-Используйте код с осторожностью.
 .stat-lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
 .grid-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
 .video-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -176,7 +174,14 @@ const isGuest = !tgUser || !tgUser.id;
 const currentUser = isGuest
 ? { id: 'guest', name: 'Гость', username: 'guest', photo: null }
 : { id: String(tgUser.id), name: tgUser.username ? @${tgUser.username} : (tgUser.first_name || 'Пользователь'), username: tgUser.username || tgUser.first_name || 'user', photo: tgUser.photo_url || null };
-let allVideos = [], likedSet = new Set(), subsSet = new Set(), viewedSessionSet = new Set();
+const LIKES_KEY = ut_likes_${currentUser.id};
+function loadLikesCache() {
+try { return new Set(JSON.parse(localStorage.getItem(LIKES_KEY) || '[]').map(String)); } catch (e) { return new Set(); }
+}
+function saveLikesCache(s) {
+try { localStorage.setItem(LIKES_KEY, JSON.stringify(Array.from(s))); } catch (e) {}
+}
+let allVideos = [], likedSet = loadLikesCache(), subsSet = new Set(), viewedSessionSet = new Set();
 let currentFeedTab = 'all', userWantsSound = true, selectedFile = null, currentObserver = null;
 let pollTimer = null, pendingDelete = null, activeShareVideo = null;
 const brokenVideoIds = new Set(), likeLocks = new Map();
@@ -190,20 +195,17 @@ function closeSheet(id) { document.getElementById(id)?.classList.remove('open');
 document.querySelectorAll('[data-close]').forEach(bd => bd.addEventListener('click', (e) => { if (e.target === bd) closeSheet(bd.dataset.close); }));
 document.querySelectorAll('[data-close-btn]').forEach(btn => btn.addEventListener('click', () => closeSheet(btn.dataset.closeBtn)));
 function encodeVideoCode(id) {
-const s = String(id);
-if (/^\d+$/.test(s)) {
-const n = Number(s);
-return 'u' + n.toString(36) + 'x' + ((n * 7 + 13) % 36).toString(36);
-}
-return s;
+return btoa(String(id)).replace(/+/g, '-').replace(///g, '').replace(/=+$/, '');
 }
 function decodeVideoCode(code) {
 if (!code) return '';
-if (code.startsWith('u') && code.includes('x')) {
-const num = parseInt(code.slice(1, code.lastIndexOf('x')), 36);
-if (!isNaN(num)) return String(num);
-}
+try {
+let b64 = code.replace(/-/g, '+').replace(//g, '/');
+while (b64.length % 4) b64 += '=';
+return atob(b64);
+} catch (e) {
 return code;
+}
 }
 async function syncUserProfile() {
 if (isGuest) return;
@@ -219,7 +221,7 @@ const [lr, sr] = await Promise.all([
 fetch(${SUPABASE_URL}/rest/v1/video_likes?user_id=eq.${encodeURIComponent(currentUser.id)}&select=video_id, { headers }),
 fetch(${SUPABASE_URL}/rest/v1/user_subs?follower_id=eq.${encodeURIComponent(currentUser.id)}&select=author_id, { headers })
 ]);
-if (lr.ok) { const l = await lr.json(); likedSet = new Set(l.map(x => String(x.video_id))); }
+if (lr.ok) { const l = await lr.json(); likedSet = new Set(l.map(x => String(x.video_id))); saveLikesCache(likedSet); }
 if (sr.ok) { const s = await sr.json(); subsSet = new Set(s.map(x => String(x.author_id))); }
 } catch (e) {}
 }
@@ -236,7 +238,11 @@ if (idx > 0) { const [t] = allVideos.splice(idx, 1); allVideos.unshift(t); }
 else if (idx === -1) {
 try {
 const vRes = await fetch(${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(targetId)}&select=*, { headers });
-if (vRes.ok) { const vRows = await vRes.json(); if (vRows.length > 0 && vRows[0].video_url) allVideos.unshift(vRows[0]); }
+if (vRes.ok) {
+const vRows = await vRes.json();
+const firstRow = vRows.at(0);
+if (firstRow && firstRow.video_url) allVideos.unshift(firstRow);
+}
 } catch (e) {}
 }
 }
@@ -262,31 +268,38 @@ function renderFeed() {
 const feed = document.getElementById('feed');
 let list = allVideos.filter(v => !brokenVideoIds.has(String(v.id)));
 if (currentFeedTab === 'subs') list = list.filter(v => subsSet.has(String(v.author_id || v.user_id || '')));
-if (!list.length) { feed.innerHTML = <div class="empty-state"><div style="font-size:44px">🌊</div><div style="font-weight:700;color:#fff">${currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста'}</div><div style="font-size:13px">${currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первое видео'}</div></div>; return; }
+if (!list.length) { feed.innerHTML = <div class="empty-state"><div style="font-size:44px">🌊</div><div style="font-weight:700;color:#fff">\${currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста'}</div><div style="font-size:13px">\${currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первое видео'}</div></div>; return; }
 if (currentObserver) { currentObserver.disconnect(); currentObserver = null; }
 feed.innerHTML = '';
 list.forEach((v, idx) => {
 const vidId = String(v.id), authorId = String(v.author_id || v.user_id || ''), authorName = authorDisplayName(v);
 const isLiked = likedSet.has(vidId), isSub = subsSet.has(authorId), isOwn = !isGuest && authorId === currentUser.id;
-const initial = (authorName.replace('@','')[0] || 'U').toUpperCase(), desc = escapeHtml(v.description || '');
+const initial = (authorName.replace('@','').charAt(0) || 'U').toUpperCase(), desc = escapeHtml(v.description || '');
 const card = document.createElement('div');
 card.className = 'video-card'; card.dataset.id = vidId; card.dataset.index = String(idx);
 card.innerHTML = `
-${initial}${escapeHtml(authorName)}${(!isOwn && authorId) ? <button class="sub-btn ${isSub?'subscribed':''}" data-act="sub">${isSub?'Вы подписаны':'Подписаться'}</button> : ''}${desc}
+${initial}escapeHtml(authorName){(!isOwn && authorId) ? <button class="sub-btn isSub?'subscribed':''" data-act="sub">{isSub?'Вы подписаны':'Подписаться'}</button> : ''}${desc}
 
 ${formatNum(v.likes)}
 Чат
 ${formatNum(v.views)}
 Репост
 
-; const vidEl = card.querySelector('video'), buffering = card.querySelector('.buffering'), pauseEl = card.querySelector('.pause-indicator'); const fillEl = card.querySelector('.progress-fill'), bufferEl = card.querySelector('.progress-buffer'), likeBtn = card.querySelector('[data-act="like"]'); const subBtn = card.querySelector('[data-act="sub"]'), commentBtn = card.querySelector('[data-act="comment"]'), shareBtn = card.querySelector('[data-act="share"]'); const likeCntEl = card.querySelector('[data-like-count]'), progressWrap = card.querySelector('.progress-wrap'); const showBuf = () => buffering.classList.add('show'), hideBuf = () => buffering.classList.remove('show'); vidEl.addEventListener('canplay', () => hideBuf()); vidEl.addEventListener('playing', () => { hideBuf(); pauseEl.classList.remove('visible'); }); vidEl.addEventListener('waiting', () => showBuf()); vidEl.addEventListener('stalled', () => showBuf()); vidEl.addEventListener('error', () => { hideBuf(); brokenVideoIds.add(vidId); const next = card.nextElementSibling; if (next) next.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => card.remove(), 420); }); vidEl.addEventListener('progress', () => { if (vidEl.buffered.length && vidEl.duration) { const end = vidEl.buffered.end(vidEl.buffered.length - 1); bufferEl.style.width = ${Math.min(100, (end / vidEl.duration) * 100)}%; } }); let scrubbing = false; const applyRatio = (r) => { if (!vidEl.duration) return; vidEl.currentTime = r * vidEl.duration; fillEl.style.width = ${r*100}%; }; const ratioFromEvent = (e) => { const rect = progressWrap.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); }; progressWrap.addEventListener('pointerdown', (e) => { scrubbing = true; try { progressWrap.setPointerCapture(e.pointerId); } catch(_){} applyRatio(ratioFromEvent(e)); e.stopPropagation(); }); progressWrap.addEventListener('pointermove', (e) => { if (scrubbing) applyRatio(ratioFromEvent(e)); }); const endScrub = () => { scrubbing = false; }; progressWrap.addEventListener('pointerup', endScrub); progressWrap.addEventListener('pointercancel', endScrub); progressWrap.addEventListener('pointerleave', endScrub); vidEl.addEventListener('timeupdate', () => { if (!scrubbing && vidEl.duration) fillEl.style.width = ${(vidEl.currentTime / vidEl.duration) * 100}%; }); likeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLike(vidId, likeBtn, likeCntEl); }); commentBtn.addEventListener('click', (e) => { e.stopPropagation(); openComments(vidId); }); shareBtn.addEventListener('click', (e) => { e.stopPropagation(); openShare({ id: vidId, url: v.video_url, desc: v.description || '' }); }); if (subBtn) subBtn.addEventListener('click', (e) => { e.stopPropagation(); handleSub(authorId, subBtn); }); let tapTimer = null; card.addEventListener('click', (e) => { if (e.target.closest('button') || e.target.closest('.action-btn') || e.target.closest('.progress-wrap')) return; if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; spawnHeart(card, e.clientX, e.clientY); if (!likedSet.has(vidId)) handleLike(vidId, likeBtn, likeCntEl); } else { tapTimer = setTimeout(() => { tapTimer = null; if (!card.isConnected) return; if (vidEl.paused) { vidEl.play().catch(() => {}); pauseEl.classList.remove('visible'); } else { vidEl.pause(); pauseEl.classList.add('visible'); } }, 280); } }); feed.appendChild(card); }); setupObserver(); } async function playCard(vid, card) { vid.muted = !userWantsSound; try { await vid.play(); card.querySelector('.pause-indicator')?.classList.remove('visible'); } catch (err) { if (!vid.muted) { vid.muted = true; try { await vid.play(); card.querySelector('.pause-indicator')?.classList.remove('visible'); } catch (e) { card.querySelector('.pause-indicator')?.classList.add('visible'); } } else { card.querySelector('.pause-indicator')?.classList.add('visible'); } } } function setupObserver() { if (currentObserver) currentObserver.disconnect(); currentObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { const card = entry.target, vid = card.querySelector('video'); if (!vid) return; if (entry.isIntersecting) { playCard(vid, card); registerView(card.dataset.id); manageMemory(card); } else { vid.pause(); card.querySelector('.buffering')?.classList.remove('show'); } }); }, { threshold: 0.65, root: document.getElementById('feed') }); document.querySelectorAll('.video-card').forEach(c => currentObserver.observe(c)); } function manageMemory(activeCard) { const cards = Array.from(document.querySelectorAll('.video-card')); const activeIdx = cards.indexOf(activeCard); if (activeIdx < 0) return; cards.forEach((c, i) => { const vid = c.querySelector('video'); if (!vid) return; if (Math.abs(i - activeIdx) <= 3) { if (!vid.getAttribute('src') && c.dataset.src) { vid.setAttribute('src', c.dataset.src); vid.load(); } } else { if (vid.getAttribute('src')) { c.dataset.src = vid.getAttribute('src'); vid.removeAttribute('src'); vid.load(); } } }); } async function registerView(vidId) { if (!vidId || vidId.startsWith('temp_') || viewedSessionSet.has(vidId)) return; viewedSessionSet.add(vidId); const viewerKey = isGuest ? (localStorage.getItem('ut_guest_id') || (() => { const id = 'g_' + Math.random().toString(36).slice(2); localStorage.setItem('ut_guest_id', id); return id; })()) : currentUser.id; try { const res = await fetch(${SUPABASE_URL}/rest/v1/rpc/register_unique_view, { method: 'POST', headers, body: JSON.stringify({ p_viewer_id: viewerKey, p_video_id: vidId }) }); if (res.ok) { const newViews = await res.json(); const card = document.querySelector(.video-card[data-id="${vidId}"]); const el = card?.querySelector('[data-view-count]'); if (el && typeof newViews === 'number') el.textContent = formatNum(newViews); } } catch (e) {} } async function handleLike(vidId, btn, cntEl) { if (isGuest) return openSheet('guestSheet'); if (vidId.startsWith('temp_')) return showToast('Загрузка...'); if (likeLocks.has(vidId)) return; const lockTimer = setTimeout(() => likeLocks.delete(vidId), 8000); likeLocks.set(vidId, lockTimer); haptic('medium'); const wasLiked = likedSet.has(vidId), item = allVideos.find(x => String(x.id) === vidId); let cur = Number(item?.likes || 0); if (wasLiked) { likedSet.delete(vidId); btn.classList.remove('liked'); cur = Math.max(0, cur - 1); } else { likedSet.add(vidId); btn.classList.add('liked'); cur += 1; } if (cntEl) cntEl.textContent = formatNum(cur); if (item) item.likes = cur; try { const res = await fetch(${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`, { method: 'POST', headers, body: JSON.stringify({ p_user_id: currentUser.id, p_video_id: vidId }) });
-if (!res.ok) throw new Error(); const d = await res.json();
+; const vidEl = card.querySelector('video'), buffering = card.querySelector('.buffering'), pauseEl = card.querySelector('.pause-indicator'); const fillEl = card.querySelector('.progress-fill'), bufferEl = card.querySelector('.progress-buffer'), likeBtn = card.querySelector('[data-act="like"]'); const subBtn = card.querySelector('[data-act="sub"]'), commentBtn = card.querySelector('[data-act="comment"]'), shareBtn = card.querySelector('[data-act="share"]'); const likeCntEl = card.querySelector('[data-like-count]'), progressWrap = card.querySelector('.progress-wrap'); const showBuf = () => buffering.classList.add('show'), hideBuf = () => buffering.classList.remove('show'); vidEl.addEventListener('canplay', () => hideBuf()); vidEl.addEventListener('playing', () => { hideBuf(); pauseEl.classList.remove('visible'); }); vidEl.addEventListener('waiting', () => showBuf()); vidEl.addEventListener('stalled', () => showBuf()); vidEl.addEventListener('error', () => { hideBuf(); brokenVideoIds.add(vidId); const next = card.nextElementSibling; if (next) next.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => card.remove(), 420); }); vidEl.addEventListener('progress', () => { if (vidEl.buffered.length && vidEl.duration) { const end = vidEl.buffered.end(vidEl.buffered.length - 1); bufferEl.style.width = ${Math.min(100, (end / vidEl.duration) * 100)}%; } }); let scrubbing = false; const applyRatio = (r) => { if (!vidEl.duration) return; vidEl.currentTime = r * vidEl.duration; fillEl.style.width = ${r*100}%; }; const ratioFromEvent = (e) => { const rect = progressWrap.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); }; progressWrap.addEventListener('pointerdown', (e) => { scrubbing = true; try { progressWrap.setPointerCapture(e.pointerId); } catch(_){} applyRatio(ratioFromEvent(e)); e.stopPropagation(); }); progressWrap.addEventListener('pointermove', (e) => { if (scrubbing) applyRatio(ratioFromEvent(e)); }); const endScrub = () => { scrubbing = false; }; progressWrap.addEventListener('pointerup', endScrub); progressWrap.addEventListener('pointercancel', endScrub); progressWrap.addEventListener('pointerleave', endScrub); vidEl.addEventListener('timeupdate', () => { if (!scrubbing && vidEl.duration) fillEl.style.width = ${(vidEl.currentTime / vidEl.duration) * 100}%; }); likeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLike(vidId, likeBtn, likeCntEl); }); commentBtn.addEventListener('click', (e) => { e.stopPropagation(); openComments(vidId); }); shareBtn.addEventListener('click', (e) => { e.stopPropagation(); openShare({ id: vidId, url: v.video_url, desc: v.description || '' }); }); if (subBtn) subBtn.addEventListener('click', (e) => { e.stopPropagation(); handleSub(authorId, subBtn); }); let tapTimer = null; card.addEventListener('click', (e) => { if (e.target.closest('button') || e.target.closest('.action-btn') || e.target.closest('.progress-wrap')) return; if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; spawnHeart(card, e.clientX, e.clientY); if (!likedSet.has(vidId)) handleLike(vidId, likeBtn, likeCntEl); } else { tapTimer = setTimeout(() => { tapTimer = null; if (!card.isConnected) return; if (vidEl.paused) { vidEl.play().catch(() => {}); pauseEl.classList.remove('visible'); } else { vidEl.pause(); pauseEl.classList.add('visible'); } }, 280); } }); feed.appendChild(card); }); setupObserver(); } async function playCard(vid, card) { vid.muted = !userWantsSound; try { await vid.play(); card.querySelector('.pause-indicator')?.classList.remove('visible'); } catch (err) { if (!vid.muted) { vid.muted = true; try { await vid.play(); card.querySelector('.pause-indicator')?.classList.remove('visible'); } catch (e) { card.querySelector('.pause-indicator')?.classList.add('visible'); } } else { card.querySelector('.pause-indicator')?.classList.add('visible'); } } } function setupObserver() { if (currentObserver) currentObserver.disconnect(); currentObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { const card = entry.target, vid = card.querySelector('video'); if (!vid) return; if (entry.isIntersecting) { playCard(vid, card); registerView(card.dataset.id); manageMemory(card); } else { vid.pause(); card.querySelector('.buffering')?.classList.remove('show'); } }); }, { threshold: 0.65, root: document.getElementById('feed') }); document.querySelectorAll('.video-card').forEach(c => currentObserver.observe(c)); } function manageMemory(activeCard) { const cards = Array.from(document.querySelectorAll('.video-card')); const activeIdx = cards.indexOf(activeCard); if (activeIdx < 0) return; cards.forEach((c, i) => { const vid = c.querySelector('video'); if (!vid) return; if (Math.abs(i - activeIdx) <= 3) { if (!vid.getAttribute('src') && c.dataset.src) { vid.setAttribute('src', c.dataset.src); vid.load(); } } else { if (vid.getAttribute('src')) { c.dataset.src = vid.getAttribute('src'); vid.removeAttribute('src'); vid.load(); } } }); } async function registerView(vidId) { if (!vidId || vidId.startsWith('temp_') || viewedSessionSet.has(vidId)) return; viewedSessionSet.add(vidId); const viewerKey = isGuest ? (localStorage.getItem('ut_guest_id') || (() => { const id = 'g_' + Math.random().toString(36).slice(2); localStorage.setItem('ut_guest_id', id); return id; })()) : currentUser.id; try { const res = await fetch(${SUPABASE_URL}/rest/v1/rpc/register_unique_view, { method: 'POST', headers, body: JSON.stringify({ p_viewer_id: viewerKey, p_video_id: vidId }) }); if (res.ok) { const newViews = await res.json(); const card = document.querySelector(.video-card[data-id="${vidId}"]); const el = card?.querySelector('[data-view-count]'); if (el && typeof newViews === 'number') el.textContent = formatNum(newViews); } } catch (e) {} } async function handleLike(vidId, btn, cntEl) { if (isGuest) return openSheet('guestSheet'); if (vidId.startsWith('temp_')) return showToast('Загрузка...'); if (likeLocks.has(vidId)) return; const lockTimer = setTimeout(() => likeLocks.delete(vidId), 8000); likeLocks.set(vidId, lockTimer); haptic('medium'); const wasLiked = likedSet.has(vidId), item = allVideos.find(x => String(x.id) === vidId); let cur = Number(item?.likes || 0); if (wasLiked) { likedSet.delete(vidId); btn.classList.remove('liked'); cur = Math.max(0, cur - 1); } else { likedSet.add(vidId); btn.classList.add('liked'); cur += 1; } saveLikesCache(likedSet); if (cntEl) cntEl.textContent = formatNum(cur); if (item) item.likes = cur; try { const res = await fetch(${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`, { method: 'POST', headers, body: JSON.stringify({ p_user_id: currentUser.id, p_video_id: vidId }) });
+if (res.ok) {
+const d = await res.json();
 if (typeof d.likes === 'number') { if (cntEl) cntEl.textContent = formatNum(d.likes); if (item) item.likes = d.likes; }
-if (typeof d.liked === 'boolean') { if (d.liked) { likedSet.add(vidId); btn.classList.add('liked'); } else { likedSet.delete(vidId); btn.classList.remove('liked'); } }
-} catch (e) {
-if (wasLiked) { likedSet.add(vidId); btn.classList.add('liked'); cur += 1; } else { likedSet.delete(vidId); btn.classList.remove('liked'); cur = Math.max(0, cur - 1); }
-if (cntEl) cntEl.textContent = formatNum(cur); if (item) item.likes = cur; showToast('Ошибка');
-} finally { clearTimeout(lockTimer); likeLocks.delete(vidId); }
+if (typeof d.liked === 'boolean') { if (d.liked) { likedSet.add(vidId); btn.classList.add('liked'); } else { likedSet.delete(vidId); btn.classList.remove('liked'); } saveLikesCache(likedSet); }
+} else {
+await Promise.all([
+fetch(${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(vidId)}, { method: 'PATCH', headers, body: JSON.stringify({ likes: cur }) }),
+wasLiked
+? fetch(${SUPABASE_URL}/rest/v1/video_likes?user_id=eq.${encodeURIComponent(currentUser.id)}&video_id=eq.${encodeURIComponent(vidId)}, { method: 'DELETE', headers })
+: fetch(${SUPABASE_URL}/rest/v1/video_likes, { method: 'POST', headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id: currentUser.id, video_id: vidId }) })
+]);
+}
+} catch (e) {}
+finally { clearTimeout(lockTimer); likeLocks.delete(vidId); }
 }
 async function handleSub(authorId, btn) {
 if (isGuest) return openSheet('guestSheet'); haptic('light');
@@ -309,7 +322,7 @@ else { document.getElementById('profileView').classList.add('active'); document.
 function renderProfile() {
 document.getElementById('profName').textContent = currentUser.name; const badge = document.getElementById('profBadge');
 if (isGuest) { badge.className = 'badge-guest'; badge.textContent = 'Режим гостя'; } else { badge.className = 'badge-tg'; badge.textContent = 'Аккаунт TG'; }
-const av = document.getElementById('profAvatar'); if (currentUser.photo) av.innerHTML = <img src="${currentUser.photo}" alt="">; else av.innerHTML = <div>${(currentUser.name.replace('@','')[0] || 'G').toUpperCase()}</div>;
+const av = document.getElementById('profAvatar'); if (currentUser.photo) av.innerHTML = <img src="${currentUser.photo}" alt="">; else av.innerHTML = <div>${(currentUser.name.replace('@','').charAt(0) || 'G').toUpperCase()}</div>;
 const myVideos = isGuest ? [] : allVideos.filter(v => String(v.author_id || v.user_id) === currentUser.id && !brokenVideoIds.has(String(v.id)));
 document.getElementById('statVideos').textContent = formatNum(myVideos.length);
 document.getElementById('statViews').textContent = formatNum(myVideos.reduce((a, v) => a + (Number(v.views) || 0), 0));
@@ -340,7 +353,10 @@ pendingDelete = null;
 document.getElementById('btnConfirmDelete').addEventListener('click', doDeleteVideo);
 function handleCreateClick() { if (isGuest) return openSheet('guestSheet'); selectedFile = null; document.getElementById('fileLabel').textContent = 'Выбрать видео'; document.getElementById('videoDescInput').value = ''; openSheet('uploadSheet'); }
 document.getElementById('navCreate').addEventListener('click', handleCreateClick);
-document.getElementById('videoFileInput').addEventListener('change', function () { if (this.files && this.files[0]) { selectedFile = this.files[0]; document.getElementById('fileLabel').textContent = ✅ ${selectedFile.name}; } });
+document.getElementById('videoFileInput').addEventListener('change', function () {
+const picked = this.files ? this.files.item(0) : null;
+if (picked) { selectedFile = picked; document.getElementById('fileLabel').textContent = ✅ ${selectedFile.name}; }
+});
 function uploadFileXHR(file, fileName, onProgress) {
 return new Promise((resolve, reject) => {
 const attempt = (r) => {
@@ -367,8 +383,14 @@ const ext = (file.name.split('.').pop() || 'mp4').replace(/[^a-z0-9]/gi, '') || 
 const publicUrl = await uploadFileXHR(file, fileName, (pct) => { f.style.width = ${pct}%; p.textContent = ${pct}%; });
 let savedRow = null;
 const checkRes = await fetch(${SUPABASE_URL}/rest/v1/videos?video_url=eq.${encodeURIComponent(publicUrl)}&select=*, { headers }), existing = checkRes.ok ? await checkRes.json() : [];
-if (existing.length > 0) { const patchRes = await fetch(${SUPABASE_URL}/rest/v1/videos?id=eq.${existing[0].id}, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=representation' }, body: JSON.stringify({ author_name: currentUser.name, description: desc }) }); savedRow = patchRes.ok ? (await patchRes.json())[0] || existing[0] : existing[0]; }
-else { const insRes = await fetch(${SUPABASE_URL}/rest/v1/videos, { method: 'POST', headers: { ...headers, 'Prefer': 'return=representation' }, body: JSON.stringify({ user_id: currentUser.id, author_id: Number(currentUser.id), author_name: currentUser.name, video_url: publicUrl, description: desc, likes: 0, views: 0 }) }); savedRow = insRes.ok ? (await insRes.json())[0] : null; }
+const firstExisting = existing.at(0);
+if (firstExisting) {
+const patchRes = await fetch(${SUPABASE_URL}/rest/v1/videos?id=eq.${firstExisting.id}, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=representation' }, body: JSON.stringify({ author_name: currentUser.name, description: desc }) });
+savedRow = patchRes.ok ? ((await patchRes.json()).at(0) || firstExisting) : firstExisting;
+} else {
+const insRes = await fetch(${SUPABASE_URL}/rest/v1/videos, { method: 'POST', headers: { ...headers, 'Prefer': 'return=representation' }, body: JSON.stringify({ user_id: currentUser.id, author_id: Number(currentUser.id), author_name: currentUser.name, video_url: publicUrl, description: desc, likes: 0, views: 0 }) });
+savedRow = insRes.ok ? ((await insRes.json()).at(0) || null) : null;
+}
 if (savedRow) { const idx = allVideos.findIndex(x => x.id === tempId); if (idx !== -1) allVideos[idx] = savedRow; URL.revokeObjectURL(localBlobUrl); renderFeed(); }
 showToast('✅ Опубликовано');
 } catch (err) { showToast('Ошибка сети'); allVideos = allVideos.filter(x => x.id !== tempId); renderFeed(); }
@@ -428,4 +450,3 @@ try { await Promise.all([syncUserProfile(), loadUserRelations(), fetchVideos()])
 renderFeed(); startPolling();
 setTimeout(() => document.getElementById('splash').classList.add('hidden'), 280);
 })();
-
