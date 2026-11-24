@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Undertow</title>
-<script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+<script src="https://telegram.org/js/telegram-web-app.js" async></script>
 <style>
 :root{--bg:#050507;--surface:rgba(24,24,29,0.72);--surface-solid:#16161b;--border:rgba(255,255,255,0.10);--border-strong:rgba(255,255,255,0.18);--accent:#00e5ff;--accent-2:#ff2b54;--text:#ffffff;--text-muted:#9898a6;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);}
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -192,20 +192,41 @@ const SUPABASE_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
 const BOT_USERNAME = 'undertow_vids_bot';
 const BOT_APP_URL  = 'https://t.me/undertow_vids_bot/app';
 
-const tg = window.Telegram?.WebApp || null;
-if (tg) { try { tg.ready(); tg.expand(); if (tg.setHeaderColor) tg.setHeaderColor('#050507'); if (tg.setBackgroundColor) tg.setBackgroundColor('#050507'); } catch (e) {} }
-const tgUser = tg?.initDataUnsafe?.user || null;
-const isGuest = !tgUser || !tgUser.id;
-const currentUser = isGuest
-  ? { id: 'guest', name: 'Гость', username: 'guest', photo: null }
-  : { id: String(tgUser.id), name: tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Пользователь'), username: tgUser.username || tgUser.first_name || 'user', photo: tgUser.photo_url || null };
+function getTg() { return window.Telegram?.WebApp || null; }
+
+async function initTelegram() {
+  const start = Date.now();
+  while (!getTg() && Date.now() - start < 1500) {
+    await new Promise(r => setTimeout(r, 50));
+  }
+  const t = getTg();
+  if (t) {
+    try {
+      t.ready(); t.expand();
+      if (t.setHeaderColor) t.setHeaderColor('#050507');
+      if (t.setBackgroundColor) t.setBackgroundColor('#050507');
+    } catch (e) {}
+  }
+  return t;
+}
+
+let tgUser = null, isGuest = true, currentUser = { id: 'guest', name: 'Гость', username: 'guest', photo: null };
+
+async function bootstrapUser() {
+  const tg = await initTelegram();
+  tgUser = tg?.initDataUnsafe?.user || null;
+  isGuest = !tgUser || !tgUser.id;
+  currentUser = isGuest
+    ? { id: 'guest', name: 'Гость', username: 'guest', photo: null }
+    : { id: String(tgUser.id), name: tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Пользователь'), username: tgUser.username || tgUser.first_name || 'user', photo: tgUser.photo_url || null };
+}
 
 let allVideos = [], likedSet = new Set(), subsSet = new Set(), viewedSessionSet = new Set();
 let currentFeedTab = 'all', userWantsSound = true, selectedFile = null, currentObserver = null;
 let pollTimer = null, pendingDelete = null, activeShareVideo = null, activeReportVideoId = null;
 const brokenVideoIds = new Set(), likeLocks = new Map();
 
-const LIKES_CACHE_KEY = `ut_likes_${currentUser.id}`;
+let LIKES_CACHE_KEY = `ut_likes_guest`;
 function loadLikesCache() {
   try {
     const raw = localStorage.getItem(LIKES_CACHE_KEY);
@@ -222,7 +243,7 @@ const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KE
 function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function formatNum(n) { n = Number(n) || 0; if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M'; if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K'; return String(n); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2600); }
-function haptic(type='light') { try { tg?.HapticFeedback?.impactOccurred(type); } catch (e) {} }
+function haptic(type='light') { try { getTg()?.HapticFeedback?.impactOccurred(type); } catch (e) {} }
 function openSheet(id) { document.getElementById(id)?.classList.add('open'); }
 function closeSheet(id) { document.getElementById(id)?.classList.remove('open'); }
 document.querySelectorAll('[data-close]').forEach(bd => bd.addEventListener('click', (e) => { if (e.target === bd) closeSheet(bd.dataset.close); }));
@@ -240,13 +261,9 @@ function decodeVideoCode(code) {
     if (!code) return '';
     const s = String(code).replace(/-/g, '+').replace(/_/g, '/');
     const pad = s.length % 4 === 0 ? '' : '='.repeat(4 - (s.length % 4));
-    const b64 = s + pad;
-    return decodeURIComponent(escape(atob(b64)));
+    return decodeURIComponent(escape(atob(s + pad)));
   } catch (e) { return String(code); }
 }
 
 const BANNED_PATTERNS = [
-  { cat: 'наркотики', re: /(закладк|спайс|мефедрон|героин|кокаин|амфетамин|экстази|mdma|мдма|лсд|lsd|трамадол|соли?\s*для\s*ванн|купить\s*наркот|дроп(ер|ы)?\s*(адрес|координат))/i },
-  { cat: 'суицид', re: /(покончить\s*с\s*собой|убить\s*себя|суицид|самоубийств|как\s*повесит|резать\s*вен|спрыгнуть\s*с\s*крыш)/i },
-  { cat: 'экстремизм/терроризм', re: /(теракт|взорвать|джихад|шахид|игил|isis|нацист|зиг\s*хайль|свастик|казн(ь|ить)\s*неверн)/i },
-  { cat: 'порнография', re: /(порн|porn|xxx|секс\s*видео
+  { cat: 'наркотики', re: /(закладк|спайс|мефедрон|героин|кокаин|амфетамин|экстази
