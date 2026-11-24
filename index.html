@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Undertow</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js" defer></script>
 <style>
 :root{--bg:#050507;--surface:rgba(24,24,29,0.72);--surface-solid:#16161b;--border:rgba(255,255,255,0.10);--border-strong:rgba(255,255,255,0.18);--accent:#00e5ff;--accent-2:#ff2b54;--text:#ffffff;--text-muted:#9898a6;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);}
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -174,7 +174,6 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
   <button class="btn-danger" id="btnConfirmDelete">🗑 Удалить навсегда</button>
   <button class="btn-secondary" data-close-btn="deleteSheet">Отмена</button>
 </div></div>
-<!-- [4] Новый sheet: жалоба на видео -->
 <div class="sheet-backdrop" id="reportSheet" data-close="reportSheet"><div class="sheet">
   <div class="sheet-handle"></div><div class="sheet-title">Пожаловаться на видео</div>
   <p class="sheet-text">Выберите причину жалобы:</p>
@@ -206,7 +205,6 @@ let currentFeedTab = 'all', userWantsSound = true, selectedFile = null, currentO
 let pollTimer = null, pendingDelete = null, activeShareVideo = null, activeReportVideoId = null;
 const brokenVideoIds = new Set(), likeLocks = new Map();
 
-// [2] Кэш лайков в localStorage
 const LIKES_CACHE_KEY = `ut_likes_${currentUser.id}`;
 function loadLikesCache() {
   try {
@@ -230,7 +228,6 @@ function closeSheet(id) { document.getElementById(id)?.classList.remove('open');
 document.querySelectorAll('[data-close]').forEach(bd => bd.addEventListener('click', (e) => { if (e.target === bd) closeSheet(bd.dataset.close); }));
 document.querySelectorAll('[data-close-btn]').forEach(btn => btn.addEventListener('click', () => closeSheet(btn.dataset.closeBtn)));
 
-// [1] Кодирование/декодирование id видео в base64url
 function encodeVideoCode(id) {
   try {
     const s = String(id);
@@ -248,7 +245,8 @@ function decodeVideoCode(code) {
   } catch (e) { return String(code); }
 }
 
-// [3] Фильтр небезопасного текста (описания, комментарии)
 const BANNED_PATTERNS = [
-  // наркотики / закладки
- 
+  { cat: 'наркотики', re: /(закладк|спайс|мефедрон|героин|кокаин|амфетамин|экстази|mdma|мдма|лсд|lsd|трамадол|соли?\s*для\s*ванн|купить\s*наркот|дроп(ер|ы)?\s*(адрес|координат))/i },
+  { cat: 'суицид', re: /(покончить\s*с\s*собой|убить\s*себя|суицид|самоубийств|как\s*повесит|резать\s*вен|спрыгнуть\s*с\s*крыш)/i },
+  { cat: 'экстремизм/терроризм', re: /(теракт|взорвать|джихад|шахид|игил|isis|нацист|зиг\s*хайль|свастик|казн(ь|ить)\s*неверн)/i },
+  { cat: 'порнография', re: /(порн|porn|xxx|секс\s*видео
