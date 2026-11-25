@@ -20,8 +20,9 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .top-bar>*{pointer-events:auto}
 .brand-pill{background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);padding:6px 10px;border-radius:18px;font-weight:800;font-size:12px;background-image:linear-gradient(135deg,#fff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;box-shadow:0 4px 24px rgba(0,0,0,.3);flex-shrink:0}
 .tabs-pill{display:flex;background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:18px;padding:3px;box-shadow:0 4px 24px rgba(0,0,0,.3);gap:1px;min-width:0;overflow:hidden}
-.tab-btn{background:none;border:none;color:var(--text-muted);font-size:11px;font-weight:600;padding:5px 9px;border-radius:14px;cursor:pointer;transition:.2s;white-space:nowrap}
+.tab-btn{background:none;border:none;color:var(--text-muted);font-size:11px;font-weight:600;padding:5px 8px;border-radius:14px;cursor:pointer;transition:.2s;white-space:nowrap;position:relative}
 .tab-btn.active{background:rgba(255,255,255,.15);color:#fff}
+.tab-counter{position:absolute;top:-4px;right:-4px;min-width:15px;height:15px;padding:0 4px;border-radius:8px;background:var(--accent-2);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 6px rgba(0,0,0,.4)}
 .top-actions{display:flex;gap:6px;flex-shrink:0}
 .icon-pill{width:32px;height:32px;border-radius:50%;background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;padding:0}
 .icon-pill:active{transform:scale(.92)}.icon-pill.spinning svg{animation:spin .8s linear infinite}
@@ -90,7 +91,7 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .desc-more{background:none;border:none;color:#fff;font-size:13px;font-weight:700;opacity:.85;cursor:pointer;padding:2px 0;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .status-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;display:inline-block;line-height:1.2;white-space:nowrap}
 .badge-pending{background:rgba(255,200,0,.2);color:#ffd700;border:1px solid rgba(255,200,0,.4)}
-.badge-blocked,.badge-reported{background:rgba(255,43,84,.22);color:#ff8aa3;border:1px solid rgba(255,43,84,.45)}
+.badge-blocked{background:rgba(255,43,84,.22);color:#ff8aa3;border:1px solid rgba(255,43,84,.45)}
 .badge-admin{font-size:12px;padding:4px 12px;border-radius:12px;background:linear-gradient(135deg,rgba(255,200,0,.22),rgba(255,43,84,.22));color:#ffd700;font-weight:700;border:1px solid rgba(255,200,0,.4)}
 
 /* Sound marquee */
@@ -107,8 +108,6 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .reaction-btn:active{transform:scale(.9)}
 .reaction-btn.mine{background:rgba(0,229,255,.2);border-color:rgba(0,229,255,.5)}
 .reaction-count{font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8)}
-
-/* Reaction burst animation */
 .reaction-burst{position:fixed;font-size:26px;pointer-events:none;z-index:98;animation:reactionFloat 1.5s ease-out forwards}
 @keyframes reactionFloat{0%{opacity:0;transform:translateY(0) scale(.6)}15%{opacity:1;transform:translateY(-20px) scale(1.15)}100%{opacity:0;transform:translateY(-260px) scale(.85) translateX(var(--drift,0px))}}
 
@@ -164,7 +163,9 @@ body.clear-mode .trend-rank{opacity:0;pointer-events:none;transition:opacity .35
 .badge-tg{font-size:12px;padding:4px 12px;border-radius:12px;background:rgba(0,229,255,.14);color:var(--accent);font-weight:600}
 .badge-guest{font-size:12px;padding:4px 12px;border-radius:12px;background:rgba(255,255,255,.08);color:var(--text-muted)}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;margin-top:8px}
-.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 8px;text-align:center}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 8px;text-align:center;transition:.15s}
+.stat-clickable{cursor:pointer}
+.stat-clickable:active{transform:scale(.96);background:rgba(255,255,255,.08)}
 .stat-val{font-size:18px;font-weight:800;color:#fff}.stat-lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
 .grid-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
 .video-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -176,11 +177,9 @@ body.clear-mode .trend-rank{opacity:0;pointer-events:none;transition:opacity .35
 .delete-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(255,43,84,.85);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;padding:0}
 .delete-btn svg{width:13px;height:13px;stroke:#fff;stroke-width:2.5;stroke-linecap:round;fill:none}
 
-.profile-tabs{display:flex;gap:3px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:16px;padding:4px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
-.profile-tabs::-webkit-scrollbar{display:none}
-.ptab{flex:1;background:none;border:none;color:var(--text-muted);font-size:12px;font-weight:600;padding:8px 10px;border-radius:12px;cursor:pointer;transition:.2s;white-space:nowrap;position:relative}
+.profile-tabs{display:flex;gap:3px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:16px;padding:4px;margin-bottom:14px}
+.ptab{flex:1;background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:600;padding:8px 10px;border-radius:12px;cursor:pointer;transition:.2s;white-space:nowrap}
 .ptab.active{background:rgba(255,255,255,.15);color:#fff}
-.ptab .tab-badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--accent-2);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
 
 /* Channel topbar */
 .channel-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
@@ -192,6 +191,34 @@ body.clear-mode .trend-rank{opacity:0;pointer-events:none;transition:opacity .35
 .ch-actions{display:flex;gap:10px;width:100%;margin-top:10px}
 .ch-sub-btn{flex:1;padding:11px;border-radius:14px;border:none;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--accent),#0099ff);color:#000;cursor:pointer;transition:.2s}
 .ch-sub-btn.subscribed{background:rgba(255,255,255,.12);color:#fff;border:1px solid var(--border-strong)}
+
+/* Moderation view */
+#moderationView{padding:calc(64px + var(--safe-top)) 14px calc(80px + var(--safe-bottom));overflow-y:auto;background:radial-gradient(circle at 50% 0,#1a1d29,#050507 55%)}
+.mod-title-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.mod-title{font-size:18px;font-weight:800}
+.mod-subtitle{font-size:12px;color:var(--text-muted);margin-top:2px}
+.mod-refresh{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.mod-refresh svg{width:16px;height:16px;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.mod-empty{text-align:center;color:var(--text-muted);padding:50px 20px;font-size:14px}
+.mod-card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:10px;margin-bottom:10px;display:flex;gap:10px}
+.mod-thumb{width:72px;height:112px;flex-shrink:0;border-radius:8px;overflow:hidden;background:#000;position:relative;cursor:pointer}
+.mod-thumb video{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.mod-thumb-badge{position:absolute;top:4px;left:4px;background:rgba(255,43,84,.9);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;line-height:1.3}
+.mod-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.mod-desc{font-size:13px;line-height:1.3;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.mod-author{font-size:11px;color:var(--text-muted);font-weight:600}
+.mod-ai{font-size:11px;color:#ff9f45;background:rgba(255,140,50,.1);border:1px solid rgba(255,140,50,.3);padding:3px 7px;border-radius:6px;align-self:flex-start;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%}
+.mod-reports{font-size:11px;color:#ff8aa3;background:rgba(255,43,84,.1);border:1px solid rgba(255,43,84,.3);padding:3px 7px;border-radius:6px;align-self:flex-start;font-weight:600;max-width:100%;line-height:1.4;word-break:break-word}
+.mod-status{font-size:10px;color:#ffd700;background:rgba(255,200,0,.1);border:1px solid rgba(255,200,0,.3);padding:2px 6px;border-radius:5px;align-self:flex-start;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.mod-actions{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+.mod-btn{background:rgba(255,255,255,.08);border:1px solid var(--border);color:#fff;font-size:11px;font-weight:700;padding:5px 9px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.mod-btn svg{width:12px;height:12px;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.mod-btn.approve{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.4);color:#4ade80}
+.mod-btn.approve svg{stroke:#4ade80}
+.mod-btn.delete{background:rgba(255,43,84,.15);border-color:rgba(255,43,84,.4);color:#ff8aa3}
+.mod-btn.delete svg{stroke:#ff8aa3}
+.mod-btn.ban{background:rgba(255,140,50,.15);border-color:rgba(255,140,50,.4);color:#ff9f45}
+.mod-btn.ban svg{stroke:#ff9f45}
 
 /* Search overlay */
 #searchOverlay{position:fixed;inset:0;z-index:70;background:rgba(5,5,7,.97);backdrop-filter:blur(20px);display:none;flex-direction:column;padding:calc(16px + var(--safe-top)) 16px calc(20px + var(--safe-bottom))}
@@ -229,6 +256,13 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
 .menu-item.success{color:#22c55e;border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.08)}
 .menu-item.success svg{stroke:#22c55e}
 
+/* Subs list */
+.subs-list{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;min-height:100px}
+.subs-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:.15s}
+.subs-item:active{background:rgba(255,255,255,.1)}
+.subs-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
+.subs-name{font-size:14px;font-weight:600;color:#fff;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 /* Reply context preview */
 .reply-preview{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.3);border-radius:12px;padding:10px 12px;display:none;gap:8px;align-items:flex-start;position:relative}
 .reply-preview.show{display:flex}
@@ -242,32 +276,13 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
 .comments-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;min-height:160px;max-height:45vh}
 .comment-item{background:rgba(255,255,255,.04);padding:10px 12px;border-radius:12px}
 .comment-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px}
-.comment-author{font-size:12px;font-weight:700;color:var(--accent);cursor:pointer}
+.comment-author{font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;transition:.15s}
+.comment-author:active{opacity:.7}
 .comment-reply-btn{background:rgba(255,255,255,.08);border:1px solid var(--border);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
 .comment-reply-btn svg{width:11px;height:11px;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
 .comment-text{font-size:14px;line-height:1.35;word-break:break-word}
 .comment-form{display:flex;gap:8px}
 .comment-send{background:var(--accent);color:#000;border:none;border-radius:12px;padding:0 16px;font-weight:700;cursor:pointer}
-
-/* Moderation */
-.mod-card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:10px;margin-bottom:10px;display:flex;gap:10px}
-.mod-thumb{width:72px;height:112px;flex-shrink:0;border-radius:8px;overflow:hidden;background:#000;position:relative;cursor:pointer}
-.mod-thumb video{width:100%;height:100%;object-fit:cover;pointer-events:none}
-.mod-thumb-badge{position:absolute;top:4px;left:4px;background:rgba(255,43,84,.9);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;line-height:1.3}
-.mod-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
-.mod-desc{font-size:13px;line-height:1.3;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
-.mod-author{font-size:11px;color:var(--text-muted);font-weight:600}
-.mod-ai{font-size:11px;color:#ff9f45;background:rgba(255,140,50,.1);border:1px solid rgba(255,140,50,.3);padding:3px 7px;border-radius:6px;align-self:flex-start;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%}
-.mod-reports{font-size:11px;color:#ff8aa3;background:rgba(255,43,84,.1);border:1px solid rgba(255,43,84,.3);padding:3px 7px;border-radius:6px;align-self:flex-start;font-weight:600;max-width:100%}
-.mod-actions{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
-.mod-btn{background:rgba(255,255,255,.08);border:1px solid var(--border);color:#fff;font-size:11px;font-weight:700;padding:5px 9px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px}
-.mod-btn svg{width:12px;height:12px;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
-.mod-btn.approve{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.4);color:#4ade80}
-.mod-btn.approve svg{stroke:#4ade80}
-.mod-btn.delete{background:rgba(255,43,84,.15);border-color:rgba(255,43,84,.4);color:#ff8aa3}
-.mod-btn.delete svg{stroke:#ff8aa3}
-.mod-btn.ban{background:rgba(255,140,50,.15);border-color:rgba(255,140,50,.4);color:#ff9f45}
-.mod-btn.ban svg{stroke:#ff9f45}
 
 .empty-state{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;gap:12px;color:var(--text-muted)}
 .empty-state svg{width:48px;height:48px;stroke:var(--text-muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;fill:none;opacity:.7}
@@ -286,6 +301,7 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
     <button class="tab-btn" id="tabTrends" data-tab="trends">Тренды</button>
     <button class="tab-btn active" id="tabForyou" data-tab="foryou">Для вас</button>
     <button class="tab-btn" id="tabSubs" data-tab="subs">Подписки</button>
+    <button class="tab-btn" id="tabReports" data-tab="reports" style="display:none">Жалобы<span class="tab-counter" id="tabReportsCount" style="display:none"></span></button>
   </div>
   <div class="top-actions">
     <button class="icon-pill" id="searchBtn" title="Поиск">
@@ -299,6 +315,19 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
 
 <div id="feedView" class="view active"><div class="feed" id="feed"></div></div>
 
+<div id="moderationView" class="view">
+  <div class="mod-title-bar">
+    <div>
+      <div class="mod-title">Очередь модерации</div>
+      <div class="mod-subtitle" id="modSubtitle">Загрузка...</div>
+    </div>
+    <button class="mod-refresh" id="modRefreshBtn" title="Обновить">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+    </button>
+  </div>
+  <div id="moderationList"></div>
+</div>
+
 <div id="profileView" class="view">
   <div class="profile-header">
     <div class="profile-avatar" id="profAvatar"><div>U</div></div>
@@ -306,17 +335,15 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
     <div id="profBadge" class="badge-guest">Режим просмотра</div>
     <div class="stats-grid">
       <div class="stat-box"><div class="stat-val" id="statFollowers">—</div><div class="stat-lbl">Подписчики</div></div>
-      <div class="stat-box"><div class="stat-val" id="statVideos">0</div><div class="stat-lbl">Видео</div></div>
-      <div class="stat-box"><div class="stat-val" id="statViews">0</div><div class="stat-lbl">Просмотры</div></div>
+      <div class="stat-box stat-clickable" id="statSubsBox"><div class="stat-val" id="statSubs">0</div><div class="stat-lbl">Подписки</div></div>
+      <div class="stat-box"><div class="stat-val" id="statLikes">0</div><div class="stat-lbl">Лайки</div></div>
     </div>
   </div>
   <div class="profile-tabs" id="profileTabs">
     <button class="ptab active" data-ptab="mine">Мои видео</button>
     <button class="ptab" data-ptab="liked">Понравившиеся</button>
-    <button class="ptab" data-ptab="moderation" id="modTabBtn" style="display:none">Модерация<span class="tab-badge" id="modTabCount" style="display:none">0</span></button>
   </div>
   <div class="video-grid" id="profileGrid"></div>
-  <div id="moderationPanel" style="display:none"></div>
 </div>
 
 <div id="channelView" class="view">
@@ -386,6 +413,12 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
   <div class="sheet-handle"></div><div class="sheet-title">Комментарии</div>
   <div class="comments-list" id="commentsList"></div>
   <div id="commentInputArea"></div>
+</div></div>
+
+<div class="sheet-backdrop" id="subsSheet" data-close="subsSheet"><div class="sheet">
+  <div class="sheet-handle"></div><div class="sheet-title">Мои подписки</div>
+  <div class="subs-list" id="subsList"></div>
+  <button class="btn-secondary" data-close-btn="subsSheet">Закрыть</button>
 </div></div>
 
 <div class="sheet-backdrop" id="shareSheet" data-close="shareSheet"><div class="sheet">
@@ -484,7 +517,8 @@ const ICON={
   trash:`<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>`,
   wave:`<svg viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>`,
   vinyl:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2" fill="#fff" stroke="none"/></svg>`,
-  reply:`<svg viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>`
+  reply:`<svg viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>`,
+  chevronRight:`<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`
 };
 
 const tg=window.Telegram?.WebApp||null;
@@ -497,7 +531,7 @@ const currentUser=isGuest
 const isAdmin=!isGuest&&ADMIN_IDS.includes(currentUser.id);
 
 let allVideos=[],likedSet=new Set(),subsSet=new Set(),viewedSessionSet=new Set();
-let currentFeedTab='foryou'; // 'trends' | 'foryou' | 'subs'
+let currentFeedTab='foryou';
 let hashtagFilter=null;
 let userWantsSound=true,selectedFile=null,currentObserver=null;
 let pollTimer=null,pendingDelete=null,activeShareVideo=null,activeReportVideo=null,activeMenuVideo=null;
@@ -507,7 +541,6 @@ let replyContext=null;
 let isBanned=false,banReason='';
 let autoScrollEnabled=false;
 let modQueue=[];
-let moderationLoaded=false;
 const channelStatsCache=new Map();
 const reactionsCache=new Map();
 const userReactionCache=new Map();
@@ -579,9 +612,15 @@ async function loadUserRelations(){
       fetch(`${SUPABASE_URL}/rest/v1/video_likes?user_id=eq.${encodeURIComponent(currentUser.id)}&select=video_id`,{headers}),
       fetch(`${SUPABASE_URL}/rest/v1/user_subs?follower_id=eq.${encodeURIComponent(currentUser.id)}&select=author_id`,{headers})
     ]);
-    if(lr.ok){const l=await lr.json();likedSet=new Set(l.map(x=>String(x.video_id)));}
-    if(sr.ok){const s=await sr.json();subsSet=new Set(s.map(x=>String(x.author_id)));}
-  }catch(e){}
+    if(lr.ok){
+      const rows=await lr.json();
+      likedSet=new Set(rows.map(x=>String(x.video_id)));
+    }
+    if(sr.ok){
+      const s=await sr.json();
+      subsSet=new Set(s.map(x=>String(x.author_id)));
+    }
+  }catch(e){console.error('[Undertow] loadUserRelations error:',e);}
 }
 
 /* ============ FETCH VIDEOS ============ */
@@ -606,6 +645,26 @@ async function fetchVideos(){
     }
   }
 }
+
+/* ============ LOAD MISSING LIKED VIDEOS ============ */
+async function loadMissingLikedVideos(){
+  if(!likedSet.size)return;
+  const missing=[...likedSet].filter(id=>!allVideos.find(v=>String(v.id)===String(id)));
+  if(!missing.length)return;
+  try{
+    const idsStr=missing.map(id=>encodeURIComponent(id)).join(',');
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/videos?id=in.(${idsStr})&select=*`,{headers});
+    if(res.ok){
+      const rows=await res.json();
+      if(Array.isArray(rows)){
+        rows.forEach(r=>{
+          if(r&&r.video_url&&!allVideos.find(v=>String(v.id)===String(r.id)))allVideos.push(r);
+        });
+      }
+    }
+  }catch(e){console.error('[Undertow] loadMissingLikedVideos error:',e);}
+}
+
 async function silentRefresh(){
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_recommended_feed`,{method:'POST',headers,body:JSON.stringify({p_user_id:getViewerKey(),p_limit:50})});
@@ -682,16 +741,15 @@ async function loadCommentCounts(ids){
   }catch(e){}
 }
 
-/* ============ ADMIN BADGE ============ */
+/* ============ ADMIN BADGE (только pending/blocked, БЕЗ жалоб) ============ */
 function renderAdminBadge(v){
-  const status=v.status||'';const rc=Number(v.reports_count)||0;
+  const status=v.status||'';
   if(status==='pending')return`<span class="status-badge badge-pending" data-status-badge>На проверке</span>`;
-  if(status==='blocked')return`<span class="status-badge badge-blocked" data-status-badge>Скрыто · ${rc}</span>`;
-  if(rc>0)return`<span class="status-badge badge-reported" data-status-badge>Жалоб: ${rc}</span>`;
+  if(status==='blocked')return`<span class="status-badge badge-blocked" data-status-badge>Скрыто</span>`;
   return'';
 }
 
-/* ============ DESC RENDERING WITH HASHTAGS ============ */
+/* ============ DESCRIPTION WITH HASHTAGS ============ */
 function renderDescriptionHTML(text){
   const escaped=escapeHtml(text);
   return escaped.replace(/#([\wа-яёА-ЯЁ]+)/gi,(m,h)=>`<span class="hashtag" data-hashtag="${h.toLowerCase()}">${m}</span>`);
@@ -841,7 +899,6 @@ function renderFeed(){
       if(autoScrollEnabled){const next=card.nextElementSibling;if(next)next.scrollIntoView({behavior:'smooth'});}
     });
 
-    /* Progress */
     let scrubbing=false;
     const applyRatio=r=>{if(!vidEl.duration)return;vidEl.currentTime=r*vidEl.duration;fillEl.style.width=`${r*100}%`;};
     const ratioFromEvent=e=>{const rect=progressWrap.getBoundingClientRect();return Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));};
@@ -851,7 +908,6 @@ function renderFeed(){
     progressWrap.addEventListener('pointerup',endScrub);progressWrap.addEventListener('pointercancel',endScrub);progressWrap.addEventListener('pointerleave',endScrub);
     vidEl.addEventListener('timeupdate',()=>{if(!scrubbing&&vidEl.duration)fillEl.style.width=`${(vidEl.currentTime/vidEl.duration)*100}%`;});
 
-    /* Buttons */
     likeBtn.addEventListener('click',e=>{e.stopPropagation();handleLike(vidId,likeBtn,likeCntEl);});
     commentBtn.addEventListener('click',e=>{e.stopPropagation();openComments(vidId);});
     shareBtn.addEventListener('click',e=>{e.stopPropagation();openShare({id:vidId,code:v.short_code||vidId,url:v.video_url,desc:v.description||''});});
@@ -865,7 +921,6 @@ function renderFeed(){
       else{d.classList.add('expanded');expandBtn.textContent='Свернуть';}
     });
 
-    /* Hashtag click */
     card.querySelectorAll('.hashtag').forEach(h=>{
       h.addEventListener('click',e=>{
         e.stopPropagation();
@@ -874,12 +929,13 @@ function renderFeed(){
         document.getElementById('tabTrends').classList.remove('active');
         document.getElementById('tabForyou').classList.add('active');
         document.getElementById('tabSubs').classList.remove('active');
+        const rTab=document.getElementById('tabReports');
+        if(rTab)rTab.classList.remove('active');
         renderFeed();haptic('light');
         showToast(`Фильтр: #${hashtagFilter}`);
       });
     });
 
-    /* Reactions */
     card.querySelectorAll('.reaction-btn').forEach(btn=>{
       btn.addEventListener('click',e=>{
         e.stopPropagation();
@@ -887,7 +943,6 @@ function renderFeed(){
       });
     });
 
-    /* Tap / double-tap / long-press zones */
     let tapTimer=null;
     let longPressTimer=null;
     let isSpeedActive=false;
@@ -919,7 +974,6 @@ function renderFeed(){
       else{tapTimer=setTimeout(()=>{tapTimer=null;if(!card.isConnected)return;if(vidEl.paused){vidEl.play().catch(()=>{});pauseEl.classList.remove('visible');}else{vidEl.pause();pauseEl.classList.add('visible');}},280);}
     });
 
-    /* Swipe for clear mode */
     let tSX=0,tSY=0,tST=0;
     card.addEventListener('touchstart',e=>{
       tSX=e.touches[0].clientX;tSY=e.touches[0].clientY;tST=Date.now();
@@ -1008,25 +1062,34 @@ async function registerView(vidId){
 /* ============ LIKE ============ */
 async function handleLike(vidId,btn,cntEl){
   if(isGuest)return openSheet('guestSheet');
-  if(vidId.startsWith('temp_'))return showToast('Загрузка...');
+  if(String(vidId).startsWith('temp_'))return showToast('Загрузка...');
   if(likeLocks.has(vidId))return;
   const lockTimer=setTimeout(()=>likeLocks.delete(vidId),8000);likeLocks.set(vidId,lockTimer);haptic('medium');
-  const wasLiked=likedSet.has(vidId),item=allVideos.find(x=>String(x.id)===vidId);let cur=Number(item?.likes||0);
+  const wasLiked=likedSet.has(vidId),item=allVideos.find(x=>String(x.id)===String(vidId));let cur=Number(item?.likes||0);
   if(wasLiked){likedSet.delete(vidId);btn.classList.remove('liked');btn.querySelector('.act-icon').innerHTML=ICON.heart;cur=Math.max(0,cur-1);}
   else{likedSet.add(vidId);btn.classList.add('liked');btn.querySelector('.act-icon').innerHTML=ICON.heartFilled;cur+=1;}
   if(cntEl)cntEl.textContent=formatNum(cur);if(item)item.likes=cur;
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`,{method:'POST',headers,body:JSON.stringify({p_user_id:currentUser.id,p_video_id:vidId})});
-    if(!res.ok)throw new Error();const d=await res.json();
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`,{
+      method:'POST',headers,
+      body:JSON.stringify({p_user_id:currentUser.id,p_video_id:String(vidId)})
+    });
+    if(!res.ok){
+      const errText=await res.text().catch(()=>'');
+      console.error('[Undertow] toggle_video_like failed:',res.status,errText);
+      throw new Error('like failed');
+    }
+    const d=await res.json();
     if(typeof d.likes==='number'){if(cntEl)cntEl.textContent=formatNum(d.likes);if(item)item.likes=d.likes;}
     if(typeof d.liked==='boolean'){
       if(d.liked){likedSet.add(vidId);btn.classList.add('liked');btn.querySelector('.act-icon').innerHTML=ICON.heartFilled;}
       else{likedSet.delete(vidId);btn.classList.remove('liked');btn.querySelector('.act-icon').innerHTML=ICON.heart;}
     }
   }catch(e){
+    console.error('[Undertow] handleLike error:',e);
     if(wasLiked){likedSet.add(vidId);btn.classList.add('liked');btn.querySelector('.act-icon').innerHTML=ICON.heartFilled;cur+=1;}
     else{likedSet.delete(vidId);btn.classList.remove('liked');btn.querySelector('.act-icon').innerHTML=ICON.heart;cur=Math.max(0,cur-1);}
-    if(cntEl)cntEl.textContent=formatNum(cur);if(item)item.likes=cur;showToast('Ошибка');
+    if(cntEl)cntEl.textContent=formatNum(cur);if(item)item.likes=cur;showToast('Ошибка лайка');
   }finally{clearTimeout(lockTimer);likeLocks.delete(vidId);}
 }
 
@@ -1116,13 +1179,146 @@ async function sendReaction(vidId,emoji,btnEl,card){
   }catch(e){}
 }
 
+/* ============ MODERATION ============ */
+async function loadModerationQueue(){
+  if(!isAdmin)return;
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_moderation_queue`,{method:'POST',headers,body:JSON.stringify({p_admin_id:currentUser.id})});
+    if(!res.ok){modQueue=[];return;}
+    const data=await res.json();
+    modQueue=Array.isArray(data)?data:[];
+  }catch(e){modQueue=[];}
+}
+function updateModBadge(){
+  const tab=document.getElementById('tabReports');
+  const cnt=document.getElementById('tabReportsCount');
+  if(!tab||!cnt)return;
+  if(!isAdmin){tab.style.display='none';return;}
+  tab.style.display='';
+  if(modQueue.length>0){cnt.style.display='flex';cnt.textContent=String(modQueue.length);}
+  else{cnt.style.display='none';}
+}
+function renderModerationView(){
+  const list=document.getElementById('moderationList');
+  const sub=document.getElementById('modSubtitle');
+  if(sub)sub.textContent=modQueue.length?`${modQueue.length} ${modQueue.length===1?'ролик требует':'роликов требуют'} внимания`:'Нет активных жалоб';
+  if(!modQueue.length){
+    list.innerHTML=`<div class="mod-empty">Очередь модерации пуста</div>`;
+    return;
+  }
+  list.innerHTML='';
+  modQueue.forEach(v=>{
+    const id=String(v.id);
+    const authorName=escapeHtml(v.author_name||'@user');
+    const authorId=String(v.author_id||v.user_id||'');
+    const desc=escapeHtml(v.description||'(без описания)');
+    const aiReason=v.ai_reason?escapeHtml(String(v.ai_reason)):'';
+    let reportsText='';
+    if(Array.isArray(v.report_reasons)&&v.report_reasons.length){
+      reportsText=v.report_reasons.map(r=>escapeHtml(String(r))).join(' • ');
+    }else if(v.report_reasons){
+      reportsText=escapeHtml(String(v.report_reasons));
+    }
+    const statusText=v.status==='pending'?'На проверке':(v.status==='blocked'?'Скрыто':'');
+    const card=document.createElement('div');card.className='mod-card';
+    card.innerHTML=`
+      <div class="mod-thumb" data-act="view">
+        <video src="${v.video_url||''}" preload="metadata" muted playsinline></video>
+        ${Number(v.reports_count)>0?`<div class="mod-thumb-badge">🚩 ${v.reports_count}</div>`:''}
+      </div>
+      <div class="mod-body">
+        <div class="mod-desc">${desc}</div>
+        <div class="mod-author">${authorName}</div>
+        ${statusText?`<div class="mod-status">${statusText}</div>`:''}
+        ${aiReason?`<div class="mod-ai">🤖 ${aiReason}</div>`:''}
+        ${reportsText?`<div class="mod-reports">🚩 ${reportsText}</div>`:''}
+        <div class="mod-actions">
+          <button class="mod-btn" data-act="view">${ICON.eye} Смотреть</button>
+          <button class="mod-btn approve" data-act="approve">Оправдать</button>
+          <button class="mod-btn delete" data-act="delete">Удалить</button>
+          <button class="mod-btn ban" data-act="ban">Забанить</button>
+        </div>
+      </div>`;
+    card.querySelectorAll('[data-act="view"]').forEach(b=>b.addEventListener('click',()=>{
+      const i=allVideos.findIndex(x=>String(x.id)===id);
+      if(i>0){const[m]=allVideos.splice(i,1);allVideos.unshift(m);}
+      else if(i===-1){allVideos.unshift(v);}
+      switchMainView('feed');renderFeed();
+    }));
+    card.querySelector('[data-act="approve"]').addEventListener('click',()=>modClearReports(id,card));
+    card.querySelector('[data-act="delete"]').addEventListener('click',()=>modDelete(id,v.video_url,card));
+    card.querySelector('[data-act="ban"]').addEventListener('click',()=>modBanUser(authorId,v.author_name,card));
+    list.appendChild(card);
+  });
+}
+async function modClearReports(vidId,card){
+  haptic('medium');
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_clear_reports`,{method:'POST',headers,body:JSON.stringify({p_video_id:vidId,p_admin_id:currentUser.id})});
+    if(!res.ok)throw new Error();
+    await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(vidId)}`,{method:'PATCH',headers:{...headers,'Prefer':'return=minimal'},body:JSON.stringify({status:'approved',reports_count:0})});
+    modQueue=modQueue.filter(v=>String(v.id)!==String(vidId));
+    card?.remove();
+    const item=allVideos.find(x=>String(x.id)===String(vidId));
+    if(item){item.status='approved';item.reports_count=0;}
+    updateModBadge();renderModerationView();
+    showToast('Жалобы оправданы');
+  }catch(e){showToast('Ошибка');}
+}
+async function modDelete(vidId,videoUrl,card){
+  haptic('heavy');
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(vidId)}`,{method:'DELETE',headers});
+    const fileName=(videoUrl||'').split('/').pop();
+    if(fileName)await fetch(`${SUPABASE_URL}/storage/v1/object/videos/${encodeURIComponent(fileName)}`,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});
+    modQueue=modQueue.filter(v=>String(v.id)!==String(vidId));
+    allVideos=allVideos.filter(x=>String(x.id)!==String(vidId));
+    card?.remove();
+    updateModBadge();renderModerationView();
+    showToast('Видео удалено');
+  }catch(e){showToast('Ошибка удаления');}
+}
+async function modBanUser(authorId,authorName,card){
+  if(!authorId)return showToast('Автор не найден');
+  const reason=prompt(`Причина бана для ${authorName||authorId}:`,'Нарушение правил');
+  if(!reason)return;
+  haptic('heavy');
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_ban_user`,{method:'POST',headers,body:JSON.stringify({p_target_user_id:authorId,p_admin_id:currentUser.id,p_reason:reason})});
+    if(!res.ok)throw new Error();
+    showToast(`Автор забанен: ${reason}`);
+  }catch(e){showToast('Ошибка бана');}
+}
+
 /* ============ TABS ============ */
-function switchFeedTab(tab){
+async function switchFeedTab(tab){
   if(tab==='subs'&&isGuest)return openSheet('guestSheet');
+
+  if(tab==='reports'){
+    if(!isAdmin)return;
+    currentFeedTab='reports';
+    document.getElementById('topBar').style.display='flex';
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('moderationView').classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab==='reports'));
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('navFeed').classList.add('active');
+    document.getElementById('modSubtitle').textContent='Загрузка...';
+    document.getElementById('moderationList').innerHTML='';
+    await loadModerationQueue();
+    renderModerationView();
+    updateModBadge();
+    haptic('light');
+    return;
+  }
+
   currentFeedTab=tab;hashtagFilter=null;
-  document.getElementById('tabTrends').classList.toggle('active',tab==='trends');
-  document.getElementById('tabForyou').classList.toggle('active',tab==='foryou');
-  document.getElementById('tabSubs').classList.toggle('active',tab==='subs');
+  document.getElementById('topBar').style.display='flex';
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('feedView').classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('navFeed').classList.add('active');
   renderFeed();haptic('light');
 }
 
@@ -1135,6 +1331,11 @@ function switchMainView(view){
     topBar.style.display='flex';
     document.getElementById('feedView').classList.add('active');
     document.getElementById('navFeed').classList.add('active');
+    if(currentFeedTab==='reports'){
+      currentFeedTab='foryou';
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab==='foryou'));
+      renderFeed();
+    }
   }else if(view==='profile'){
     topBar.style.display='none';
     document.getElementById('profileView').classList.add('active');
@@ -1145,6 +1346,47 @@ function switchMainView(view){
     topBar.style.display='none';
     document.getElementById('channelView').classList.add('active');
   }
+}
+
+/* ============ SUBS LIST ============ */
+async function renderSubsList(){
+  const listEl=document.getElementById('subsList');
+  if(!subsSet.size){listEl.innerHTML='<div class="mod-empty">Нет подписок</div>';return;}
+  listEl.innerHTML='<div style="text-align:center;color:#aaa;padding:20px">Загрузка...</div>';
+  const ids=[...subsSet];
+  const found={};
+  allVideos.forEach(v=>{
+    const aid=String(v.author_id||v.user_id||'');
+    if(aid&&subsSet.has(aid)&&!found[aid]){found[aid]={name:authorDisplayName(v),id:aid};}
+  });
+  const missing=ids.filter(id=>!found[id]);
+  if(missing.length){
+    try{
+      const idsStr=missing.map(id=>encodeURIComponent(id)).join(',');
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/users?user_id=in.(${idsStr})&select=user_id,username,first_name`,{headers});
+      if(res.ok){
+        const rows=await res.json();
+        rows.forEach(r=>{
+          const id=String(r.user_id);
+          const name=r.username?`@${r.username}`:(r.first_name||`@user_${id.slice(-4)}`);
+          found[id]={name,id};
+        });
+      }
+    }catch(e){}
+  }
+  const items=ids.map(id=>found[id]||{name:`@user_${id.slice(-4)}`,id});
+  listEl.innerHTML=items.map(it=>`
+    <div class="subs-item" data-author-id="${escapeHtml(it.id)}" data-author-name="${escapeHtml(it.name)}">
+      <div class="subs-avatar">${(it.name.replace('@','')[0]||'U').toUpperCase()}</div>
+      <div class="subs-name">${escapeHtml(it.name)}</div>
+      <span style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;margin-left:auto">${ICON.chevronRight}</span>
+    </div>`).join('');
+  listEl.querySelectorAll('.subs-item').forEach(el=>{
+    el.addEventListener('click',()=>{
+      closeSheet('subsSheet');
+      openChannel(el.dataset.authorId,el.dataset.authorName);
+    });
+  });
 }
 
 /* ============ PROFILE ============ */
@@ -1162,38 +1404,20 @@ function renderProfile(){
 
   const myVideos=isGuest?[]:allVideos.filter(v=>String(v.author_id||v.user_id)===currentUser.id&&!brokenVideoIds.has(String(v.id)));
 
-  document.getElementById('statVideos').textContent=formatNum(myVideos.length);
-  document.getElementById('statViews').textContent=formatNum(myVideos.reduce((a,v)=>a+(Number(v.views)||0),0));
   document.getElementById('statFollowers').textContent='—';
+  document.getElementById('statSubs').textContent=formatNum(subsSet.size);
+  document.getElementById('statLikes').textContent=formatNum(myVideos.reduce((a,v)=>a+(Number(v.likes)||0),0));
 
   if(!isGuest){
     getChannelStats(currentUser.id).then(stats=>{
       if(!stats)return;
-      const f=stats.followers??stats.followers_count??stats.subscribers??null;
+      const f=stats.subscribers??stats.followers??stats.followers_count??null;
       if(f!=null)document.getElementById('statFollowers').textContent=formatNum(f);
     }).catch(()=>{});
   }
 
-  const modBtn=document.getElementById('modTabBtn');
-  if(isAdmin){
-    modBtn.style.display='';
-    loadModerationQueue().then(()=>{
-      const cnt=document.getElementById('modTabCount');
-      if(modQueue.length>0){cnt.style.display='';cnt.textContent=String(modQueue.length);}
-      else cnt.style.display='none';
-    });
-  }else modBtn.style.display='none';
-
   document.querySelectorAll('.ptab').forEach(b=>b.classList.toggle('active',b.dataset.ptab===currentProfileTab));
   const grid=document.getElementById('profileGrid');
-  const modPanel=document.getElementById('moderationPanel');
-
-  if(currentProfileTab==='moderation'&&isAdmin){
-    grid.style.display='none';modPanel.style.display='';
-    renderModerationPanel();
-    return;
-  }
-  grid.style.display='';modPanel.style.display='none';
 
   if(isGuest){
     grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:24px;"><p style="margin-bottom:14px;color:#aaa;">Войдите в бота</p><button class="btn-main" id="btnLoginInline">Войти</button></div>`;
@@ -1221,110 +1445,19 @@ function renderProfile(){
   });
 }
 document.querySelectorAll('.ptab').forEach(b=>{
-  b.addEventListener('click',()=>{currentProfileTab=b.dataset.ptab;renderProfile();haptic('light');});
-});
-
-/* ============ MODERATION ============ */
-async function loadModerationQueue(){
-  if(!isAdmin)return;
-  try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_moderation_queue`,{method:'POST',headers,body:JSON.stringify({p_admin_id:currentUser.id})});
-    if(!res.ok)return;
-    const data=await res.json();
-    modQueue=Array.isArray(data)?data:[];
-    moderationLoaded=true;
-  }catch(e){}
-}
-function renderModerationPanel(){
-  const panel=document.getElementById('moderationPanel');
-  if(!modQueue.length){
-    panel.innerHTML=`<div style="text-align:center;color:#aaa;padding:40px 0">Очередь модерации пуста</div>`;
-    return;
-  }
-  panel.innerHTML='';
-  modQueue.forEach(v=>{
-    const id=String(v.id);
-    const authorName=escapeHtml(v.author_name||'@user');
-    const desc=escapeHtml(v.description||'(без описания)');
-    const aiReason=v.ai_reason?escapeHtml(String(v.ai_reason)):'';
-    let reportsText='';
-    if(Array.isArray(v.report_reasons)&&v.report_reasons.length){
-      reportsText=v.report_reasons.map(r=>escapeHtml(String(r))).join(' • ');
-    }else if(v.report_reasons){
-      reportsText=escapeHtml(String(v.report_reasons));
-    }
-    const card=document.createElement('div');card.className='mod-card';
-    card.innerHTML=`
-      <div class="mod-thumb">
-        <video src="${v.video_url}" preload="metadata" muted playsinline></video>
-        ${Number(v.reports_count)>0?`<div class="mod-thumb-badge">🚩 ${v.reports_count}</div>`:''}
-      </div>
-      <div class="mod-body">
-        <div class="mod-desc">${desc}</div>
-        <div class="mod-author">${authorName}</div>
-        ${aiReason?`<div class="mod-ai">🤖 ${aiReason}</div>`:''}
-        ${reportsText?`<div class="mod-reports">🚩 ${reportsText}</div>`:''}
-        <div class="mod-actions">
-          <button class="mod-btn view" data-act="view">${ICON.eye} Смотреть</button>
-          <button class="mod-btn approve" data-act="approve">Оправдать</button>
-          <button class="mod-btn delete" data-act="delete">Удалить</button>
-          <button class="mod-btn ban" data-act="ban">Забанить</button>
-        </div>
-      </div>`;
-    card.querySelector('[data-act="view"]').addEventListener('click',()=>{
-      const i=allVideos.findIndex(x=>String(x.id)===id);
-      if(i>0){const[m]=allVideos.splice(i,1);allVideos.unshift(m);}
-      else if(i===-1){allVideos.unshift(v);}
-      switchMainView('feed');renderFeed();
-    });
-    card.querySelector('[data-act="approve"]').addEventListener('click',()=>modClearReports(id,card));
-    card.querySelector('[data-act="delete"]').addEventListener('click',()=>modDelete(id,v.video_url,card));
-    card.querySelector('[data-act="ban"]').addEventListener('click',()=>modBanUser(String(v.author_id||v.user_id||''),v.author_name,card));
-    panel.appendChild(card);
+  b.addEventListener('click',async ()=>{
+    currentProfileTab=b.dataset.ptab;
+    if(currentProfileTab==='liked')await loadMissingLikedVideos();
+    renderProfile();
+    haptic('light');
   });
-}
-async function modClearReports(vidId,card){
-  haptic('medium');
-  try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_clear_reports`,{method:'POST',headers,body:JSON.stringify({p_video_id:vidId,p_admin_id:currentUser.id})});
-    if(!res.ok)throw new Error();
-    await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(vidId)}`,{method:'PATCH',headers:{...headers,'Prefer':'return=minimal'},body:JSON.stringify({status:'approved',reports_count:0})});
-    modQueue=modQueue.filter(v=>String(v.id)!==String(vidId));
-    card?.remove();
-    const item=allVideos.find(x=>String(x.id)===String(vidId));
-    if(item){item.status='approved';item.reports_count=0;}
-    const cnt=document.getElementById('modTabCount');
-    if(modQueue.length===0&&cnt)cnt.style.display='none';
-    else if(cnt)cnt.textContent=String(modQueue.length);
-    showToast('Жалобы оправданы');
-  }catch(e){showToast('Ошибка');}
-}
-async function modDelete(vidId,videoUrl,card){
-  haptic('heavy');
-  try{
-    await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(vidId)}`,{method:'DELETE',headers});
-    const fileName=(videoUrl||'').split('/').pop();
-    if(fileName)await fetch(`${SUPABASE_URL}/storage/v1/object/videos/${encodeURIComponent(fileName)}`,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});
-    modQueue=modQueue.filter(v=>String(v.id)!==String(vidId));
-    allVideos=allVideos.filter(x=>String(x.id)!==String(vidId));
-    card?.remove();
-    const cnt=document.getElementById('modTabCount');
-    if(modQueue.length===0&&cnt)cnt.style.display='none';
-    else if(cnt)cnt.textContent=String(modQueue.length);
-    showToast('Видео удалено');
-  }catch(e){showToast('Ошибка удаления');}
-}
-async function modBanUser(authorId,authorName,card){
-  if(!authorId)return showToast('Автор не найден');
-  const reason=prompt(`Причина бана для ${authorName||authorId}:`,'Нарушение правил');
-  if(!reason)return;
-  haptic('heavy');
-  try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_ban_user`,{method:'POST',headers,body:JSON.stringify({p_target_user_id:authorId,p_admin_id:currentUser.id,p_reason:reason})});
-    if(!res.ok)throw new Error();
-    showToast(`Автор забанен: ${reason}`);
-  }catch(e){showToast('Ошибка бана');}
-}
+});
+document.getElementById('statSubsBox').addEventListener('click',()=>{
+  if(isGuest)return openSheet('guestSheet');
+  openSheet('subsSheet');
+  renderSubsList();
+  haptic('light');
+});
 
 /* ============ CHANNEL ============ */
 function renderChannelSubBtn(authorId){
@@ -1348,7 +1481,7 @@ async function loadChannelStats(authorId){
   setStat('chViews',formatNum(fallbackViews));
   const stats=await getChannelStats(authorId);
   if(stats){
-    const f=stats.followers??stats.followers_count??stats.subscribers??null;
+    const f=stats.subscribers??stats.followers??stats.followers_count??null;
     const l=stats.likes??stats.likes_count??stats.total_likes??null;
     const v=stats.views??stats.views_count??stats.total_views??null;
     if(f!=null)setStat('chFollowers',formatNum(f));
@@ -1602,11 +1735,19 @@ async function openComments(vidId){
     else listEl.innerHTML=rows.map(c=>`
       <div class="comment-item">
         <div class="comment-head">
-          <div class="comment-author">${escapeHtml(c.author_name||'Юзер')}</div>
+          <div class="comment-author" data-author-id="${escapeHtml(String(c.user_id||''))}" data-author-name="${escapeHtml(c.author_name||'')}">${escapeHtml(c.author_name||'Юзер')}</div>
           <button class="comment-reply-btn" data-reply-id="${escapeHtml(c.id||'')}" data-reply-author="${escapeHtml(c.author_name||'')}" data-reply-text="${escapeHtml(c.text||'')}">${ICON.reply} Ответить видео</button>
         </div>
         <div class="comment-text">${escapeHtml(c.text)}</div>
       </div>`).join('');
+    listEl.querySelectorAll('.comment-author').forEach(el=>{
+      el.addEventListener('click',()=>{
+        const aid=el.dataset.authorId;
+        if(!aid)return;
+        closeSheet('commentsSheet');
+        openChannel(aid, el.dataset.authorName);
+      });
+    });
     listEl.querySelectorAll('.comment-reply-btn').forEach(btn=>{
       btn.addEventListener('click',()=>{
         if(isGuest){closeSheet('commentsSheet');openSheet('guestSheet');return;}
@@ -1763,7 +1904,7 @@ function openSearch(){
 }
 function closeSearch(){
   searchOverlay.classList.remove('open');
-  if(document.getElementById('feedView').classList.contains('active'))document.getElementById('topBar').style.display='flex';
+  if(document.getElementById('feedView').classList.contains('active')||document.getElementById('moderationView').classList.contains('active'))document.getElementById('topBar').style.display='flex';
   else document.getElementById('topBar').style.display='none';
   searchInput.value='';
 }
@@ -1806,6 +1947,12 @@ async function refreshFeed(){
   catch(e){showToast('Ошибка');}
   finally{setTimeout(()=>btn.classList.remove('spinning'),450);}
 }
+document.getElementById('modRefreshBtn').addEventListener('click',async ()=>{
+  haptic('light');
+  await loadModerationQueue();
+  renderModerationView();
+  updateModBadge();
+});
 
 /* ============ WIRING ============ */
 document.getElementById('navFeed').addEventListener('click',()=>switchMainView('feed'));
@@ -1813,6 +1960,7 @@ document.getElementById('navProfile').addEventListener('click',()=>switchMainVie
 document.getElementById('tabTrends').addEventListener('click',()=>switchFeedTab('trends'));
 document.getElementById('tabForyou').addEventListener('click',()=>switchFeedTab('foryou'));
 document.getElementById('tabSubs').addEventListener('click',()=>switchFeedTab('subs'));
+document.getElementById('tabReports').addEventListener('click',()=>switchFeedTab('reports'));
 document.getElementById('refreshBtn').addEventListener('click',refreshFeed);
 
 document.addEventListener('pointerdown',()=>{if(userWantsSound)enableSound();},{passive:true});
@@ -1831,11 +1979,19 @@ feedEl.addEventListener('touchmove',()=>{clearTimeout(pressTimer);},{passive:tru
 
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')silentRefresh();});
 
+/* ============ INIT ============ */
 (async function init(){
   renderSkeleton();
   try{await checkBanStatus();}catch(e){}
   try{await Promise.all([syncUserProfile(),loadUserRelations(),fetchVideos()]);}catch(e){}
+  try{await loadMissingLikedVideos();}catch(e){}
   renderFeed();startPolling();
+
+  if(isAdmin){
+    document.getElementById('tabReports').style.display='';
+    loadModerationQueue().then(()=>updateModBadge());
+  }
+
   setTimeout(()=>document.getElementById('splash').classList.add('hidden'),280);
 })();
 </script>
