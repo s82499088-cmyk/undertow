@@ -622,6 +622,7 @@ let currentCommentsVideoId=null;
 let commentReplyContext=null;
 let historyCache=null;
 let currentSearchTab='videos';
+const viewTimers=new Map();
 const channelStatsCache=new Map();
 const brokenVideoIds=new Set(),likeLocks=new Map();
 
@@ -638,6 +639,20 @@ function closeSheet(id){
 }
 document.querySelectorAll('[data-close]').forEach(bd=>bd.addEventListener('click',e=>{if(e.target===bd)closeSheet(bd.dataset.close);}));
 document.querySelectorAll('[data-close-btn]').forEach(btn=>btn.addEventListener('click',()=>closeSheet(btn.dataset.closeBtn)));
+
+/* ============ BOT NOTIFICATIONS ============ */
+function sendBotNotification(payload){
+  if(isGuest)return;
+  if(!payload||!payload.recipient_id)return;
+  if(String(payload.recipient_id)===String(currentUser.id))return;
+  try{
+    fetch(`${SUPABASE_URL}/functions/v1/telegram-bot?action=notify`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    }).catch(()=>{});
+  }catch(e){}
+}
 
 /* ============ LAZY THUMB ============ */
 const thumbQueue=[];
@@ -1243,8 +1258,26 @@ function setupObserver(){
   currentObserver=new IntersectionObserver(entries=>{
     entries.forEach(entry=>{
       const card=entry.target,vid=card.querySelector('video');if(!vid)return;
-      if(entry.isIntersecting){playCard(vid,card);registerView(card.dataset.id);}
-      else{vid.pause();card.querySelector('.buffering')?.classList.remove('show');}
+      const vidId=card.dataset.id;
+      if(entry.isIntersecting){
+        playCard(vid,card);
+        if(vidId&&!viewedSessionSet.has(vidId)){
+          const existing=viewTimers.get(vidId);
+          if(existing)clearTimeout(existing);
+          const t=setTimeout(()=>{
+            viewTimers.delete(vidId);
+            registerView(vidId);
+          },2000);
+          viewTimers.set(vidId,t);
+        }
+      }else{
+        vid.pause();
+        card.querySelector('.buffering')?.classList.remove('show');
+        if(vidId){
+          const t=viewTimers.get(vidId);
+          if(t){clearTimeout(t);viewTimers.delete(vidId);}
+        }
+      }
     });
   },{threshold:0.65,root:document.getElementById('feed')});
   document.querySelectorAll('.video-card').forEach(c=>currentObserver.observe(c));
@@ -1301,6 +1334,15 @@ async function handleLike(vidId,btn,cntEl){
     const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`,{method:'POST',headers,body:JSON.stringify({p_user_id:currentUser.id,p_video_id:String(vidId)})});
     if(!res.ok)throw new Error();
     const d=await res.json();
+    if(!wasLiked&&item){
+      sendBotNotification({
+        recipient_id:String(item.author_id||item.user_id||''),
+        sender_id:currentUser.id,
+        sender_name:currentUser.name,
+        type:'like',
+        video_code:String(item.short_code||item.id)
+      });
+    }
     if(typeof d.likes==='number'){if(cntEl)cntEl.textContent=formatNum(d.likes);if(item)item.likes=d.likes;}
     if(typeof d.liked==='boolean'){
       if(d.liked){likedSet.add(vidId);btn.classList.add('liked');btn.querySelector('.act-icon').innerHTML=ICON.heartFilled;}
@@ -1319,6 +1361,14 @@ function setSubUI(authorId,subbed){
     channelSubBtnEl.classList.toggle('subscribed',subbed);
     channelSubBtnEl.textContent=subbed?'Вы подписаны':'Подписаться';
   }
+  document.querySelectorAll(`.video-card[data-author-id="${authorId}"]`).forEach(card=>{
+    const ring=card.querySelector('[data-avatar-ring]');
+    if(ring)ring.classList.toggle('subscribed',subbed);
+    if(subbed){
+      const followBtn=card.querySelector('[data-act="follow"]');
+      if(followBtn)followBtn.remove();
+    }
+  });
 }
 async function doSubscribe(authorId,subbed){
   const prev=subsSet.has(String(authorId));
@@ -1326,6 +1376,14 @@ async function doSubscribe(authorId,subbed){
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_user_sub`,{method:'POST',headers,body:JSON.stringify({p_follower_id:currentUser.id,p_author_id:authorId})});
     if(!res.ok)throw new Error();
+    if(subbed===true){
+      sendBotNotification({
+        recipient_id:String(authorId),
+        sender_id:currentUser.id,
+        sender_name:currentUser.name,
+        type:'sub'
+      });
+    }
   }catch(e){setSubUI(authorId,prev);showToast('Ошибка подписки');}
 }
 function handleFollow(authorId,btn,card){
@@ -2000,6 +2058,17 @@ async function sendComment(vidId){
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/comments`,{method:'POST',headers,body:JSON.stringify(body)});
     if(!res.ok)throw new Error();
+    const video=allVideos.find(v=>String(v.id)===String(vidId));
+    if(video){
+      sendBotNotification({
+        recipient_id:String(video.author_id||video.user_id||''),
+        sender_id:currentUser.id,
+        sender_name:currentUser.name,
+        type:'comment',
+        video_code:String(video.short_code||video.id),
+        text_preview:text
+      });
+    }
     await loadAndRenderComments(vidId);
   }catch(e){showToast('Ошибка отправки');}
 }
