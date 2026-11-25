@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Undertow</title>
-<script async src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{--bg:#050507;--surface:rgba(24,24,29,0.72);--surface-solid:#16161b;--border:rgba(255,255,255,0.10);--border-strong:rgba(255,255,255,0.18);--accent:#00e5ff;--accent-2:#ff2b54;--text:#ffffff;--text-muted:#9898a6;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);}
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -100,8 +100,6 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
 .comment-form{display:flex;gap:8px}
 .comment-send{background:var(--accent);color:#000;border:none;border-radius:12px;padding:0 16px;font-weight:700;cursor:pointer}
 .empty-state{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;gap:12px;color:var(--text-muted)}
-.report-option{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);cursor:pointer;font-size:14px;font-weight:600;transition:.15s}
-.report-option.selected{background:rgba(255,43,84,0.18);border-color:var(--accent-2);color:var(--accent-2)}
 </style>
 </head>
 <body>
@@ -162,13 +160,6 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
   <button class="btn-secondary" id="btnShareChat">✈️ Отправить в чат или другу</button>
   <button class="btn-secondary" id="btnCopyLink">🔗 Скопировать прямую ссылку</button>
 </div></div>
-<div class="sheet-backdrop" id="reportSheet" data-close="reportSheet"><div class="sheet">
-  <div class="sheet-handle"></div><div class="sheet-title">Пожаловаться на видео</div>
-  <p class="sheet-text" style="margin-bottom:2px">Выберите причину жалобы. Мы проверим ролик.</p>
-  <div id="reportReasons" style="display:flex;flex-direction:column;gap:8px"></div>
-  <button class="btn-danger" id="btnSendReport">Отправить жалобу</button>
-  <button class="btn-secondary" data-close-btn="reportSheet">Отмена</button>
-</div></div>
 <div class="sheet-backdrop" id="guestSheet" data-close="guestSheet"><div class="sheet">
   <div class="sheet-handle"></div><div class="sheet-title">Доступно в Telegram</div>
   <p class="sheet-text">Вы находитесь в режиме просмотра. Войдите через официального бота <b>@undertow_vids_bot</b>, чтобы ставить лайки, подписываться, комментировать и загружать видео.</p>
@@ -187,7 +178,6 @@ const SUPABASE_URL = 'https://pgnqjobutdlaxtjrrxio.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
 const BOT_USERNAME = 'undertow_vids_bot';
 const BOT_APP_URL  = 'https://t.me/undertow_vids_bot/app';
-const FETCH_TIMEOUT_MS = 4000;
 
 const tg = window.Telegram?.WebApp || null;
 if (tg) { try { tg.ready(); tg.expand(); if (tg.setHeaderColor) tg.setHeaderColor('#050507'); if (tg.setBackgroundColor) tg.setBackgroundColor('#050507'); } catch (e) {} }
@@ -200,35 +190,9 @@ const currentUser = isGuest
 let allVideos = [], likedSet = new Set(), subsSet = new Set(), viewedSessionSet = new Set();
 let currentFeedTab = 'all', userWantsSound = true, selectedFile = null, currentObserver = null;
 let pollTimer = null, pendingDelete = null, activeShareVideo = null;
-let reportTargetVideo = null, reportSelectedReason = null;
 const brokenVideoIds = new Set(), likeLocks = new Map();
 
 const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
-
-// ---- Fetch с таймаутом 4 секунды ----
-function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  return fetch(url, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(timer));
-}
-const http = (url, options) => fetchWithTimeout(url, options);
-
-// ---- Локальный кеш лайков ----
-const LIKES_CACHE_KEY = 'ut_likes_cache';
-function loadLikesCache() {
-  try { const raw = localStorage.getItem(LIKES_CACHE_KEY); if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) arr.forEach(id => likedSet.add(String(id))); } } catch (e) {}
-}
-function saveLikesCache() { try { localStorage.setItem(LIKES_CACHE_KEY, JSON.stringify([...likedSet])); } catch (e) {} }
-
-// ---- Фильтр запрещённых слов ----
-const BANNED_WORDS = ['дурак','идиот','мат','хуй','пизда','ебан','блядь','сука','fuck','shit','bitch'];
-function containsBanned(text) {
-  if (!text) return false;
-  const low = String(text).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ');
-  return BANNED_WORDS.some(w => low.includes(w));
-}
-
 function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function formatNum(n) { n = Number(n) || 0; if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M'; if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K'; return String(n); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2600); }
@@ -241,23 +205,304 @@ document.querySelectorAll('[data-close-btn]').forEach(btn => btn.addEventListene
 async function syncUserProfile() {
   if (isGuest) return;
   try {
-    await http(`${SUPABASE_URL}/rest/v1/users`, { method: 'POST', headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id: currentUser.id, username: currentUser.username, first_name: currentUser.name }) });
-    await http(`${SUPABASE_URL}/rest/v1/videos?user_id=eq.${encodeURIComponent(currentUser.id)}&author_name=eq.${encodeURIComponent('@user')}`, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ author_name: currentUser.name }) });
+    await fetch(`${SUPABASE_URL}/rest/v1/users`, { method: 'POST', headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id: currentUser.id, username: currentUser.username, first_name: currentUser.name }) });
+    await fetch(`${SUPABASE_URL}/rest/v1/videos?user_id=eq.${encodeURIComponent(currentUser.id)}&author_name=eq.${encodeURIComponent('@user')}`, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ author_name: currentUser.name }) });
   } catch (e) {}
 }
 async function loadUserRelations() {
   if (isGuest) return;
   try {
     const [lr, sr] = await Promise.all([
-      http(`${SUPABASE_URL}/rest/v1/video_likes?user_id=eq.${encodeURIComponent(currentUser.id)}&select=video_id`, { headers }),
-      http(`${SUPABASE_URL}/rest/v1/user_subs?follower_id=eq.${encodeURIComponent(currentUser.id)}&select=author_id`, { headers })
+      fetch(`${SUPABASE_URL}/rest/v1/video_likes?user_id=eq.${encodeURIComponent(currentUser.id)}&select=video_id`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/user_subs?follower_id=eq.${encodeURIComponent(currentUser.id)}&select=author_id`, { headers })
     ]);
-    if (lr.ok) { const l = await lr.json(); l.forEach(x => likedSet.add(String(x.video_id))); saveLikesCache(); }
+    if (lr.ok) { const l = await lr.json(); likedSet = new Set(l.map(x => String(x.video_id))); }
     if (sr.ok) { const s = await sr.json(); subsSet = new Set(s.map(x => String(x.author_id))); }
   } catch (e) {}
 }
 async function fetchVideos() {
-  const res = await http(`${SUPABASE_URL}/rest/v1/videos?select=*&order=id.desc&limit=50`, { headers });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=id.desc&limit=50`, { headers });
   if (!res.ok) throw new Error('fetch failed');
   const rows = await res.json();
-  allVideos = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('
+  allVideos = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('http'));
+  const startParam = tg?.initDataUnsafe?.start_param || new URLSearchParams(location.search).get('startapp');
+  if (startParam && startParam.startsWith('v_')) {
+    const targetId = startParam.slice(2);
+    let idx = allVideos.findIndex(v => String(v.id) === targetId);
+    if (idx > 0) { const [t] = allVideos.splice(idx, 1); allVideos.unshift(t); }
+    else if (idx === -1) {
+      try {
+        const vRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${targetId}&select=*`, { headers });
+        if (vRes.ok) { const vRows = await vRes.json(); if (vRows.length > 0 && vRows[0].video_url) allVideos.unshift(vRows[0]); }
+      } catch (e) {}
+    }
+  }
+}
+async function silentRefresh() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/videos?select=*&order=id.desc&limit=50`, { headers });
+    if (!res.ok) return;
+    const rows = await res.json();
+    const fresh = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('http'));
+    const known = new Set(allVideos.map(v => String(v.id)));
+    const newOnes = fresh.filter(v => !known.has(String(v.id)));
+    if (!newOnes.length) return;
+    allVideos = [...newOnes, ...allVideos.filter(v => !String(v.id).startsWith('temp_'))];
+    const feed = document.getElementById('feed');
+    if (feed.scrollTop < feed.clientHeight * 0.5) renderFeed();
+  } catch (e) {}
+}
+function startPolling() { stopPolling(); pollTimer = setInterval(() => { if (document.visibilityState === 'visible' && document.getElementById('feedView').classList.contains('active')) silentRefresh(); }, 12000); }
+function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+function authorDisplayName(v) { const raw = v.author_name; const authorId = String(v.author_id || v.user_id || ''); if (raw && raw !== '@user') return raw; if (authorId === currentUser.id) return currentUser.name; return `@creator_${(authorId || '01').slice(-4)}`; }
+
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  let list = allVideos.filter(v => !brokenVideoIds.has(String(v.id)));
+  if (currentFeedTab === 'subs') list = list.filter(v => subsSet.has(String(v.author_id || v.user_id || '')));
+  if (!list.length) { feed.innerHTML = `<div class="empty-state"><div style="font-size:44px">🌊</div><div style="font-weight:700;color:#fff">${currentFeedTab === 'subs' ? 'В подписках пока пусто' : 'Лента пока пуста'}</div><div style="font-size:13px">${currentFeedTab === 'subs' ? 'Подпишитесь на авторов в общей ленте' : 'Нажмите + внизу, чтобы загрузить первое видео'}</div></div>`; return; }
+  if (currentObserver) { currentObserver.disconnect(); currentObserver = null; }
+  feed.innerHTML = '';
+  list.forEach((v, idx) => {
+    const vidId = String(v.id), authorId = String(v.author_id || v.user_id || ''), authorName = authorDisplayName(v);
+    const isLiked = likedSet.has(vidId), isSub = subsSet.has(authorId), isOwn = !isGuest && authorId === currentUser.id;
+    const initial = (authorName.replace('@','')[0] || 'U').toUpperCase(), desc = escapeHtml(v.description || '');
+    const card = document.createElement('div');
+    card.className = 'video-card'; card.dataset.id = vidId; card.dataset.index = String(idx);
+    card.innerHTML = `
+      <video src="${v.video_url}" loop playsinline webkit-playsinline preload="${idx < 2 ? 'auto' : 'metadata'}" crossorigin="anonymous"></video>
+      <div class="buffering"><div class="buffering-spinner"></div></div><div class="gradient-bottom"></div>
+      <div class="pause-indicator"><svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>
+      <div class="video-info"><div class="author-row"><div class="avatar-ring"><div class="avatar-inner">${initial}</div></div><span class="author-name">${escapeHtml(authorName)}</span>${(!isOwn && authorId) ? `<button class="sub-btn ${isSub?'subscribed':''}" data-act="sub">${isSub?'Вы подписаны':'Подписаться'}</button>` : ''}</div><div class="video-desc">${desc}</div></div>
+      <div class="actions">
+        <button class="action-btn ${isLiked?'liked':''}" data-act="like"><div class="action-circle"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div><span class="action-count" data-like-count>${formatNum(v.likes)}</span></button>
+        <button class="action-btn" data-act="comment"><div class="action-circle"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></div><span class="action-count">Чат</span></button>
+        <div class="action-btn" style="cursor:default"><div class="action-circle"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><span class="action-count" data-view-count>${formatNum(v.views)}</span></div>
+        <button class="action-btn" data-act="share"><div class="action-circle"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg></div><span class="action-count">Репост</span></button>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar"><div class="progress-buffer"></div><div class="progress-fill"></div></div></div>`;
+    const vidEl = card.querySelector('video'), buffering = card.querySelector('.buffering'), pauseEl = card.querySelector('.pause-indicator');
+    const fillEl = card.querySelector('.progress-fill'), bufferEl = card.querySelector('.progress-buffer'), likeBtn = card.querySelector('[data-act="like"]');
+    const subBtn = card.querySelector('[data-act="sub"]'), commentBtn = card.querySelector('[data-act="comment"]'), shareBtn = card.querySelector('[data-act="share"]');
+    const likeCntEl = card.querySelector('[data-like-count]'), progressWrap = card.querySelector('.progress-wrap');
+    const showBuf = () => buffering.classList.add('show'), hideBuf = () => buffering.classList.remove('show');
+    vidEl.addEventListener('canplay', () => hideBuf()); vidEl.addEventListener('playing', () => { hideBuf(); pauseEl.classList.remove('visible'); });
+    vidEl.addEventListener('waiting', () => showBuf()); vidEl.addEventListener('stalled', () => showBuf());
+    vidEl.addEventListener('error', () => { hideBuf(); brokenVideoIds.add(vidId); const next = card.nextElementSibling; if (next) next.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => card.remove(), 420); });
+    vidEl.addEventListener('progress', () => { if (vidEl.buffered.length && vidEl.duration) { const end = vidEl.buffered.end(vidEl.buffered.length - 1); bufferEl.style.width = `${Math.min(100, (end / vidEl.duration) * 100)}%`; } });
+    let scrubbing = false;
+    const applyRatio = (r) => { if (!vidEl.duration) return; vidEl.currentTime = r * vidEl.duration; fillEl.style.width = `${r*100}%`; };
+    const ratioFromEvent = (e) => { const rect = progressWrap.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); };
+    progressWrap.addEventListener('pointerdown', (e) => { scrubbing = true; try { progressWrap.setPointerCapture(e.pointerId); } catch(_){} applyRatio(ratioFromEvent(e)); e.stopPropagation(); });
+    progressWrap.addEventListener('pointermove', (e) => { if (scrubbing) applyRatio(ratioFromEvent(e)); });
+    const endScrub = () => { scrubbing = false; };
+    progressWrap.addEventListener('pointerup', endScrub); progressWrap.addEventListener('pointercancel', endScrub); progressWrap.addEventListener('pointerleave', endScrub);
+    vidEl.addEventListener('timeupdate', () => { if (!scrubbing && vidEl.duration) fillEl.style.width = `${(vidEl.currentTime / vidEl.duration) * 100}%`; });
+    likeBtn.addEventListener('click', (e) => { e.stopPropagation(); handleLike(vidId, likeBtn, likeCntEl); });
+    commentBtn.addEventListener('click', (e) => { e.stopPropagation(); openComments(vidId); });
+    shareBtn.addEventListener('click', (e) => { e.stopPropagation(); openShare({ id: vidId, url: v.video_url, desc: v.description || '' }); });
+    if (subBtn) subBtn.addEventListener('click', (e) => { e.stopPropagation(); handleSub(authorId, subBtn); });
+    let tapTimer = null;
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button') || e.target.closest('.action-btn') || e.target.closest('.progress-wrap')) return;
+      if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; spawnHeart(card, e.clientX, e.clientY); if (!likedSet.has(vidId)) handleLike(vidId, likeBtn, likeCntEl); }
+      else { tapTimer = setTimeout(() => { tapTimer = null; if (!card.isConnected) return; if (vidEl.paused) { vidEl.play().catch(() => {}); pauseEl.classList.remove('visible'); } else { vidEl.pause(); pauseEl.classList.add('visible'); } }, 280); }
+    });
+    feed.appendChild(card);
+  });
+  setupObserver();
+}
+async function playCard(vid, card) {
+  vid.muted = !userWantsSound;
+  try { await vid.play(); card.querySelector('.pause-indicator')?.classList.remove('visible'); }
+  catch (err) { if (!vid.muted) { vid.muted = true; try { await vid.play(); card.querySelector('.pause-indicator')?.classList.remove('visible'); } catch (e) { card.querySelector('.pause-indicator')?.classList.add('visible'); } } else { card.querySelector('.pause-indicator')?.classList.add('visible'); } }
+}
+function setupObserver() {
+  if (currentObserver) currentObserver.disconnect();
+  currentObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const card = entry.target, vid = card.querySelector('video'); if (!vid) return;
+      if (entry.isIntersecting) { playCard(vid, card); registerView(card.dataset.id); manageMemory(card); }
+      else { vid.pause(); card.querySelector('.buffering')?.classList.remove('show'); }
+    });
+  }, { threshold: 0.65, root: document.getElementById('feed') });
+  document.querySelectorAll('.video-card').forEach(c => currentObserver.observe(c));
+}
+function manageMemory(activeCard) {
+  const cards = Array.from(document.querySelectorAll('.video-card'));
+  const activeIdx = cards.indexOf(activeCard); if (activeIdx < 0) return;
+  cards.forEach((c, i) => {
+    const vid = c.querySelector('video'); if (!vid) return;
+    if (Math.abs(i - activeIdx) <= 3) { if (!vid.getAttribute('src') && c.dataset.src) { vid.setAttribute('src', c.dataset.src); vid.load(); } }
+    else { if (vid.getAttribute('src')) { c.dataset.src = vid.getAttribute('src'); vid.removeAttribute('src'); vid.load(); } }
+  });
+}
+async function registerView(vidId) {
+  if (!vidId || vidId.startsWith('temp_') || viewedSessionSet.has(vidId)) return;
+  viewedSessionSet.add(vidId);
+  const viewerKey = isGuest ? (localStorage.getItem('ut_guest_id') || (() => { const id = 'g_' + Math.random().toString(36).slice(2); localStorage.setItem('ut_guest_id', id); return id; })()) : currentUser.id;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/register_unique_view`, { method: 'POST', headers, body: JSON.stringify({ p_viewer_id: viewerKey, p_video_id: vidId }) });
+    if (res.ok) { const newViews = await res.json(); const card = document.querySelector(`.video-card[data-id="${vidId}"]`); const el = card?.querySelector('[data-view-count]'); if (el && typeof newViews === 'number') el.textContent = formatNum(newViews); }
+  } catch (e) {}
+}
+async function handleLike(vidId, btn, cntEl) {
+  if (isGuest) return openSheet('guestSheet'); if (vidId.startsWith('temp_')) return showToast('Загрузка...'); if (likeLocks.has(vidId)) return;
+  const lockTimer = setTimeout(() => likeLocks.delete(vidId), 8000); likeLocks.set(vidId, lockTimer); haptic('medium');
+  const wasLiked = likedSet.has(vidId), item = allVideos.find(x => String(x.id) === vidId); let cur = Number(item?.likes || 0);
+  if (wasLiked) { likedSet.delete(vidId); btn.classList.remove('liked'); cur = Math.max(0, cur - 1); }
+  else { likedSet.add(vidId); btn.classList.add('liked'); cur += 1; }
+  if (cntEl) cntEl.textContent = formatNum(cur); if (item) item.likes = cur;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_video_like`, { method: 'POST', headers, body: JSON.stringify({ p_user_id: currentUser.id, p_video_id: vidId }) });
+    if (!res.ok) throw new Error(); const d = await res.json();
+    if (typeof d.likes === 'number') { if (cntEl) cntEl.textContent = formatNum(d.likes); if (item) item.likes = d.likes; }
+    if (typeof d.liked === 'boolean') { if (d.liked) { likedSet.add(vidId); btn.classList.add('liked'); } else { likedSet.delete(vidId); btn.classList.remove('liked'); } }
+  } catch (e) {
+    if (wasLiked) { likedSet.add(vidId); btn.classList.add('liked'); cur += 1; } else { likedSet.delete(vidId); btn.classList.remove('liked'); cur = Math.max(0, cur - 1); }
+    if (cntEl) cntEl.textContent = formatNum(cur); if (item) item.likes = cur; showToast('Ошибка');
+  } finally { clearTimeout(lockTimer); likeLocks.delete(vidId); }
+}
+async function handleSub(authorId, btn) {
+  if (isGuest) return openSheet('guestSheet'); haptic('light');
+  const wasSub = subsSet.has(authorId);
+  if (wasSub) { subsSet.delete(authorId); btn.classList.remove('subscribed'); btn.textContent = 'Подписаться'; }
+  else { subsSet.add(authorId); btn.classList.add('subscribed'); btn.textContent = 'Вы подписаны'; }
+  try { await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_user_sub`, { method: 'POST', headers, body: JSON.stringify({ p_follower_id: currentUser.id, p_author_id: authorId }) }); } catch (e) {}
+}
+function enableSound() { userWantsSound = true; document.querySelectorAll('.video-card video').forEach(v => { if (v.muted) { v.muted = false; v.play().catch(() => {}); } }); }
+function switchFeedTab(tab) {
+  if (tab === 'subs' && isGuest) return openSheet('guestSheet'); currentFeedTab = tab;
+  document.getElementById('tabAll').classList.toggle('active', tab === 'all'); document.getElementById('tabSubs').classList.toggle('active', tab === 'subs'); renderFeed();
+}
+function switchMainView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('topBar').style.display = view === 'feed' ? 'flex' : 'none';
+  if (view === 'feed') { document.getElementById('feedView').classList.add('active'); document.getElementById('navFeed').classList.add('active'); }
+  else { document.getElementById('profileView').classList.add('active'); document.getElementById('navProfile').classList.add('active'); document.querySelectorAll('.video-card video').forEach(v => v.pause()); renderProfile(); }
+}
+function renderProfile() {
+  document.getElementById('profName').textContent = currentUser.name; const badge = document.getElementById('profBadge');
+  if (isGuest) { badge.className = 'badge-guest'; badge.textContent = 'Режим гостя'; } else { badge.className = 'badge-tg'; badge.textContent = 'Аккаунт TG'; }
+  const av = document.getElementById('profAvatar'); if (currentUser.photo) av.innerHTML = `<img src="${currentUser.photo}" alt="">`; else av.innerHTML = `<div>${(currentUser.name.replace('@','')[0] || 'G').toUpperCase()}</div>`;
+  const myVideos = isGuest ? [] : allVideos.filter(v => String(v.author_id || v.user_id) === currentUser.id && !brokenVideoIds.has(String(v.id)));
+  document.getElementById('statVideos').textContent = formatNum(myVideos.length);
+  document.getElementById('statViews').textContent = formatNum(myVideos.reduce((a, v) => a + (Number(v.views) || 0), 0));
+  document.getElementById('statLikes').textContent = formatNum(myVideos.reduce((a, v) => a + (Number(v.likes) || 0), 0));
+  const grid = document.getElementById('profileGrid');
+  if (isGuest) { grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;"><p style="margin-bottom:14px;color:#aaa;">Войдите в бота</p><button class="btn-main" id="btnLoginInline">Войти</button></div>`; document.getElementById('btnLoginInline').addEventListener('click', openBotAuth); return; }
+  if (!myVideos.length) { grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:30px 0">Нет видео</div>`; return; }
+  grid.innerHTML = '';
+  myVideos.forEach(v => {
+    const item = document.createElement('div'); item.className = 'grid-item';
+    item.innerHTML = `<video src="${v.video_url}" preload="metadata" muted playsinline></video><div class="grid-views">👁 ${formatNum(v.views)}</div><button class="delete-btn">×</button>`;
+    item.addEventListener('click', () => { const idx = allVideos.findIndex(x => String(x.id) === String(v.id)); if (idx > 0) { const [m] = allVideos.splice(idx, 1); allVideos.unshift(m); } switchMainView('feed'); renderFeed(); });
+    item.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); pendingDelete = { id: v.id, video_url: v.video_url }; openSheet('deleteSheet'); });
+    grid.appendChild(item);
+  });
+}
+async function doDeleteVideo() {
+  if (!pendingDelete) return; const v = pendingDelete; closeSheet('deleteSheet'); haptic('heavy');
+  allVideos = allVideos.filter(x => String(x.id) !== String(v.id)); renderProfile();
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${encodeURIComponent(v.id)}`, { method: 'DELETE', headers });
+    const fileName = (v.video_url || '').split('/').pop();
+    if (fileName) await fetch(`${SUPABASE_URL}/storage/v1/object/videos/${encodeURIComponent(fileName)}`, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+    showToast('🗑 Удалено'); silentRefresh();
+  } catch (e) {}
+  pendingDelete = null;
+}
+document.getElementById('btnConfirmDelete').addEventListener('click', doDeleteVideo);
+function handleCreateClick() { if (isGuest) return openSheet('guestSheet'); selectedFile = null; document.getElementById('fileLabel').textContent = 'Выбрать видео'; document.getElementById('videoDescInput').value = ''; openSheet('uploadSheet'); }
+document.getElementById('navCreate').addEventListener('click', handleCreateClick);
+document.getElementById('videoFileInput').addEventListener('change', function () { if (this.files && this.files[0]) { selectedFile = this.files[0]; document.getElementById('fileLabel').textContent = `✅ ${selectedFile.name}`; } });
+function uploadFileXHR(file, fileName, onProgress) {
+  return new Promise((resolve, reject) => {
+    const attempt = (r) => {
+      const xhr = new XMLHttpRequest(); xhr.open('POST', `${SUPABASE_URL}/storage/v1/object/videos/${encodeURIComponent(fileName)}`, true);
+      xhr.setRequestHeader('apikey', SUPABASE_KEY); xhr.setRequestHeader('Authorization', `Bearer ${SUPABASE_KEY}`);
+      xhr.setRequestHeader('x-upsert', 'true'); xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+      xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+      xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) resolve(`${SUPABASE_URL}/storage/v1/object/public/videos/${fileName}`); else if (r > 0) setTimeout(() => attempt(r - 1), 700); else reject(); };
+      xhr.onerror = () => { if (r > 0) setTimeout(() => attempt(r - 1), 700); else reject(); };
+      xhr.send(file);
+    };
+    attempt(3);
+  });
+}
+async function publishVideoInstant() {
+  if (!selectedFile) return showToast('Выберите видео'); if (selectedFile.size > 52 * 1024 * 1024) return showToast('Максимум 50 МБ');
+  const file = selectedFile, desc = document.getElementById('videoDescInput').value.trim(), localBlobUrl = URL.createObjectURL(file), tempId = 'temp_' + Date.now();
+  allVideos.unshift({ id: tempId, user_id: currentUser.id, author_id: Number(currentUser.id), author_name: currentUser.name, video_url: localBlobUrl, description: desc, likes: 0, views: 1 });
+  closeSheet('uploadSheet'); switchMainView('feed'); renderFeed(); haptic('heavy');
+  const b = document.getElementById('uploadBanner'), f = document.getElementById('uploadFill'), p = document.getElementById('uploadPercent');
+  b.style.display = 'flex'; f.style.width = '5%'; p.textContent = '5%';
+  try {
+    const ext = (file.name.split('.').pop() || 'mp4').replace(/[^a-z0-9]/gi, '') || 'mp4', fileName = `${currentUser.id}_${Date.now()}.${ext}`;
+    const publicUrl = await uploadFileXHR(file, fileName, (pct) => { f.style.width = `${pct}%`; p.textContent = `${pct}%`; });
+    let savedRow = null;
+    const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?video_url=eq.${encodeURIComponent(publicUrl)}&select=*`, { headers }), existing = checkRes.ok ? await checkRes.json() : [];
+    if (existing.length > 0) { const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/videos?id=eq.${existing[0].id}`, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=representation' }, body: JSON.stringify({ author_name: currentUser.name, description: desc }) }); savedRow = patchRes.ok ? (await patchRes.json())[0] || existing[0] : existing[0]; }
+    else { const insRes = await fetch(`${SUPABASE_URL}/rest/v1/videos`, { method: 'POST', headers: { ...headers, 'Prefer': 'return=representation' }, body: JSON.stringify({ user_id: currentUser.id, author_id: Number(currentUser.id), author_name: currentUser.name, video_url: publicUrl, description: desc, likes: 0, views: 0 }) }); savedRow = insRes.ok ? (await insRes.json())[0] : null; }
+    if (savedRow) { const idx = allVideos.findIndex(x => x.id === tempId); if (idx !== -1) allVideos[idx] = savedRow; URL.revokeObjectURL(localBlobUrl); renderFeed(); }
+    showToast('✅ Опубликовано');
+  } catch (err) { showToast('Ошибка сети'); allVideos = allVideos.filter(x => x.id !== tempId); renderFeed(); }
+  finally { setTimeout(() => { b.style.display = 'none'; f.style.width = '0%'; }, 1000); }
+}
+document.getElementById('btnPublish').addEventListener('click', publishVideoInstant);
+async function openComments(vidId) {
+  if (!vidId || String(vidId).startsWith('temp_')) return showToast('Загрузка...');
+  const listEl = document.getElementById('commentsList'), inputArea = document.getElementById('commentInputArea');
+  listEl.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px">Загрузка...</div>';
+  if (isGuest) { inputArea.innerHTML = `<button class="btn-main" id="btnCommentLogin">Войти, чтобы написать</button>`; document.getElementById('btnCommentLogin').addEventListener('click', () => { closeSheet('commentsSheet'); openSheet('guestSheet'); }); }
+  else { inputArea.innerHTML = `<div class="comment-form"><input type="text" id="newCommentInput" placeholder="Написать..."><button class="comment-send" id="btnSendComment">➤</button></div>`; document.getElementById('btnSendComment').addEventListener('click', () => sendComment(vidId)); document.getElementById('newCommentInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendComment(vidId); }); }
+  openSheet('commentsSheet');
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${encodeURIComponent(vidId)}&order=created_at.desc&limit=50`, { headers });
+    if (!res.ok) throw new Error(); const rows = await res.json();
+    if (!rows.length) listEl.innerHTML = '<div style="text-align:center;color:#aaa;padding:24px">Нет комментариев</div>';
+    else listEl.innerHTML = rows.map(c => `<div class="comment-item"><div class="comment-author">${escapeHtml(c.author_name || 'Юзер')}</div><div class="comment-text">${escapeHtml(c.text)}</div></div>`).join('');
+  } catch (e) { listEl.innerHTML = '<div style="text-align:center;color:var(--accent-2);padding:24px">Ошибка загрузки</div>'; }
+}
+async function sendComment(vidId) {
+  if (isGuest) return openSheet('guestSheet'); const inp = document.getElementById('newCommentInput'); if (!inp) return;
+  const text = inp.value.trim(); if (!text) return; inp.value = ''; haptic('light');
+  const listEl = document.getElementById('commentsList'); if (listEl.textContent.includes('Нет комментариев')) listEl.innerHTML = '';
+  listEl.insertAdjacentHTML('afterbegin', `<div class="comment-item"><div class="comment-author">${escapeHtml(currentUser.name)}</div><div class="comment-text">${escapeHtml(text)}</div></div>`);
+  try { await fetch(`${SUPABASE_URL}/rest/v1/comments`, { method: 'POST', headers, body: JSON.stringify({ video_id: vidId, user_id: currentUser.id, author_name: currentUser.name, text }) }); } catch (e) {}
+}
+function openShare(v) { activeShareVideo = v; openSheet('shareSheet'); }
+function getDirectVideoLink() { return activeShareVideo ? `${BOT_APP_URL}?startapp=v_${activeShareVideo.id}` : BOT_APP_URL; }
+document.getElementById('btnShareStory').addEventListener('click', () => {
+  closeSheet('shareSheet'); const link = getDirectVideoLink();
+  if (tg?.shareToStory) { try { tg.shareToStory(activeShareVideo.url, { text: activeShareVideo.desc || 'Смотри в Undertow', widget_link: { url: link, name: 'Смотреть' } }); return; } catch (e) {} }
+  navigator.clipboard?.writeText(link); showToast('Скопировано');
+});
+document.getElementById('btnShareChat').addEventListener('click', () => {
+  closeSheet('shareSheet'); const link = getDirectVideoLink(), shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(activeShareVideo?.desc || 'Зацени в Undertow 🔥')}`;
+  if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl); else window.open(shareUrl, '_blank');
+});
+document.getElementById('btnCopyLink').addEventListener('click', () => { closeSheet('shareSheet'); navigator.clipboard?.writeText(getDirectVideoLink()); showToast('Ссылка скопирована'); });
+function openBotAuth() { if (tg?.openTelegramLink) tg.openTelegramLink(BOT_APP_URL); else window.open(BOT_APP_URL, '_blank'); }
+document.getElementById('btnOpenBot').addEventListener('click', openBotAuth);
+async function refreshFeed() {
+  const btn = document.getElementById('refreshBtn'); btn.classList.add('spinning'); haptic('light');
+  try { brokenVideoIds.clear(); await Promise.all([fetchVideos(), loadUserRelations()]); renderFeed(); showToast('Обновлено'); } catch (e) { showToast('Ошибка'); }
+  finally { setTimeout(() => btn.classList.remove('spinning'), 450); }
+}
+document.getElementById('navFeed').addEventListener('click', () => switchMainView('feed'));
+document.getElementById('navProfile').addEventListener('click', () => switchMainView('profile'));
+document.getElementById('tabAll').addEventListener('click', () => switchFeedTab('all'));
+document.getElementById('tabSubs').addEventListener('click', () => switchFeedTab('subs'));
+document.getElementById('refreshBtn').addEventListener('click', refreshFeed);
+document.addEventListener('pointerdown', enableSound, { passive: true }); document.addEventListener('touchstart', enableSound, { passive: true }); document.addEventListener('scroll', enableSound, { passive: true }); document.addEventListener('click', enableSound, { passive: true });
+function spawnHeart(container, x, y) { const h = document.createElement('div'); h.className = 'heart-burst'; h.textContent = '❤️'; h.style.left = (x - 44) + 'px'; h.style.top = (y - 44) + 'px'; container.appendChild(h); setTimeout(() => h.remove(), 820); }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') silentRefresh(); });
+(async function init() {
+  try { await Promise.all([syncUserProfile(), loadUserRelations(), fetchVideos()]); } catch (e) {}
+  renderFeed(); startPolling();
+  setTimeout(() => document.getElementById('splash').classList.add('hidden'), 280);
+})();
+</script>
+</body>
+</html>
