@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Undertow</title>
-<script src="https://telegram.org/js/telegram-web-app.js" async></script>
+<script async src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{--bg:#050507;--surface:rgba(24,24,29,0.72);--surface-solid:#16161b;--border:rgba(255,255,255,0.10);--border-strong:rgba(255,255,255,0.18);--accent:#00e5ff;--accent-2:#ff2b54;--text:#ffffff;--text-muted:#9898a6;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);}
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -100,8 +100,8 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
 .comment-form{display:flex;gap:8px}
 .comment-send{background:var(--accent);color:#000;border:none;border-radius:12px;padding:0 16px;font-weight:700;cursor:pointer}
 .empty-state{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;gap:12px;color:var(--text-muted)}
-.report-reason{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:14px;text-align:left;cursor:pointer;transition:.15s}
-.report-reason:active{transform:scale(.98);background:rgba(255,255,255,0.09)}
+.report-option{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);cursor:pointer;font-size:14px;font-weight:600;transition:.15s}
+.report-option.selected{background:rgba(255,43,84,0.18);border-color:var(--accent-2);color:var(--accent-2)}
 </style>
 </head>
 <body>
@@ -162,6 +162,13 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
   <button class="btn-secondary" id="btnShareChat">✈️ Отправить в чат или другу</button>
   <button class="btn-secondary" id="btnCopyLink">🔗 Скопировать прямую ссылку</button>
 </div></div>
+<div class="sheet-backdrop" id="reportSheet" data-close="reportSheet"><div class="sheet">
+  <div class="sheet-handle"></div><div class="sheet-title">Пожаловаться на видео</div>
+  <p class="sheet-text" style="margin-bottom:2px">Выберите причину жалобы. Мы проверим ролик.</p>
+  <div id="reportReasons" style="display:flex;flex-direction:column;gap:8px"></div>
+  <button class="btn-danger" id="btnSendReport">Отправить жалобу</button>
+  <button class="btn-secondary" data-close-btn="reportSheet">Отмена</button>
+</div></div>
 <div class="sheet-backdrop" id="guestSheet" data-close="guestSheet"><div class="sheet">
   <div class="sheet-handle"></div><div class="sheet-title">Доступно в Telegram</div>
   <p class="sheet-text">Вы находитесь в режиме просмотра. Войдите через официального бота <b>@undertow_vids_bot</b>, чтобы ставить лайки, подписываться, комментировать и загружать видео.</p>
@@ -174,105 +181,83 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
   <button class="btn-danger" id="btnConfirmDelete">🗑 Удалить навсегда</button>
   <button class="btn-secondary" data-close-btn="deleteSheet">Отмена</button>
 </div></div>
-<div class="sheet-backdrop" id="reportSheet" data-close="reportSheet"><div class="sheet">
-  <div class="sheet-handle"></div><div class="sheet-title">Пожаловаться на видео</div>
-  <p class="sheet-text">Выберите причину жалобы:</p>
-  <button class="report-reason" data-reason="porn">🔞 Порнография / 18+</button>
-  <button class="report-reason" data-reason="violence">⚠️ Насилие / экстремизм</button>
-  <button class="report-reason" data-reason="drugs">💊 Наркотики</button>
-  <button class="report-reason" data-reason="suicide">🩸 Суицид / самоповреждение</button>
-  <button class="report-reason" data-reason="fraud">💳 Мошенничество / спам</button>
-  <button class="report-reason" data-reason="copyright">©️ Нарушение авторских прав</button>
-  <button class="btn-secondary" data-close-btn="reportSheet">Отмена</button>
-</div></div>
 
 <script>
 const SUPABASE_URL = 'https://pgnqjobutdlaxtjrrxio.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
 const BOT_USERNAME = 'undertow_vids_bot';
 const BOT_APP_URL  = 'https://t.me/undertow_vids_bot/app';
+const FETCH_TIMEOUT_MS = 4000;
 
-function getTg() { return window.Telegram?.WebApp || null; }
-
-// [1] Без цикла ожидания: если SDK уже есть — берём сразу, иначе гость без паузы
-async function initTelegram() {
-  const t = getTg();
-  if (t) {
-    try {
-      t.ready(); t.expand();
-      if (t.setHeaderColor) t.setHeaderColor('#050507');
-      if (t.setBackgroundColor) t.setBackgroundColor('#050507');
-    } catch (e) {}
-  }
-  return t;
-}
-
-let tgUser = null, isGuest = true, currentUser = { id: 'guest', name: 'Гость', username: 'guest', photo: null };
-
-async function bootstrapUser() {
-  const tg = await initTelegram();
-  tgUser = tg?.initDataUnsafe?.user || null;
-  isGuest = !tgUser || !tgUser.id;
-  currentUser = isGuest
-    ? { id: 'guest', name: 'Гость', username: 'guest', photo: null }
-    : { id: String(tgUser.id), name: tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Пользователь'), username: tgUser.username || tgUser.first_name || 'user', photo: tgUser.photo_url || null };
-}
+const tg = window.Telegram?.WebApp || null;
+if (tg) { try { tg.ready(); tg.expand(); if (tg.setHeaderColor) tg.setHeaderColor('#050507'); if (tg.setBackgroundColor) tg.setBackgroundColor('#050507'); } catch (e) {} }
+const tgUser = tg?.initDataUnsafe?.user || null;
+const isGuest = !tgUser || !tgUser.id;
+const currentUser = isGuest
+  ? { id: 'guest', name: 'Гость', username: 'guest', photo: null }
+  : { id: String(tgUser.id), name: tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Пользователь'), username: tgUser.username || tgUser.first_name || 'user', photo: tgUser.photo_url || null };
 
 let allVideos = [], likedSet = new Set(), subsSet = new Set(), viewedSessionSet = new Set();
 let currentFeedTab = 'all', userWantsSound = true, selectedFile = null, currentObserver = null;
-let pollTimer = null, pendingDelete = null, activeShareVideo = null, activeReportVideoId = null;
+let pollTimer = null, pendingDelete = null, activeShareVideo = null;
+let reportTargetVideo = null, reportSelectedReason = null;
 const brokenVideoIds = new Set(), likeLocks = new Map();
-
-let LIKES_CACHE_KEY = `ut_likes_guest`;
-function loadLikesCache() {
-  try {
-    const raw = localStorage.getItem(LIKES_CACHE_KEY);
-    if (!raw) return new Set();
-    const arr = JSON.parse(raw);
-    return new Set(Array.isArray(arr) ? arr.map(String) : []);
-  } catch (e) { return new Set(); }
-}
-function saveLikesCache() {
-  try { localStorage.setItem(LIKES_CACHE_KEY, JSON.stringify(Array.from(likedSet))); } catch (e) {}
-}
 
 const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
-// [2] fetch с AbortController и таймаутом
-async function fetchWithTimeout(url, opts = {}, timeoutMs = 4000) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...opts, signal: ctrl.signal });
-  } finally {
-    clearTimeout(t);
-  }
+// ---- Fetch с таймаутом 4 секунды ----
+function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+const http = (url, options) => fetchWithTimeout(url, options);
+
+// ---- Локальный кеш лайков ----
+const LIKES_CACHE_KEY = 'ut_likes_cache';
+function loadLikesCache() {
+  try { const raw = localStorage.getItem(LIKES_CACHE_KEY); if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) arr.forEach(id => likedSet.add(String(id))); } } catch (e) {}
+}
+function saveLikesCache() { try { localStorage.setItem(LIKES_CACHE_KEY, JSON.stringify([...likedSet])); } catch (e) {} }
+
+// ---- Фильтр запрещённых слов ----
+const BANNED_WORDS = ['дурак','идиот','мат','хуй','пизда','ебан','блядь','сука','fuck','shit','bitch'];
+function containsBanned(text) {
+  if (!text) return false;
+  const low = String(text).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ');
+  return BANNED_WORDS.some(w => low.includes(w));
 }
 
 function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function formatNum(n) { n = Number(n) || 0; if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M'; if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K'; return String(n); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2600); }
-function haptic(type='light') { try { getTg()?.HapticFeedback?.impactOccurred(type); } catch (e) {} }
+function haptic(type='light') { try { tg?.HapticFeedback?.impactOccurred(type); } catch (e) {} }
 function openSheet(id) { document.getElementById(id)?.classList.add('open'); }
 function closeSheet(id) { document.getElementById(id)?.classList.remove('open'); }
 document.querySelectorAll('[data-close]').forEach(bd => bd.addEventListener('click', (e) => { if (e.target === bd) closeSheet(bd.dataset.close); }));
 document.querySelectorAll('[data-close-btn]').forEach(btn => btn.addEventListener('click', () => closeSheet(btn.dataset.closeBtn)));
 
-function encodeVideoCode(id) {
+async function syncUserProfile() {
+  if (isGuest) return;
   try {
-    const s = String(id);
-    const b64 = btoa(unescape(encodeURIComponent(s)));
-    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-  } catch (e) { return String(id); }
+    await http(`${SUPABASE_URL}/rest/v1/users`, { method: 'POST', headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id: currentUser.id, username: currentUser.username, first_name: currentUser.name }) });
+    await http(`${SUPABASE_URL}/rest/v1/videos?user_id=eq.${encodeURIComponent(currentUser.id)}&author_name=eq.${encodeURIComponent('@user')}`, { method: 'PATCH', headers: { ...headers, 'Prefer': 'return=minimal' }, body: JSON.stringify({ author_name: currentUser.name }) });
+  } catch (e) {}
 }
-function decodeVideoCode(code) {
+async function loadUserRelations() {
+  if (isGuest) return;
   try {
-    if (!code) return '';
-    const s = String(code).replace(/-/g, '+').replace(/_/g, '/');
-    const pad = s.length % 4 === 0 ? '' : '='.repeat(4 - (s.length % 4));
-    return decodeURIComponent(escape(atob(s + pad)));
-  } catch (e) { return String(code); }
+    const [lr, sr] = await Promise.all([
+      http(`${SUPABASE_URL}/rest/v1/video_likes?user_id=eq.${encodeURIComponent(currentUser.id)}&select=video_id`, { headers }),
+      http(`${SUPABASE_URL}/rest/v1/user_subs?follower_id=eq.${encodeURIComponent(currentUser.id)}&select=author_id`, { headers })
+    ]);
+    if (lr.ok) { const l = await lr.json(); l.forEach(x => likedSet.add(String(x.video_id))); saveLikesCache(); }
+    if (sr.ok) { const s = await sr.json(); subsSet = new Set(s.map(x => String(x.author_id))); }
+  } catch (e) {}
 }
-
-const BANNED_PATTERNS = [
-  { cat: 'наркотики', re: /(закладк|спайс|
+async function fetchVideos() {
+  const res = await http(`${SUPABASE_URL}/rest/v1/videos?select=*&order=id.desc&limit=50`, { headers });
+  if (!res.ok) throw new Error('fetch failed');
+  const rows = await res.json();
+  allVideos = rows.filter(r => r && r.video_url && String(r.video_url).startsWith('
