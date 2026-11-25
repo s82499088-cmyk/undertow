@@ -92,28 +92,13 @@ body,html{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .video-desc.expanded{-webkit-line-clamp:unset;overflow:visible;background:rgba(0,0,0,.42);backdrop-filter:blur(8px);padding:8px 10px;margin-left:-10px;margin-right:-10px;max-height:45vh;overflow-y:auto}
 .hashtag{color:var(--accent);font-weight:600;cursor:pointer}
 .hashtag:active{opacity:.7}
+.timecode{color:var(--accent);font-weight:700;cursor:pointer;transition:opacity .15s;background:rgba(0,229,255,.1);padding:0 3px;border-radius:4px}
+.timecode:active{opacity:.6}
 .desc-more{background:none;border:none;color:#fff;font-size:13px;font-weight:700;opacity:.85;cursor:pointer;padding:2px 0;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .status-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;display:inline-block;line-height:1.2;white-space:nowrap}
 .badge-pending{background:rgba(255,200,0,.2);color:#ffd700;border:1px solid rgba(255,200,0,.4)}
 .badge-blocked{background:rgba(255,43,84,.22);color:#ff8aa3;border:1px solid rgba(255,43,84,.45)}
 .badge-admin{font-size:12px;padding:4px 12px;border-radius:12px;background:linear-gradient(135deg,rgba(255,200,0,.22),rgba(255,43,84,.22));color:#ffd700;font-weight:700;border:1px solid rgba(255,200,0,.4)}
-
-/* Sound marquee */
-.sound-marquee{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:rgba(255,255,255,.92);text-shadow:0 1px 3px rgba(0,0,0,.9);max-width:100%}
-.sound-marquee svg{width:14px;height:14px;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none;flex-shrink:0;animation:vinylSpin 3s linear infinite}
-@keyframes vinylSpin{to{transform:rotate(360deg)}}
-.marquee-wrap{flex:1;overflow:hidden;position:relative;white-space:nowrap;min-width:0}
-.marquee-text{display:inline-block;white-space:nowrap;animation:marquee 12s linear infinite;padding-left:100%}
-@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
-
-/* Quick reactions */
-.quick-reactions{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
-.reaction-btn{background:rgba(0,0,0,.35);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:4px 8px;font-size:14px;cursor:pointer;transition:.15s var(--spring);display:flex;align-items:center;gap:3px;color:#fff;line-height:1}
-.reaction-btn:active{transform:scale(.9)}
-.reaction-btn.mine{background:rgba(0,229,255,.2);border-color:rgba(0,229,255,.5)}
-.reaction-count{font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8)}
-.reaction-burst{position:fixed;font-size:26px;pointer-events:none;z-index:98;animation:reactionFloat 1.5s ease-out forwards}
-@keyframes reactionFloat{0%{opacity:0;transform:translateY(0) scale(.6)}15%{opacity:1;transform:translateY(-20px) scale(1.15)}100%{opacity:0;transform:translateY(-260px) scale(.85) translateX(var(--drift,0px))}}
 
 /* Right actions (TikTok) */
 .actions{position:absolute;bottom:calc(92px + var(--safe-bottom));right:4px;z-index:10;display:flex;flex-direction:column;gap:16px;align-items:center;width:64px}
@@ -267,7 +252,7 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
 .subs-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
 .subs-name{font-size:14px;font-weight:600;color:#fff;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* Reply context preview */
+/* Reply context preview (upload sheet) */
 .reply-preview{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.3);border-radius:12px;padding:10px 12px;display:none;gap:8px;align-items:flex-start;position:relative}
 .reply-preview.show{display:flex}
 .reply-preview-body{flex:1;min-width:0}
@@ -282,11 +267,32 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
 .comment-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px}
 .comment-author{font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;transition:.15s}
 .comment-author:active{opacity:.7}
-.comment-reply-btn{background:rgba(255,255,255,.08);border:1px solid var(--border);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
-.comment-reply-btn svg{width:11px;height:11px;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.comment-author-heart{font-size:12px;margin-left:4px;filter:drop-shadow(0 0 4px rgba(255,43,84,.6))}
+.comment-head-actions{display:flex;gap:2px;align-items:center}
+.comment-pin-btn{background:none;border:none;font-size:14px;cursor:pointer;padding:2px 4px;border-radius:6px;opacity:.5;transition:.15s;line-height:1}
+.comment-pin-btn:active{background:rgba(255,255,255,.08)}
+.comment-pin-btn.pinned{opacity:1;filter:drop-shadow(0 0 6px rgba(255,200,0,.7))}
 .comment-text{font-size:14px;line-height:1.35;word-break:break-word}
 .comment-form{display:flex;gap:8px}
 .comment-send{background:var(--accent);color:#000;border:none;border-radius:12px;padding:0 16px;font-weight:700;cursor:pointer}
+.comment-badge-pinned{font-size:10px;font-weight:700;color:#ffd700;background:rgba(255,200,0,.12);border:1px solid rgba(255,200,0,.35);border-radius:6px;padding:2px 7px;display:inline-block;margin-bottom:6px;line-height:1.3}
+.comment-quote{font-size:11px;color:var(--text-muted);border-left:2px solid var(--accent);padding:2px 8px;margin-bottom:4px;font-style:italic;word-break:break-word}
+.comment-quote b{color:var(--accent);font-style:normal}
+.comment-footer{display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.comment-like-btn{background:none;border:none;color:var(--text-muted);font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer;padding:2px 6px;border-radius:6px;transition:.15s}
+.comment-like-btn:active{background:rgba(255,255,255,.05)}
+.comment-like-btn.liked{color:#ff2b54}
+.comment-like-btn .like-icon{display:flex;align-items:center}
+.comment-like-btn .like-icon svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.comment-like-btn.liked .like-icon svg{fill:#ff2b54;stroke:#ff2b54}
+.comment-action-btn{background:none;border:none;color:var(--text-muted);font-size:11px;font-weight:600;cursor:pointer;padding:2px 6px;border-radius:6px;transition:.15s}
+.comment-action-btn:active{background:rgba(255,255,255,.05)}
+.comment-replies{margin-left:16px;border-left:2px solid rgba(255,255,255,.08);padding-left:10px;display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.comment-replies .comment-item{background:rgba(255,255,255,.02)}
+.reply-bar{background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);border-radius:10px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#fff;margin-bottom:8px;gap:8px}
+.reply-bar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reply-bar b{color:var(--accent)}
+.reply-bar-close{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0}
 
 .empty-state{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;gap:12px;color:var(--text-muted)}
 .empty-state svg{width:48px;height:48px;stroke:var(--text-muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;fill:none;opacity:.7}
@@ -508,6 +514,9 @@ input[type="text"],textarea{width:100%;background:#22222a;border:1px solid var(-
 </div></div>
 
 <script>
+/* ============ SCROLL RESTORATION OFF (always start at 1st video) ============ */
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
 const SUPABASE_URL='https://pgnqjobutdlaxtjrrxio.supabase.co';
 const SUPABASE_KEY='sb_publishable_dtl6T4d7C-RROlkZBW7JsA_qNW9XaTF';
 const BOT_USERNAME='undertow_vids_bot';
@@ -528,7 +537,6 @@ const ICON={
   mute:`<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`,
   trash:`<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>`,
   wave:`<svg viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>`,
-  vinyl:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2" fill="#fff" stroke="none"/></svg>`,
   reply:`<svg viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>`,
   chevronRight:`<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`
 };
@@ -556,9 +564,9 @@ let modQueue=[];
 let feedSeed=Math.random().toString(36).slice(2)+Date.now();
 let deepLinkHandled=false;
 let scheduleEnableSoundRAF=0;
+let currentCommentsVideoId=null;
+let commentReplyContext=null;
 const channelStatsCache=new Map();
-const reactionsCache=new Map();
-const userReactionCache=new Map();
 const brokenVideoIds=new Set(),likeLocks=new Map();
 
 const headers={'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'};
@@ -569,7 +577,10 @@ function prevSrc(url){return url?String(url)+'#t=0.1':'';}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),2600);}
 function haptic(type='light'){try{tg?.HapticFeedback?.impactOccurred(type);}catch(e){}}
 function openSheet(id){document.getElementById(id)?.classList.add('open');}
-function closeSheet(id){document.getElementById(id)?.classList.remove('open');}
+function closeSheet(id){
+  document.getElementById(id)?.classList.remove('open');
+  if(id==='commentsSheet'){commentReplyContext=null;}
+}
 document.querySelectorAll('[data-close]').forEach(bd=>bd.addEventListener('click',e=>{if(e.target===bd)closeSheet(bd.dataset.close);}));
 document.querySelectorAll('[data-close-btn]').forEach(btn=>btn.addEventListener('click',()=>closeSheet(btn.dataset.closeBtn)));
 
@@ -582,11 +593,19 @@ function showMuteToast(){
   el.classList.add('show');clearTimeout(muteToastTimer);
   muteToastTimer=setTimeout(()=>el.classList.remove('show'),1600);
 }
-
+function getActiveVideoElement(){
+  const cards=[...document.querySelectorAll('.video-card')];
+  const mid=window.innerHeight*0.5;
+  for(const card of cards){
+    const r=card.getBoundingClientRect();
+    if(r.top<=mid&&r.bottom>=mid){
+      return card.querySelector('video');
+    }
+  }
+  return null;
+}
 /**
- * Единственная функция, которая "включает звук" в ленте.
- * КРИТИЧНО: НЕ дёргаем .play() у всех видео подряд — только у видимой карточки.
- * У всех остальных видео на странице принудительно pause() и muted = true.
+ * Включает звук ТОЛЬКО у видимой карточки. У всех остальных — pause + muted.
  */
 function enableSound(){
   if(!userWantsSound)return;
@@ -808,10 +827,40 @@ function renderAdminBadge(v){
   return'';
 }
 
-/* ============ DESCRIPTION WITH HASHTAGS ============ */
+/* ============ DESCRIPTION WITH HASHTAGS + TIMECODES ============ */
 function renderDescriptionHTML(text){
-  const escaped=escapeHtml(text);
-  return escaped.replace(/#([\wа-яёА-ЯЁ]+)/gi,(m,h)=>`<span class="hashtag" data-hashtag="${h.toLowerCase()}">${m}</span>`);
+  return escapeHtml(text)
+    .replace(/\b(\d{1,2}):(\d{2})\b/g,(m,min,sec)=>{
+      const total=parseInt(min,10)*60+parseInt(sec,10);
+      return `<span class="timecode" data-sec="${total}">${m}</span>`;
+    })
+    .replace(/#([\wа-яёА-ЯЁ]+)/gi,(m,h)=>`<span class="hashtag" data-hashtag="${h.toLowerCase()}">${m}</span>`);
+}
+
+/* ============ TIMECODE ============ */
+function handleTimecodeClick(sec){
+  const v=getActiveVideoElement();
+  if(!v)return;
+  try{
+    v.currentTime=sec;
+    v.play().catch(()=>{});
+    showToast(`⏩ Перемотка на ${fmtTime(sec)}`);
+  }catch(_){}
+}
+function attachTimecodeHandlers(container,getVideoFn){
+  container.querySelectorAll('.timecode').forEach(el=>{
+    el.addEventListener('click',e=>{
+      e.stopPropagation();
+      const sec=Number(el.dataset.sec)||0;
+      const video=getVideoFn?getVideoFn():getActiveVideoElement();
+      if(!video)return;
+      try{
+        video.currentTime=sec;
+        video.play().catch(()=>{});
+        showToast(`⏩ Перемотка на ${fmtTime(sec)}`);
+      }catch(_){}
+    });
+  });
 }
 
 /* ============ TRENDS SCORE ============ */
@@ -846,6 +895,14 @@ function getFeedList(){
   }
   return list;
 }
+function resetFeedScrollTop(){
+  const feed=document.getElementById('feed');
+  if(!feed)return;
+  requestAnimationFrame(()=>{
+    feed.scrollTop=0;
+    requestAnimationFrame(()=>{feed.scrollTop=0;});
+  });
+}
 function renderFeed(){
   const feed=document.getElementById('feed');
   const list=getFeedList();
@@ -860,6 +917,7 @@ function renderFeed(){
       currentFeedTab==='trends'?'Загляните позже — популярные видео появятся':
       'Нажмите + внизу, чтобы загрузить первое видео'
     }</div></div>`;
+    resetFeedScrollTop();
     return;
   }
   if(currentObserver){currentObserver.disconnect();currentObserver=null;}
@@ -872,15 +930,6 @@ function renderFeed(){
     const statusBadge=isAdmin?renderAdminBadge(v):'';
     const longDesc=descRaw.length>90;
     const descHTML=renderDescriptionHTML(descRaw);
-    const soundName=v.sound_name||`Оригинальный звук — ${authorName}`;
-    const reactions=reactionsCache.get(vidId)||{};
-    const myReaction=userReactionCache.get(vidId);
-    const emojiList=['❤️','🔥','😂','😱','💀'];
-    const reactionsHTML=emojiList.map(em=>{
-      const c=reactions[em]||0;
-      const mine=myReaction===em;
-      return `<button class="reaction-btn ${mine?'mine':''}" data-emoji="${em}">${em}${c?`<span class="reaction-count">${formatNum(c)}</span>`:''}</button>`;
-    }).join('');
     const trendBadge=(currentFeedTab==='trends'&&idx<3)?`<div class="trend-rank r${idx+1}">${['🥇 #1','🥈 #2','🥉 #3'][idx]}</div>`:'';
     const replySticker=v.reply_to_comment_text?`<div class="reply-sticker"><div class="reply-sticker-icon">↩</div><div class="reply-sticker-body"><div class="reply-sticker-author">${escapeHtml(v.reply_to_comment_author||'Комментарий')}</div><div class="reply-sticker-text">${escapeHtml(v.reply_to_comment_text)}</div></div></div>`:'';
 
@@ -902,11 +951,6 @@ function renderFeed(){
         </div>
         <div class="video-desc" data-desc>${descHTML}</div>
         ${longDesc?`<button class="desc-more" data-act="expand">...ещё</button>`:''}
-        <div class="sound-marquee">
-          ${ICON.vinyl}
-          <div class="marquee-wrap"><span class="marquee-text">${escapeHtml(soundName)}</span></div>
-        </div>
-        <div class="quick-reactions" data-reactions>${reactionsHTML}</div>
       </div>
       <div class="actions">
         <div class="author-col">
@@ -1009,13 +1053,7 @@ function renderFeed(){
         showToast(`Фильтр: #${hashtagFilter}`);
       });
     });
-
-    card.querySelectorAll('.reaction-btn').forEach(btn=>{
-      btn.addEventListener('click',e=>{
-        e.stopPropagation();
-        sendReaction(vidId,btn.dataset.emoji,btn,card);
-      });
-    });
+    attachTimecodeHandlers(card,()=>vidEl);
 
     let tapTimer=null;
     let longPressTimer=null;
@@ -1023,7 +1061,7 @@ function renderFeed(){
     let lpStartX=0,lpStartY=0;
 
     card.addEventListener('pointerdown',e=>{
-      if(e.target.closest('button')||e.target.closest('.action-btn')||e.target.closest('.progress-wrap')||e.target.closest('.hashtag')||e.target.closest('.reaction-btn')||e.target.closest('[data-desc]'))return;
+      if(e.target.closest('button')||e.target.closest('.action-btn')||e.target.closest('.progress-wrap')||e.target.closest('.hashtag')||e.target.closest('.timecode')||e.target.closest('[data-desc]'))return;
       const rect=card.getBoundingClientRect();
       const x=e.clientX-rect.left;
       if(x<rect.width*0.35||x>rect.width*0.65){
@@ -1050,7 +1088,7 @@ function renderFeed(){
     });
 
     card.addEventListener('click',e=>{
-      if(e.target.closest('button')||e.target.closest('.action-btn')||e.target.closest('.progress-wrap')||e.target.closest('.hashtag')||e.target.closest('.reaction-btn')||e.target.closest('[data-desc]'))return;
+      if(e.target.closest('button')||e.target.closest('.action-btn')||e.target.closest('.progress-wrap')||e.target.closest('.hashtag')||e.target.closest('.timecode')||e.target.closest('[data-desc]'))return;
       if(isSpeedActive)return;
       if(tapTimer){clearTimeout(tapTimer);tapTimer=null;spawnHeart(card,e.clientX,e.clientY);if(!likedSet.has(vidId))handleLike(vidId,likeBtn,likeCntEl);}
       else{tapTimer=setTimeout(()=>{tapTimer=null;if(!card.isConnected)return;if(vidEl.paused){vidEl.play().catch(()=>{});pauseEl.classList.remove('visible');}else{vidEl.pause();pauseEl.classList.add('visible');}},280);}
@@ -1082,7 +1120,7 @@ function renderFeed(){
   setupObserver();
   loadCommentCounts(list.map(v=>String(v.id)));
   loadLevelBadgesForFeed();
-  loadReactionsForFeed(list.map(v=>String(v.id)));
+  resetFeedScrollTop();
 }
 
 async function loadLevelBadgesForFeed(){
@@ -1097,20 +1135,6 @@ async function loadLevelBadgesForFeed(){
       el.innerHTML=`<span class="level-badge ${badge.cls}">${badge.icon} ${badge.label}</span>`;
     });
   }
-}
-
-async function loadReactionsForFeed(ids){
-  if(isGuest)return;
-  try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_user_reactions`,{method:'POST',headers,body:JSON.stringify({p_user_id:currentUser.id,p_video_ids:ids})});
-    if(!res.ok)return;
-    const data=await res.json();
-    if(Array.isArray(data)){
-      data.forEach(d=>{
-        if(d.video_id&&d.reaction){userReactionCache.set(String(d.video_id),d.reaction);}
-      });
-    }
-  }catch(e){}
 }
 
 /* ============ PLAY ============ */
@@ -1138,6 +1162,9 @@ function manageMemory(activeCard){
     if(Math.abs(i-activeIdx)<=3){if(!vid.getAttribute('src')&&c.dataset.src){vid.setAttribute('src',c.dataset.src);vid.load();}}
     else{if(vid.getAttribute('src')){c.dataset.src=vid.getAttribute('src');vid.removeAttribute('src');vid.load();}}
   });
+}
+function pauseAllVideos(){
+  document.querySelectorAll('.video-card video').forEach(v=>{try{v.pause();}catch(_){}});
 }
 async function registerView(vidId){
   if(!vidId||vidId.startsWith('temp_')||viewedSessionSet.has(vidId))return;
@@ -1213,59 +1240,6 @@ async function handleSubBtn(authorId,btn){
   haptic('light');
   const wasSub=subsSet.has(String(authorId));
   await doSubscribe(authorId,!wasSub);
-}
-
-/* ============ REACTIONS ============ */
-function spawnReactionBurst(emoji,originRect){
-  const ox=originRect?originRect.left+originRect.width/2:window.innerWidth/2;
-  const oy=originRect?originRect.top:window.innerHeight*0.7;
-  for(let i=0;i<9;i++){
-    const el=document.createElement('div');
-    el.className='reaction-burst';
-    el.textContent=emoji;
-    el.style.left=(ox-14+Math.random()*28)+'px';
-    el.style.top=oy+'px';
-    el.style.setProperty('--drift',(Math.random()*80-40).toFixed(0)+'px');
-    el.style.animationDelay=(i*55)+'ms';
-    document.body.appendChild(el);
-    setTimeout(()=>el.remove(),1800);
-  }
-}
-async function sendReaction(vidId,emoji,btnEl,card){
-  if(isGuest)return openSheet('guestSheet');
-  if(String(vidId).startsWith('temp_'))return;
-  haptic('medium');
-  const prev=userReactionCache.get(vidId);
-  const map=reactionsCache.get(vidId)||{};
-  if(prev===emoji){
-    userReactionCache.delete(vidId);
-    map[emoji]=Math.max(0,(map[emoji]||0)-1);
-  }else{
-    if(prev&&map[prev])map[prev]=Math.max(0,map[prev]-1);
-    userReactionCache.set(vidId,emoji);
-    map[emoji]=(map[emoji]||0)+1;
-  }
-  reactionsCache.set(vidId,map);
-  if(btnEl)spawnReactionBurst(emoji,btnEl.getBoundingClientRect());
-  else spawnReactionBurst(emoji);
-  if(card){
-    const reactionsWrap=card.querySelector('[data-reactions]');
-    if(reactionsWrap){
-      const emojiList=['❤️','🔥','😂','😱','💀'];
-      const myR=userReactionCache.get(vidId);
-      reactionsWrap.innerHTML=emojiList.map(em=>{
-        const c=map[em]||0;
-        const mine=myR===em;
-        return `<button class="reaction-btn ${mine?'mine':''}" data-emoji="${em}">${em}${c?`<span class="reaction-count">${formatNum(c)}</span>`:''}</button>`;
-      }).join('');
-      reactionsWrap.querySelectorAll('.reaction-btn').forEach(btn=>{
-        btn.addEventListener('click',e=>{e.stopPropagation();sendReaction(vidId,btn.dataset.emoji,btn,card);});
-      });
-    }
-  }
-  try{
-    await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_video_reaction`,{method:'POST',headers,body:JSON.stringify({p_user_id:currentUser.id,p_video_id:vidId,p_emoji:emoji})});
-  }catch(e){}
 }
 
 /* ============ MODERATION ============ */
@@ -1387,6 +1361,7 @@ async function switchFeedTab(tab){
   if(tab==='reports'){
     if(!isAdmin)return;
     currentFeedTab='reports';
+    pauseAllVideos();
     document.getElementById('topBar').style.display='flex';
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById('moderationView').classList.add('active');
@@ -1426,13 +1401,15 @@ function switchMainView(view){
       document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab==='foryou'));
       renderFeed();
     }
+    if(userWantsSound)enableSound();
   }else if(view==='profile'){
+    pauseAllVideos();
     topBar.style.display='none';
     document.getElementById('profileView').classList.add('active');
     document.getElementById('navProfile').classList.add('active');
-    document.querySelectorAll('.video-card video').forEach(v=>v.pause());
     renderProfile();
   }else if(view==='channel'){
+    pauseAllVideos();
     topBar.style.display='none';
     document.getElementById('channelView').classList.add('active');
   }
@@ -1802,49 +1779,141 @@ async function publishVideoInstant(){
 }
 document.getElementById('btnPublish').addEventListener('click',publishVideoInstant);
 
-/* ============ COMMENTS ============ */
-async function openComments(vidId){
-  if(!vidId||String(vidId).startsWith('temp_'))return showToast('Загрузка...');
-  const listEl=document.getElementById('commentsList'),inputArea=document.getElementById('commentInputArea');
-  listEl.innerHTML='<div style="text-align:center;color:#aaa;padding:20px">Загрузка...</div>';
+/* ============ COMMENTS (YouTube-style) ============ */
+function renderCommentInputArea(){
+  const inputArea=document.getElementById('commentInputArea');
+  if(!inputArea)return;
   if(isGuest){
     inputArea.innerHTML=`<button class="btn-main" id="btnCommentLogin">Войти, чтобы написать</button>`;
     document.getElementById('btnCommentLogin').addEventListener('click',()=>{closeSheet('commentsSheet');openSheet('guestSheet');});
-  }else if(isBanned){
-    inputArea.innerHTML=`<div style="text-align:center;color:#ff8aa3;font-size:13px;padding:8px">Вы забанены${banReason?`: ${banReason}`:''}</div>`;
-  }else{
-    inputArea.innerHTML=`<div class="comment-form"><input type="text" id="newCommentInput" placeholder="Написать..."><button class="comment-send" id="btnSendComment">Отправить</button></div>`;
-    document.getElementById('btnSendComment').addEventListener('click',()=>sendComment(vidId));
-    document.getElementById('newCommentInput').addEventListener('keypress',e=>{if(e.key==='Enter')sendComment(vidId);});
+    return;
   }
+  if(isBanned){
+    inputArea.innerHTML=`<div style="text-align:center;color:#ff8aa3;font-size:13px;padding:8px">Вы забанены${banReason?`: ${banReason}`:''}</div>`;
+    return;
+  }
+  const replyBar=commentReplyContext
+    ?`<div class="reply-bar"><span>Ответ для <b>${escapeHtml(commentReplyContext.name)}</b></span><button class="reply-bar-close" id="replyBarClose" aria-label="Отмена">×</button></div>`
+    :'';
+  inputArea.innerHTML=`${replyBar}<div class="comment-form"><input type="text" id="newCommentInput" placeholder="${commentReplyContext?'Написать ответ...':'Написать...'}"><button class="comment-send" id="btnSendComment">Отправить</button></div>`;
+  document.getElementById('btnSendComment').addEventListener('click',()=>sendComment(currentCommentsVideoId));
+  document.getElementById('newCommentInput').addEventListener('keypress',e=>{if(e.key==='Enter')sendComment(currentCommentsVideoId);});
+  const closeBtn=document.getElementById('replyBarClose');
+  if(closeBtn)closeBtn.addEventListener('click',()=>{commentReplyContext=null;renderCommentInputArea();});
+}
+
+async function openComments(vidId){
+  if(!vidId||String(vidId).startsWith('temp_'))return showToast('Загрузка...');
+  currentCommentsVideoId=vidId;
+  commentReplyContext=null;
+  const listEl=document.getElementById('commentsList');
+  listEl.innerHTML='<div style="text-align:center;color:#aaa;padding:20px">Загрузка...</div>';
+  renderCommentInputArea();
   openSheet('commentsSheet');
+  await loadAndRenderComments(vidId);
+}
+
+async function loadAndRenderComments(vidId){
+  const listEl=document.getElementById('commentsList');
+  if(!listEl)return;
+  listEl.innerHTML='<div style="text-align:center;color:#aaa;padding:20px">Загрузка...</div>';
   try{
-    const res=await fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${encodeURIComponent(vidId)}&order=created_at.desc&limit=50`,{headers});
-    if(!res.ok)throw new Error();const rows=await res.json();
-    if(!rows.length)listEl.innerHTML='<div style="text-align:center;color:#aaa;padding:24px">Нет комментариев</div>';
-    else listEl.innerHTML=rows.map(c=>`
-      <div class="comment-item">
-        <div class="comment-head">
-          <div class="comment-author" data-author-id="${escapeHtml(String(c.user_id||''))}" data-author-name="${escapeHtml(c.author_name||'')}">${escapeHtml(c.author_name||'Юзер')}</div>
-          <button class="comment-reply-btn" data-reply-id="${escapeHtml(c.id||'')}" data-reply-author="${escapeHtml(c.author_name||'')}" data-reply-text="${escapeHtml(c.text||'')}">${ICON.reply} Ответить видео</button>
-        </div>
-        <div class="comment-text">${escapeHtml(c.text)}</div>
-      </div>`).join('');
+    const tasks=[fetch(`${SUPABASE_URL}/rest/v1/comments?video_id=eq.${encodeURIComponent(vidId)}&order=is_pinned.desc,created_at.desc&limit=80`,{headers})];
+    if(!isGuest)tasks.push(fetch(`${SUPABASE_URL}/rest/v1/comment_likes?user_id=eq.${encodeURIComponent(currentUser.id)}&select=comment_id`,{headers}));
+    const [commentsRes,likesRes]=await Promise.all(tasks);
+    if(!commentsRes.ok)throw new Error();
+    const rows=await commentsRes.json();
+    let myLikedComments=new Set();
+    if(likesRes&&likesRes.ok){
+      const liked=await likesRes.json();
+      myLikedComments=new Set(liked.map(x=>String(x.comment_id)));
+    }
+    const video=allVideos.find(v=>String(v.id)===String(vidId));
+    const videoAuthorId=video?String(video.author_id||video.user_id||''):'';
+    const canPin=isAdmin||(!isGuest&&String(currentUser.id)===videoAuthorId);
+
+    if(!rows.length){
+      listEl.innerHTML='<div style="text-align:center;color:#aaa;padding:24px">Нет комментариев</div>';
+      return;
+    }
+
+    const topLevel=rows.filter(c=>!c.parent_id);
+    const repliesAll=rows.filter(c=>c.parent_id);
+    const repliesByParent=new Map();
+    repliesAll.forEach(r=>{
+      const pid=String(r.parent_id);
+      if(!repliesByParent.has(pid))repliesByParent.set(pid,[]);
+      repliesByParent.get(pid).push(r);
+    });
+
+    const renderSingleComment=(c,isReply)=>{
+      const cid=String(c.id);
+      const isLiked=myLikedComments.has(cid);
+      const isPinned=c.is_pinned===true;
+      const authorLiked=c.author_liked===true;
+      const pinBtn=canPin
+        ?`<button class="comment-pin-btn ${isPinned?'pinned':''}" data-pin-id="${escapeHtml(cid)}" title="${isPinned?'Открепить':'Закрепить'}">📌</button>`
+        :'';
+      const likeIcon=isLiked?ICON.heartFilled:ICON.heart;
+      return `
+        <div class="comment-item ${isReply?'comment-reply':''}" data-comment-id="${escapeHtml(cid)}">
+          ${isPinned?'<div class="comment-badge-pinned">📌 Закреплено автором</div>':''}
+          ${c.reply_to_name?`<div class="comment-quote">↳ Ответ для <b>${escapeHtml(c.reply_to_name)}</b></div>`:''}
+          <div class="comment-head">
+            <div class="comment-author" data-author-id="${escapeHtml(String(c.user_id||''))}" data-author-name="${escapeHtml(c.author_name||'')}">${escapeHtml(c.author_name||'Юзер')}${authorLiked?'<span class="comment-author-heart" title="Автор оценил">❤️</span>':''}</div>
+            <div class="comment-head-actions">${pinBtn}</div>
+          </div>
+          <div class="comment-text">${renderDescriptionHTML(c.text||'')}</div>
+          <div class="comment-footer">
+            <button class="comment-like-btn ${isLiked?'liked':''}" data-like-id="${escapeHtml(cid)}">
+              <span class="like-icon">${likeIcon}</span>
+              <span class="like-count">${formatNum(c.likes_count||0)}</span>
+            </button>
+            <button class="comment-action-btn" data-reply-id="${escapeHtml(cid)}" data-reply-name="${escapeHtml(c.author_name||'')}">Ответить</button>
+            <button class="comment-action-btn" data-video-reply-id="${escapeHtml(cid)}" data-video-reply-name="${escapeHtml(c.author_name||'')}" data-video-reply-text="${escapeHtml(c.text||'')}">Ответить видео</button>
+          </div>
+        </div>`;
+    };
+
+    const renderTree=(parentId,depth)=>{
+      const list=repliesByParent.get(parentId)||[];
+      return list.map(r=>renderSingleComment(r,true)+renderTree(String(r.id),depth+1)).join('');
+    };
+
+    let html='';
+    topLevel.forEach(c=>{
+      html+=renderSingleComment(c,false);
+      const repliesForThis=repliesByParent.get(String(c.id))||[];
+      if(repliesForThis.length){
+        html+=`<div class="comment-replies">${renderTree(String(c.id),0)}</div>`;
+      }
+    });
+    listEl.innerHTML=html;
+
     listEl.querySelectorAll('.comment-author').forEach(el=>{
       el.addEventListener('click',()=>{
         const aid=el.dataset.authorId;
         if(!aid)return;
         closeSheet('commentsSheet');
-        openChannel(aid, el.dataset.authorName);
+        openChannel(aid,el.dataset.authorName);
       });
     });
-    listEl.querySelectorAll('.comment-reply-btn').forEach(btn=>{
+
+    listEl.querySelectorAll('.comment-like-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>toggleCommentLike(btn.dataset.likeId,btn));
+    });
+
+    listEl.querySelectorAll('[data-reply-id]').forEach(btn=>{
+      btn.addEventListener('click',()=>startCommentReply(btn.dataset.replyId,btn.dataset.replyName));
+    });
+
+    listEl.querySelectorAll('[data-video-reply-id]').forEach(btn=>{
       btn.addEventListener('click',()=>{
         if(isGuest){closeSheet('commentsSheet');openSheet('guestSheet');return;}
         if(isBanned){showToast('Вы забанены');return;}
         replyContext={
-          text:btn.dataset.replyText,
-          author:btn.dataset.replyAuthor,
+          text:btn.dataset.videoReplyText,
+          author:btn.dataset.videoReplyName,
           videoId:vidId
         };
         closeSheet('commentsSheet');
@@ -1858,16 +1927,112 @@ async function openComments(vidId){
         openSheet('uploadSheet');
       });
     });
-  }catch(e){listEl.innerHTML='<div style="text-align:center;color:var(--accent-2);padding:24px">Ошибка загрузки</div>';}
+
+    listEl.querySelectorAll('[data-pin-id]').forEach(btn=>{
+      btn.addEventListener('click',()=>togglePinComment(btn.dataset.pinId));
+    });
+
+    attachTimecodeHandlers(listEl,()=>null);
+    // timecode handlers need to close sheet first — override with custom
+    listEl.querySelectorAll('.timecode').forEach(el=>{
+      // replace handler: close sheet, then seek active video
+      const clone=el.cloneNode(true);
+      el.parentNode.replaceChild(clone,el);
+      clone.addEventListener('click',e=>{
+        e.stopPropagation();
+        const sec=Number(clone.dataset.sec)||0;
+        closeSheet('commentsSheet');
+        setTimeout(()=>{
+          const v=getActiveVideoElement();
+          if(!v)return;
+          try{
+            v.currentTime=sec;
+            v.play().catch(()=>{});
+            showToast(`⏩ Перемотка на ${fmtTime(sec)}`);
+          }catch(_){}
+        },250);
+      });
+    });
+  }catch(e){
+    listEl.innerHTML='<div style="text-align:center;color:var(--accent-2);padding:24px">Ошибка загрузки</div>';
+  }
 }
+
+function startCommentReply(commentId,authorName){
+  if(isGuest){closeSheet('commentsSheet');openSheet('guestSheet');return;}
+  if(isBanned){showToast('Вы забанены');return;}
+  commentReplyContext={id:commentId,name:authorName};
+  renderCommentInputArea();
+  const inp=document.getElementById('newCommentInput');
+  if(inp)inp.focus();
+}
+
+async function toggleCommentLike(commentId,btnEl){
+  if(isGuest)return openSheet('guestSheet');
+  haptic('light');
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_comment_like`,{
+      method:'POST',headers,
+      body:JSON.stringify({p_comment_id:Number(commentId),p_user_id:currentUser.id})
+    });
+    if(!res.ok)throw new Error();
+    const d=await res.json();
+    const countEl=btnEl.querySelector('.like-count');
+    const iconEl=btnEl.querySelector('.like-icon');
+    if(typeof d.likes_count==='number'&&countEl)countEl.textContent=formatNum(d.likes_count);
+    if(typeof d.liked==='boolean'){
+      btnEl.classList.toggle('liked',d.liked);
+      if(iconEl)iconEl.innerHTML=d.liked?ICON.heartFilled:ICON.heart;
+    }
+    if(typeof d.author_liked==='boolean'){
+      const item=btnEl.closest('.comment-item');
+      const authorEl=item?.querySelector('.comment-author');
+      const heartEl=item?.querySelector('.comment-author-heart');
+      if(d.author_liked&&authorEl&&!heartEl){
+        authorEl.insertAdjacentHTML('beforeend','<span class="comment-author-heart" title="Автор оценил">❤️</span>');
+      }else if(!d.author_liked&&heartEl){
+        heartEl.remove();
+      }
+    }
+  }catch(e){showToast('Ошибка');}
+}
+
+async function togglePinComment(commentId){
+  if(isGuest)return openSheet('guestSheet');
+  haptic('medium');
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/toggle_pin_comment`,{
+      method:'POST',headers,
+      body:JSON.stringify({p_comment_id:Number(commentId),p_user_id:currentUser.id})
+    });
+    if(!res.ok)throw new Error();
+    showToast('Обновлено');
+    await loadAndRenderComments(currentCommentsVideoId);
+  }catch(e){showToast('Ошибка');}
+}
+
 async function sendComment(vidId){
   if(isGuest)return openSheet('guestSheet');
   if(isBanned)return showToast('Вы забанены');
-  const inp=document.getElementById('newCommentInput');if(!inp)return;
-  const text=inp.value.trim();if(!text)return;inp.value='';haptic('light');
-  const listEl=document.getElementById('commentsList');if(listEl.textContent.includes('Нет комментариев'))listEl.innerHTML='';
-  listEl.insertAdjacentHTML('afterbegin',`<div class="comment-item"><div class="comment-head"><div class="comment-author">${escapeHtml(currentUser.name)}</div></div><div class="comment-text">${escapeHtml(text)}</div></div>`);
-  try{await fetch(`${SUPABASE_URL}/rest/v1/comments`,{method:'POST',headers,body:JSON.stringify({video_id:vidId,user_id:currentUser.id,author_name:currentUser.name,text})});}catch(e){}
+  if(!vidId)return;
+  const inp=document.getElementById('newCommentInput');
+  if(!inp)return;
+  const text=inp.value.trim();
+  if(!text)return;
+  inp.value='';
+  haptic('light');
+  const body={video_id:vidId,user_id:currentUser.id,author_name:currentUser.name,text};
+  if(commentReplyContext){
+    body.parent_id=commentReplyContext.id;
+    body.reply_to_name=commentReplyContext.name;
+  }
+  commentReplyContext=null;
+  renderCommentInputArea();
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/comments`,{method:'POST',headers,body:JSON.stringify(body)});
+    if(!res.ok)throw new Error();
+    await loadAndRenderComments(vidId);
+  }catch(e){showToast('Ошибка отправки');}
 }
 
 /* ============ SHARE ============ */
@@ -2057,7 +2222,7 @@ searchInput.addEventListener('input',e=>renderSearchResults(e.target.value));
 async function refreshFeed(){
   const btn=document.getElementById('refreshBtn');btn.classList.add('spinning');haptic('light');
   feedSeed=Math.random().toString(36).slice(2)+Date.now();
-  try{brokenVideoIds.clear();await Promise.all([fetchVideos(),loadUserRelations()]);renderFeed();document.getElementById('feed').scrollTop=0;showToast('Обновлено');}
+  try{brokenVideoIds.clear();await Promise.all([fetchVideos(),loadUserRelations()]);renderFeed();resetFeedScrollTop();showToast('Обновлено');}
   catch(e){showToast('Ошибка');}
   finally{setTimeout(()=>btn.classList.remove('spinning'),450);}
 }
@@ -2084,7 +2249,16 @@ document.addEventListener('click',()=>{if(userWantsSound)enableSound();},{passiv
 
 function spawnHeart(container,x,y){const h=document.createElement('div');h.className='heart-burst';h.textContent='❤️';h.style.left=(x-44)+'px';h.style.top=(y-44)+'px';container.appendChild(h);setTimeout(()=>h.remove(),820);}
 
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')silentRefresh();});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){
+    pauseAllVideos();
+  }else{
+    silentRefresh();
+    if(document.getElementById('feedView').classList.contains('active')&&userWantsSound){
+      enableSound();
+    }
+  }
+});
 
 /* ============ INIT ============ */
 (async function init(){
@@ -2093,7 +2267,15 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   try{await Promise.all([syncUserProfile(),loadUserRelations(),fetchVideos()]);}catch(e){}
   try{await loadMissingLikedVideos();}catch(e){}
   renderFeed();startPolling();
-  document.getElementById('feed').scrollTop=0;
+  resetFeedScrollTop();
+  // Safety: ensure only first card is playing at startup
+  setTimeout(()=>{
+    const firstVideo=document.querySelector('.video-card video');
+    if(firstVideo&&firstVideo.paused){
+      firstVideo.muted=!userWantsSound;
+      firstVideo.play().catch(()=>{});
+    }
+  },220);
 
   if(isAdmin){
     document.getElementById('tabReports').style.display='';
