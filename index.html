@@ -194,11 +194,8 @@ const BOT_APP_URL  = 'https://t.me/undertow_vids_bot/app';
 
 function getTg() { return window.Telegram?.WebApp || null; }
 
+// [1] Без цикла ожидания: если SDK уже есть — берём сразу, иначе гость без паузы
 async function initTelegram() {
-  const start = Date.now();
-  while (!getTg() && Date.now() - start < 1500) {
-    await new Promise(r => setTimeout(r, 50));
-  }
   const t = getTg();
   if (t) {
     try {
@@ -240,6 +237,18 @@ function saveLikesCache() {
 }
 
 const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+
+// [2] fetch с AbortController и таймаутом
+async function fetchWithTimeout(url, opts = {}, timeoutMs = 4000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...opts, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function formatNum(n) { n = Number(n) || 0; if (n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M'; if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K'; return String(n); }
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2600); }
@@ -266,4 +275,4 @@ function decodeVideoCode(code) {
 }
 
 const BANNED_PATTERNS = [
-  { cat: 'наркотики', re: /(закладк|спайс|мефедрон|героин|кокаин|амфетамин|экстази
+  { cat: 'наркотики', re: /(закладк|спайс|
